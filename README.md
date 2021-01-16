@@ -41,8 +41,9 @@ After
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "example");
-    flrviz::Rviz rviz("map");
+    flrviz::Rviz rviz("map", "visualization_msgs");
     auto marker = flrviz::CubeMarker(0)
+        .orientation(1)
         .scale(1, 1, 1)
         .color(1, 0, 0);
     rviz.add(marker);
