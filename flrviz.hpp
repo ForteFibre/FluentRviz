@@ -595,7 +595,7 @@ class Rviz {
     std::string frame_id_;
 
 public:
-    Rviz(std::string frame_id, std::string topic = "visualization_marker")
+    Rviz(std::string frame_id = "map", std::string topic = "visualization_marker")
         : pub(nh.advertise<visualization_msgs::Marker>(topic, 1))
         , frame_id_(frame_id)
     { }
