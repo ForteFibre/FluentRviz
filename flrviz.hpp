@@ -25,7 +25,7 @@ enum class ColorsOption {
 namespace internal {
     template<typename T>
     struct position_helper {
-        T &position(geometry_msgs::Point &position)
+        T &position(const geometry_msgs::Point &position)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -46,7 +46,7 @@ namespace internal {
 
     template<typename T>
     struct orientation_helper {
-        T &orientation(geometry_msgs::Quaternion &orientation)
+        T &orientation(const geometry_msgs::Quaternion &orientation)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -115,7 +115,7 @@ namespace internal {
 
     template<typename T>
     struct color_helper {
-        T &color(std_msgs::ColorRGBA &color)
+        T &color(const std_msgs::ColorRGBA &color)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -137,7 +137,7 @@ namespace internal {
 
     template<typename T>
     struct lifetime_helper {
-        T &lifetime(ros::Duration &lifetime)
+        T &lifetime(const ros::Duration &lifetime)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -167,7 +167,7 @@ namespace internal {
 
     template<typename T>
     struct points_helper {
-        T &points(std::vector<geometry_msgs::Point> &points)
+        T &points(const std::vector<geometry_msgs::Point> &points)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -175,7 +175,7 @@ namespace internal {
             return self;
         }
 
-        T &points(std::vector<geometry_msgs::Point> &&points)
+        T &points(const std::vector<geometry_msgs::Point> &&points)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -186,18 +186,18 @@ namespace internal {
 
     template<typename T>
     struct arrow_point_helper {
-        T &start(geometry_msgs::Point &start)
+        T &start(const geometry_msgs::Point &start)
         {
             return set_point(start, 0);
         }
 
-        T &end(geometry_msgs::Point &end)
+        T &end(const geometry_msgs::Point &end)
         {
             return set_point(end, 1);
         }
 
     private:
-        T &set_point(geometry_msgs::Point &point, size_t idx)
+        T &set_point(const geometry_msgs::Point &point, size_t idx)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -208,7 +208,7 @@ namespace internal {
 
     template<typename T>
     struct push_point_helper {
-        T &push_point(geometry_msgs::Point &point)
+        T &push_point(const geometry_msgs::Point &point)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -219,7 +219,7 @@ namespace internal {
 
     template<typename T>
     struct push_line_helper {
-        T &push_line(geometry_msgs::Point &start, geometry_msgs::Point &end)
+        T &push_line(const geometry_msgs::Point &start, const geometry_msgs::Point &end)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -231,7 +231,7 @@ namespace internal {
 
     template<typename T>
     struct push_triangle_helper {
-        T &push_triangle(geometry_msgs::Point &a, geometry_msgs::Point &b, geometry_msgs::Point &c)
+        T &push_triangle(const geometry_msgs::Point &a, const geometry_msgs::Point &b, const geometry_msgs::Point &c)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -244,7 +244,7 @@ namespace internal {
 
     template<typename T>
     struct colors_helper {
-        T &colors(std::vector<std_msgs::ColorRGBA> &colors)
+        T &colors(const std::vector<std_msgs::ColorRGBA> &colors)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -252,7 +252,7 @@ namespace internal {
             return self;
         }
 
-        T &colors(std::vector<std_msgs::ColorRGBA> &&colors)
+        T &colors(const std::vector<std_msgs::ColorRGBA> &&colors)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -263,7 +263,7 @@ namespace internal {
 
     template<typename T>
     struct text_helper {
-        T &text(std::string &text)
+        T &text(const std::string &text)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -271,7 +271,7 @@ namespace internal {
             return self;
         }
 
-        T &text(std::string &&text)
+        T &text(const std::string &&text)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -282,7 +282,7 @@ namespace internal {
 
     template<typename T>
     struct mesh_resource_helper {
-        T &mesh_resource(std::string &mesh_resource)
+        T &mesh_resource(const std::string &mesh_resource)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -290,7 +290,7 @@ namespace internal {
             return self;
         }
 
-        T &mesh_resource(std::string &&mesh_resource)
+        T &mesh_resource(const std::string &&mesh_resource)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
