@@ -493,6 +493,42 @@ namespace internal {
 
 } // namespace internal
 
+namespace color {
+    std_msgs::ColorRGBA generate_color(int32_t color, double opacity = 1)
+    {
+        std_msgs::ColorRGBA res;
+        int32_t mask = (1 << 8) - 1;
+        res.r = ((color >> 16) & mask) / 255.0;
+        res.g = ((color >> 8) & mask) / 255.0;
+        res.b = (color & mask) / 255.0;
+        res.a = opacity;
+        return res;
+    }
+
+    inline const static std_msgs::ColorRGBA RED = generate_color(0xF44336);
+    inline const static std_msgs::ColorRGBA PINK = generate_color(0xFF4081);
+    inline const static std_msgs::ColorRGBA PURPLE = generate_color(0x9C27B0);
+    inline const static std_msgs::ColorRGBA DEEP_PURPLE = generate_color(0x7B1FA2);
+    inline const static std_msgs::ColorRGBA INDIGO = generate_color(0x3F51B5);
+    inline const static std_msgs::ColorRGBA BRUE = generate_color(0x448aff);
+    inline const static std_msgs::ColorRGBA LIGHT_BRUE = generate_color(0x03A9F4);
+    inline const static std_msgs::ColorRGBA CYAN = generate_color(0x00BCD4);
+    inline const static std_msgs::ColorRGBA TEAL = generate_color(0x009688);
+    inline const static std_msgs::ColorRGBA GREEN = generate_color(0x4CAF50);
+    inline const static std_msgs::ColorRGBA LIGHT_GREEN = generate_color(0x8BC34A);
+    inline const static std_msgs::ColorRGBA LIME = generate_color(0xCDDC39);
+    inline const static std_msgs::ColorRGBA YELLOW = generate_color(0xFFEB3B);
+    inline const static std_msgs::ColorRGBA AMBER = generate_color(0xFFC107);
+    inline const static std_msgs::ColorRGBA ORANGE = generate_color(0xFF9800);
+    inline const static std_msgs::ColorRGBA DEEP_ORANGE = generate_color(0xFF5722);
+    inline const static std_msgs::ColorRGBA BROWN = generate_color(0x795548);
+    inline const static std_msgs::ColorRGBA GREY = generate_color(0x9E9E9E);
+    inline const static std_msgs::ColorRGBA BLUE_GREY = generate_color(0x607D8B);
+    inline const static std_msgs::ColorRGBA WHITE = generate_color(0xffffff);
+    inline const static std_msgs::ColorRGBA BLACK = generate_color(0x000000);
+
+} // namespace color
+
 template<int32_t MarkerType, auto... Options>
 class Marker
     : public internal::conditional_position<Marker, MarkerType, Options...>
