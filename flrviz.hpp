@@ -14,14 +14,6 @@ enum class ArrowOption {
     POSE, VECTOR,
 };
 
-enum class PointsOption {
-    SEPARATELY_UPDATE, BULK_UPDATE,
-};
-
-enum class ColorsOption {
-    SEPARATELY_UPDATE, BULK_UPDATE,
-};
-
 namespace internal {
     template<typename T>
     struct position_helper {
@@ -202,42 +194,6 @@ namespace internal {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.points[idx] = point;
-            return self;
-        }
-    };
-
-    template<typename T>
-    struct push_point_helper {
-        T &push_point(const geometry_msgs::Point &point)
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.points.push_back(point);
-            return self;
-        }
-    };
-
-    template<typename T>
-    struct push_line_helper {
-        T &push_line(const geometry_msgs::Point &start, const geometry_msgs::Point &end)
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.points.push_back(start);
-            marker.points.push_back(end);
-            return self;
-        }
-    };
-
-    template<typename T>
-    struct push_triangle_helper {
-        T &push_triangle(const geometry_msgs::Point &a, const geometry_msgs::Point &b, const geometry_msgs::Point &c)
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.points.push_back(a);
-            marker.points.push_back(b);
-            marker.points.push_back(c);
             return self;
         }
     };
@@ -457,23 +413,14 @@ namespace internal {
             is_arrow_marker_v<MarkerType> && is_contained_v<ArrowOption::VECTOR, Options...>,
             arrow_point_helper<Marker<MarkerType, Options...>>>
         , conditional_extend<
-            is_points_available_v<MarkerType> && is_contained_v<PointsOption::BULK_UPDATE, Options...>,
+            is_points_available_v<MarkerType>,
             points_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_points_available_by_point_v<MarkerType> && is_contained_v<PointsOption::SEPARATELY_UPDATE, Options...>,
-            push_point_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_points_available_by_line_v<MarkerType> && is_contained_v<PointsOption::SEPARATELY_UPDATE, Options...>,
-            push_line_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_points_available_by_triangle_v<MarkerType> && is_contained_v<PointsOption::SEPARATELY_UPDATE, Options...>,
-            push_triangle_helper<Marker<MarkerType, Options...>>>
     { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_colors
         : conditional_extend<
-            is_colors_available_v<MarkerType> && is_contained_v<ColorsOption::BULK_UPDATE, Options...>,
+            is_colors_available_v<MarkerType>,
             colors_helper<Marker<MarkerType, Options...>>>
     { };
 
@@ -596,33 +543,21 @@ using SphereMarker = Marker<visualization_msgs::Marker::SPHERE>;
 
 using CylinderMarker = Marker<visualization_msgs::Marker::CYLINDER>;
 
-using LineStripMarker = Marker<
-    visualization_msgs::Marker::LINE_STRIP,
-    PointsOption::BULK_UPDATE>;
+using LineStripMarker = Marker<visualization_msgs::Marker::LINE_STRIP>;
 
-using LineListMarker = Marker<
-    visualization_msgs::Marker::LINE_LIST,
-    PointsOption::BULK_UPDATE>;
+using LineListMarker = Marker<visualization_msgs::Marker::LINE_LIST>;
 
-using CubeListMarker = Marker<
-    visualization_msgs::Marker::CUBE_LIST,
-    PointsOption::BULK_UPDATE>;
+using CubeListMarker = Marker<visualization_msgs::Marker::CUBE_LIST>;
 
-using SphereListMarker = Marker<
-    visualization_msgs::Marker::SPHERE_LIST,
-    PointsOption::BULK_UPDATE>;
+using SphereListMarker = Marker<visualization_msgs::Marker::SPHERE_LIST>;
 
-using PointsMarker = Marker<
-    visualization_msgs::Marker::POINTS,
-    PointsOption::BULK_UPDATE>;
+using PointsMarker = Marker<visualization_msgs::Marker::POINTS>;
 
 using TextViewFacingMarker = Marker<visualization_msgs::Marker::TEXT_VIEW_FACING>;
 
 using MeshResourceMarker = Marker<visualization_msgs::Marker::MESH_RESOURCE>;
 
-using TriangleListMarker = Marker<
-    visualization_msgs::Marker::TRIANGLE_LIST,
-    PointsOption::BULK_UPDATE>;
+using TriangleListMarker = Marker<visualization_msgs::Marker::TRIANGLE_LIST>;
 
 class Rviz {
     ros::NodeHandle nh;
