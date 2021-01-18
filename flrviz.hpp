@@ -381,15 +381,13 @@ namespace internal {
     struct conditional_position
         : conditional_extend<
             is_arrow_marker_v<MarkerType> ? is_contained_v<ArrowOption::POSE, Options...> : true,
-            position_helper<Marker<MarkerType, Options...>>>
-    { };
+            position_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_orientation
         : conditional_extend<
             is_arrow_marker_v<MarkerType> ? is_contained_v<ArrowOption::POSE, Options...> : true,
-            orientation_helper<Marker<MarkerType, Options...>>>
-    { };
+            orientation_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_scale
@@ -404,8 +402,7 @@ namespace internal {
             scale_width_helper<Marker<MarkerType, Options...>>>
         , conditional_extend<
             is_text_scale_available_v<MarkerType>,
-            scale_height_helper<Marker<MarkerType, Options...>>>
-    { };
+            scale_height_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_points
@@ -414,29 +411,25 @@ namespace internal {
             arrow_point_helper<Marker<MarkerType, Options...>>>
         , conditional_extend<
             is_points_available_v<MarkerType>,
-            points_helper<Marker<MarkerType, Options...>>>
-    { };
+            points_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_colors
         : conditional_extend<
             is_colors_available_v<MarkerType>,
-            colors_helper<Marker<MarkerType, Options...>>>
-    { };
+            colors_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_text
         : conditional_extend<
             is_text_view_facing_marker_v<MarkerType>,
-            text_helper<Marker<MarkerType, Options...>>>
-    { };
+            text_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_mesh_resource
         : conditional_extend<
             is_mesh_resource_marker_v<MarkerType>,
-            mesh_resource_helper<Marker<MarkerType, Options...>>>
-    { };
+            mesh_resource_helper<Marker<MarkerType, Options...>>> { };
 
 } // namespace internal
 
