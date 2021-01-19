@@ -586,4 +586,4 @@ public:
     }
 };
 
-} // namespace flrv
+} // namespace flrviz
