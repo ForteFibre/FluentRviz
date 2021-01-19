@@ -23,20 +23,20 @@ namespace option {
 namespace internal {
     template<typename T>
     struct position_helper {
-        T &position(double x, double y, double z)
+        [[nodiscard]] T &&position(double x, double y, double z) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.pose.position.x = x;
             marker.pose.position.y = y;
             marker.pose.position.z = z;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct orientation_helper {
-        T &orientation(double w, double x = 0, double y = 0, double z = 0)
+        [[nodiscard]] T &&orientation(double w, double x = 0, double y = 0, double z = 0) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -44,221 +44,222 @@ namespace internal {
             marker.pose.orientation.x = x;
             marker.pose.orientation.y = y;
             marker.pose.orientation.z = z;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct scale3_helper {
-        T &scale(double x, double y, double z)
+        [[nodiscard]] T &&scale(double x, double y, double z) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.scale.x = x;
             marker.scale.y = y;
             marker.scale.z = z;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct scale2_helper {
-        T &size(double x, double y)
+        [[nodiscard]] T &&size(double x, double y) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.scale.x = x;
             marker.scale.y = y;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct scale_width_helper {
-        T &scale(double width)
+        [[nodiscard]] T &&scale(double width) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.scale.x = width;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct scale_height_helper {
-        T &scale(double height)
+        [[nodiscard]] T &&scale(double height) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.scale.z = height;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct color_helper {
-        T &color(int32_t hexcolor)
+        [[nodiscard]] T &&color(int32_t hexcolor) && noexcept
         {
-            return color(
-                ((hexcolor >> 16) & 0xff) / 255.0,
-                ((hexcolor >> 8) & 0xff) / 255.0,
-                (hexcolor & 0xff) / 255.0);
+            T &self = static_cast<T &>(*this);
+            float r = ((hexcolor >> 16) & 0xff) / 255.0;
+            float g = ((hexcolor >> 8) & 0xff) / 255.0;
+            float b = (hexcolor & 0xff) / 255.0;
+            return std::move(self).color(r, g, b);
         }
 
-        T &color(double r, double g, double b)
+        [[nodiscard]] T &&color(float r, float g, float b) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.color.r = r;
             marker.color.g = g;
             marker.color.b = b;
-            return self;
+            return std::move(self);
         }
 
-        T &opacity(double opacity)
+        [[nodiscard]] T &&opacity(double opacity) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.color.a = opacity;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct lifetime_helper {
-        T &lifetime(double lifetime)
+        [[nodiscard]] T &&lifetime(double lifetime) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &Marker = self.msg();
             Marker.lifetime = ros::Duration(lifetime);
-            return self;
+            return std::move(self);
         }
 
-        T &lifetime(int32_t sec, int32_t nsec)
+        [[nodiscard]] T &&lifetime(int32_t sec, int32_t nsec) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &Marker = self.msg();
             Marker.lifetime = ros::Duration(sec, nsec);
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct frame_locked_helper {
-        T &frame_locked(bool frame_locked)
+        [[nodiscard]] T &&frame_locked(bool frame_locked) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.frame_locked = frame_locked;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct points_helper {
-        T &points(const std::vector<geometry_msgs::Point> &points)
+        [[nodiscard]] T &&points(const std::vector<geometry_msgs::Point> &points) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.points = points;
-            return self;
+            return std::move(self);
         }
 
-        T &points(const std::vector<geometry_msgs::Point> &&points)
+        [[nodiscard]] T &&points(const std::vector<geometry_msgs::Point> &&points) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.points = std::move(points);
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct arrow_point_helper {
-        T &start(float x, float y, float z)
+        [[nodiscard]] T &&start(float x, float y, float z) && noexcept
         {
             return set_point(0, x, y, z);
         }
 
-        T &end(float x, float y, float z)
+        [[nodiscard]] T &&end(float x, float y, float z) && noexcept
         {
             return set_point(1, x, y, z);
         }
 
     private:
-        T &set_point(size_t idx, float x, float y, float z)
+        [[nodiscard]] T &&set_point(size_t idx, float x, float y, float z) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.points[idx].x = x;
             marker.points[idx].y = y;
             marker.points[idx].z = z;
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct colors_helper {
-        T &colors(const std::vector<std_msgs::ColorRGBA> &colors)
+        [[nodiscard]] T &&colors(const std::vector<std_msgs::ColorRGBA> &colors) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.colors = colors;
-            return self;
+            return std::move(self);
         }
 
-        T &colors(const std::vector<std_msgs::ColorRGBA> &&colors)
+        [[nodiscard]] T &&colors(const std::vector<std_msgs::ColorRGBA> &&colors) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.colors = std::move(colors);
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct text_helper {
-        T &text(const std::string &text)
+        [[nodiscard]] T &&text(const std::string &text) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.text = text;
-            return self;
+            return std::move(self);
         }
 
-        T &text(const std::string &&text)
+        [[nodiscard]] T &&text(const std::string &&text) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.text = std::move(text);
-            return self;
+            return std::move(self);
         }
     };
 
     template<typename T>
     struct mesh_resource_helper {
-        T &mesh_resource(const std::string &mesh_resource)
+        [[nodiscard]] T &&mesh_resource(const std::string &mesh_resource) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.mesh_resource = mesh_resource;
-            return self;
+            return std::move(self);
         }
 
-        T &mesh_resource(const std::string &&mesh_resource)
+        [[nodiscard]] T &&mesh_resource(const std::string &&mesh_resource) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.mesh_resource = std::move(mesh_resource);
-            return self;
+            return std::move(self);
         }
 
-        T &mesh_use_embedded_materials(bool mesh_use_embedded_materials)
+        [[nodiscard]] T &&mesh_use_embedded_materials(bool mesh_use_embedded_materials) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.mesh_use_embedded_materials = mesh_use_embedded_materials;
-            return self;
+            return std::move(self);
         }
     };
 
