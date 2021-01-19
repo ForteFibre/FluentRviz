@@ -8,7 +8,7 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 
-namespace flrv {
+namespace flrviz {
 
 enum class ArrowOption {
     POSE, VECTOR,
