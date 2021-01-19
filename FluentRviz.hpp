@@ -10,9 +10,15 @@
 
 namespace flrviz {
 
-enum class ArrowOption {
-    POSE, VECTOR,
-};
+namespace option {
+    enum class Arrow {
+        POSE, VECTOR,
+    };
+
+    enum class Color {
+        SEPARATE
+    };
+} // namespace option
 
 namespace internal {
     template<typename T>
@@ -94,9 +100,9 @@ namespace internal {
         T &color(int32_t hexcolor)
         {
             return color(
-                (hexcolor >> 16) & 0xff / 255.0,
-                (hexcolor >> 8) & 0xff / 255.0,
-                hexcolor & 0xff / 255.0);
+                ((hexcolor >> 16) & 0xff) / 255.0,
+                ((hexcolor >> 8) & 0xff) / 255.0,
+                (hexcolor & 0xff) / 255.0);
         }
 
         T &color(double r, double g, double b)
@@ -373,14 +379,20 @@ namespace internal {
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_position
         : conditional_extend<
-            is_arrow_marker_v<MarkerType> ? is_contained_v<ArrowOption::POSE, Options...> : true,
+            !is_arrow_marker_v<MarkerType> || is_contained_v<option::Arrow::POSE, Options...>,
             position_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_orientation
         : conditional_extend<
-            is_arrow_marker_v<MarkerType> ? is_contained_v<ArrowOption::POSE, Options...> : true,
+            !is_arrow_marker_v<MarkerType> || is_contained_v<option::Arrow::POSE, Options...>,
             orientation_helper<Marker<MarkerType, Options...>>> { };
+
+    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
+    struct conditional_color
+        : conditional_extend<
+            !is_colors_available_v<MarkerType> || !is_contained_v<option::Color::SEPARATE, Options...>,
+            color_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_scale
@@ -400,7 +412,7 @@ namespace internal {
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_points
         : conditional_extend<
-            is_arrow_marker_v<MarkerType> && is_contained_v<ArrowOption::VECTOR, Options...>,
+            is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>,
             arrow_point_helper<Marker<MarkerType, Options...>>>
         , conditional_extend<
             is_points_available_v<MarkerType>,
@@ -409,7 +421,7 @@ namespace internal {
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_colors
         : conditional_extend<
-            is_colors_available_v<MarkerType>,
+            is_colors_available_v<MarkerType> && is_contained_v<option::Color::SEPARATE>,
             colors_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
@@ -455,7 +467,7 @@ class Marker
     : public internal::conditional_position<Marker, MarkerType, Options...>
     , public internal::conditional_orientation<Marker, MarkerType, Options...>
     , public internal::conditional_scale<Marker, MarkerType, Options...>
-    , public internal::color_helper<Marker<MarkerType, Options...>>
+    , public internal::conditional_color<Marker, MarkerType, Options...>
     , public internal::lifetime_helper<Marker<MarkerType, Options...>>
     , public internal::frame_locked_helper<Marker<MarkerType, Options...>>
     , public internal::conditional_points<Marker, MarkerType, Options...>
@@ -494,7 +506,7 @@ public:
 
         if constexpr (
             internal::is_arrow_marker_v<MarkerType>
-            && internal::is_contained_v<ArrowOption::VECTOR, Options...>) {
+            && internal::is_contained_v<option::Arrow::VECTOR, Options...>) {
             marker.points.resize(2);
         }
 
@@ -508,30 +520,17 @@ public:
 };
 
 namespace marker {
-    using Arrow = Marker<
-        visualization_msgs::Marker::ARROW,
-        ArrowOption::VECTOR>;
-
+    using Arrow = Marker<visualization_msgs::Marker::ARROW, option::Arrow::VECTOR>;
     using Cube = Marker<visualization_msgs::Marker::CUBE>;
-
     using Sphere = Marker<visualization_msgs::Marker::SPHERE>;
-
     using Cylinder = Marker<visualization_msgs::Marker::CYLINDER>;
-
     using LineStrip = Marker<visualization_msgs::Marker::LINE_STRIP>;
-
     using LineList = Marker<visualization_msgs::Marker::LINE_LIST>;
-
     using CubeList = Marker<visualization_msgs::Marker::CUBE_LIST>;
-
     using SphereList = Marker<visualization_msgs::Marker::SPHERE_LIST>;
-
     using Points = Marker<visualization_msgs::Marker::POINTS>;
-
     using TextViewFacing = Marker<visualization_msgs::Marker::TEXT_VIEW_FACING>;
-
     using MeshResource = Marker<visualization_msgs::Marker::MESH_RESOURCE>;
-
     using TriangleList = Marker<visualization_msgs::Marker::TRIANGLE_LIST>;
 } // namespace marker
 
