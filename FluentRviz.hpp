@@ -178,12 +178,14 @@ namespace internal {
     struct arrow_point_helper {
         [[nodiscard]] T &&start(float x, float y, float z) && noexcept
         {
-            return set_point(0, x, y, z);
+            T &self = static_cast<T &>(*this);
+            return std::move(self).set_point(0, x, y, z);
         }
 
         [[nodiscard]] T &&end(float x, float y, float z) && noexcept
         {
-            return set_point(1, x, y, z);
+            T &self = static_cast<T &>(*this);
+            return std::move(self).set_point(1, x, y, z);
         }
 
     private:
