@@ -421,7 +421,7 @@ namespace internal {
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_colors
         : conditional_extend<
-            is_colors_available_v<MarkerType> && is_contained_v<option::Color::SEPARATE>,
+            is_colors_available_v<MarkerType> && is_contained_v<option::Color::SEPARATE, Options...>,
             colors_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
