@@ -63,7 +63,7 @@ namespace internal {
 
     template<typename T>
     struct scale2_helper {
-        [[nodiscard]] T &&size(double x, double y) && noexcept
+        [[nodiscard]] T &&scale(double x, double y) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
