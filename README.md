@@ -36,7 +36,7 @@ After
 
 ```cpp
 #include <ros/ros.h>
-#include <flrviz.hpp>
+#include <FluentRviz.hpp>
 
 int main(int argc, char **argv)
 {
