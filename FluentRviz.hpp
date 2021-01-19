@@ -520,18 +520,26 @@ public:
 };
 
 namespace marker {
-    using Arrow = Marker<visualization_msgs::Marker::ARROW, option::Arrow::VECTOR>;
+    using PoseArrow = Marker<visualization_msgs::Marker::ARROW, option::Arrow::POSE>;
+    using VectorArrow = Marker<visualization_msgs::Marker::ARROW, option::Arrow::VECTOR>;
+    using Arrow = VectorArrow;
     using Cube = Marker<visualization_msgs::Marker::CUBE>;
     using Sphere = Marker<visualization_msgs::Marker::SPHERE>;
     using Cylinder = Marker<visualization_msgs::Marker::CYLINDER>;
     using LineStrip = Marker<visualization_msgs::Marker::LINE_STRIP>;
+    using ColorfulLineStrip = Marker<visualization_msgs::Marker::LINE_STRIP, option::Color::SEPARATE>;
     using LineList = Marker<visualization_msgs::Marker::LINE_LIST>;
+    using ColorfulLineList = Marker<visualization_msgs::Marker::LINE_LIST, option::Color::SEPARATE>;
     using CubeList = Marker<visualization_msgs::Marker::CUBE_LIST>;
+    using ColorfulCubeList = Marker<visualization_msgs::Marker::CUBE_LIST, option::Color::SEPARATE>;
     using SphereList = Marker<visualization_msgs::Marker::SPHERE_LIST>;
+    using ColorfulSphereList = Marker<visualization_msgs::Marker::SPHERE_LIST, option::Color::SEPARATE>;
     using Points = Marker<visualization_msgs::Marker::POINTS>;
+    using ColorfulPoints = Marker<visualization_msgs::Marker::POINTS, option::Color::SEPARATE>;
     using TextViewFacing = Marker<visualization_msgs::Marker::TEXT_VIEW_FACING>;
     using MeshResource = Marker<visualization_msgs::Marker::MESH_RESOURCE>;
     using TriangleList = Marker<visualization_msgs::Marker::TRIANGLE_LIST>;
+    using ColorfulTriangleList = Marker<visualization_msgs::Marker::TRIANGLE_LIST, option::Color::SEPARATE>;
 } // namespace marker
 
 class Rviz {
