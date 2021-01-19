@@ -8,7 +8,7 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 
-namespace flrviz {
+namespace flrv {
 
 enum class ArrowOption {
     POSE, VECTOR,
@@ -17,14 +17,6 @@ enum class ArrowOption {
 namespace internal {
     template<typename T>
     struct position_helper {
-        T &position(const geometry_msgs::Point &position)
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.pose.position = position;
-            return self;
-        }
-
         T &position(double x, double y, double z)
         {
             T &self = static_cast<T &>(*this);
@@ -38,14 +30,6 @@ namespace internal {
 
     template<typename T>
     struct orientation_helper {
-        T &orientation(const geometry_msgs::Quaternion &orientation)
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.pose.orientation = orientation;
-            return self;
-        }
-
         T &orientation(double w, double x = 0, double y = 0, double z = 0)
         {
             T &self = static_cast<T &>(*this);
@@ -107,41 +91,40 @@ namespace internal {
 
     template<typename T>
     struct color_helper {
-        T &color(const std_msgs::ColorRGBA &color)
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.color = color;
-            return self;
-        }
-
-        T &color(double r, double g, double b, double a = 1.0)
+        T &color(double r, double g, double b)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
             marker.color.r = r;
             marker.color.g = g;
             marker.color.b = b;
-            marker.color.a = a;
+            return self;
+        }
+
+        T &opacity(double opacity)
+        {
+            T &self = static_cast<T &>(*this);
+            visualization_msgs::Marker &marker = self.msg();
+            marker.color.a = opacity;
             return self;
         }
     };
 
     template<typename T>
     struct lifetime_helper {
-        T &lifetime(const ros::Duration &lifetime)
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.lifetime = lifetime;
-            return self;
-        }
-
         T &lifetime(double lifetime)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &Marker = self.msg();
             Marker.lifetime = ros::Duration(lifetime);
+            return self;
+        }
+
+        T &lifetime(int32_t sec, int32_t nsec)
+        {
+            T &self = static_cast<T &>(*this);
+            visualization_msgs::Marker &Marker = self.msg();
+            Marker.lifetime = ros::Duration(sec, nsec);
             return self;
         }
     };
@@ -178,22 +161,24 @@ namespace internal {
 
     template<typename T>
     struct arrow_point_helper {
-        T &start(const geometry_msgs::Point &start)
+        T &start(float x, float y, float z)
         {
-            return set_point(start, 0);
+            return set_point(0, x, y, z);
         }
 
-        T &end(const geometry_msgs::Point &end)
+        T &end(float x, float y, float z)
         {
-            return set_point(end, 1);
+            return set_point(1, x, y, z);
         }
 
     private:
-        T &set_point(const geometry_msgs::Point &point, size_t idx)
+        T &set_point(size_t idx, float x, float y, float z)
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
-            marker.points[idx] = point;
+            marker.points[idx].x = x;
+            marker.points[idx].y = y;
+            marker.points[idx].z = z;
             return self;
         }
     };
@@ -596,4 +581,4 @@ public:
     }
 };
 
-} // namespace flrviz
+} // namespace flrv
