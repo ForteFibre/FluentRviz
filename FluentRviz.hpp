@@ -519,6 +519,9 @@ public:
         }
     }
 
+    Marker(const Marker<MarkerType, Options...> &) = delete;
+    Marker(Marker<MarkerType, Options...> &&) = default;
+
     visualization_msgs::Marker &msg() { return marker; }
 };
 
