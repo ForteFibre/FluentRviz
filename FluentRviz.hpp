@@ -507,31 +507,33 @@ public:
     visualization_msgs::Marker &msg() { return marker; }
 };
 
-using ArrowMarker = Marker<
-    visualization_msgs::Marker::ARROW,
-    ArrowOption::VECTOR>;
+namespace marker {
+    using Arrow = Marker<
+        visualization_msgs::Marker::ARROW,
+        ArrowOption::VECTOR>;
 
-using CubeMarker = Marker<visualization_msgs::Marker::CUBE>;
+    using Cube = Marker<visualization_msgs::Marker::CUBE>;
 
-using SphereMarker = Marker<visualization_msgs::Marker::SPHERE>;
+    using Sphere = Marker<visualization_msgs::Marker::SPHERE>;
 
-using CylinderMarker = Marker<visualization_msgs::Marker::CYLINDER>;
+    using Cylinder = Marker<visualization_msgs::Marker::CYLINDER>;
 
-using LineStripMarker = Marker<visualization_msgs::Marker::LINE_STRIP>;
+    using LineStrip = Marker<visualization_msgs::Marker::LINE_STRIP>;
 
-using LineListMarker = Marker<visualization_msgs::Marker::LINE_LIST>;
+    using LineList = Marker<visualization_msgs::Marker::LINE_LIST>;
 
-using CubeListMarker = Marker<visualization_msgs::Marker::CUBE_LIST>;
+    using CubeList = Marker<visualization_msgs::Marker::CUBE_LIST>;
 
-using SphereListMarker = Marker<visualization_msgs::Marker::SPHERE_LIST>;
+    using SphereList = Marker<visualization_msgs::Marker::SPHERE_LIST>;
 
-using PointsMarker = Marker<visualization_msgs::Marker::POINTS>;
+    using Points = Marker<visualization_msgs::Marker::POINTS>;
 
-using TextViewFacingMarker = Marker<visualization_msgs::Marker::TEXT_VIEW_FACING>;
+    using TextViewFacing = Marker<visualization_msgs::Marker::TEXT_VIEW_FACING>;
 
-using MeshResourceMarker = Marker<visualization_msgs::Marker::MESH_RESOURCE>;
+    using MeshResource = Marker<visualization_msgs::Marker::MESH_RESOURCE>;
 
-using TriangleListMarker = Marker<visualization_msgs::Marker::TRIANGLE_LIST>;
+    using TriangleList = Marker<visualization_msgs::Marker::TRIANGLE_LIST>;
+} // namespace marker
 
 class Rviz {
     ros::NodeHandle nh;
