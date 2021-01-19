@@ -568,6 +568,9 @@ public:
         publish(marker);
     }
 
+    template<int32_t MarkerType, auto... Options>
+    void add(Marker<MarkerType, Options...> &&m) { add(m); }
+
     void delete_marker(int32_t id, std::string ns = "")
     {
         visualization_msgs::Marker marker;
