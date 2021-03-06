@@ -4,8 +4,8 @@
 #include <vector>
 #include <type_traits>
 
-#include <geometry_msgs/Point.h>
 #include <ros/ros.h>
+#include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
 
 namespace flrviz {
@@ -21,106 +21,323 @@ namespace option {
 } // namespace option
 
 namespace internal {
+    namespace detail {
+        template<typename AlwaysVoid, template<typename...> typename Op, typename... Args>
+        struct detector : std::false_type { };
+
+        template<template<typename...> typename Op, typename... Args>
+        struct detector<std::void_t<Op<Args...>>, Op, Args...> : std::true_type { };
+    } // namespace detail
+
+    template<template<typename...> typename Op, typename... Args>
+    using is_detected = detail::detector<void, Op, Args...>;
+
+    template<typename T>
+    using x_var_accessible_t = decltype(std::declval<T>().x);
+
+    template<typename T>
+    using is_x_var_accessible = is_detected<x_var_accessible_t, T>;
+
+    template<typename T>
+    inline constexpr bool is_x_var_accessible_v = is_x_var_accessible<T>::value;
+
+    template<typename T>
+    using x_func_accessible_t = decltype(std::declval<T>().x());
+
+    template<typename T>
+    using is_x_func_accessible = is_detected<x_func_accessible_t, T>;
+
+    template<typename T>
+    inline constexpr bool is_x_func_accessible_v = is_x_func_accessible<T>::value;
+
+    template<typename T>
+    using index_accessible_t = decltype(std::declval<T>()[0]);
+
+    template<typename T>
+    using is_index_accessible = is_detected<index_accessible_t, T>;
+
+    template<typename T>
+    inline constexpr bool is_index_accessible_v = is_index_accessible<T>::value;
+
+    template<typename T>
+    inline constexpr bool false_v = false;
+
+    template<size_t index, typename T>
+    double get(T value) = delete;
+} // namespace internal
+
+namespace param {
+    class Vector3 {
+        geometry_msgs::Vector3 vector3;
+
+    public:
+        Vector3(double x, double y, double z)
+        {
+            vector3.x = x;
+            vector3.y = y;
+            vector3.z = z;
+        }
+
+        static const Vector3 UNIT_X;
+        static const Vector3 UNIT_Y;
+        static const Vector3 UNIT_Z;
+
+        operator const geometry_msgs::Vector3 &() const noexcept
+        {
+            return vector3;
+        }
+    };
+
+    const Vector3 Vector3::UNIT_X = { 1, 0, 0 };
+    const Vector3 Vector3::UNIT_Y = { 0, 1, 0 };
+    const Vector3 Vector3::UNIT_Z = { 0, 0, 1 };
+
+    class Scale {
+        geometry_msgs::Vector3 vector3;
+
+    public:
+        Scale(double x, double y, double z)
+        {
+            vector3.x = x;
+            vector3.y = y;
+            vector3.z = z;
+        }
+
+        operator const geometry_msgs::Vector3 &() const noexcept
+        {
+            return vector3;
+        }
+    };
+
+    class PoseArrowScale : public Scale {
+    public:
+        PoseArrowScale(double length, double width, double height) : Scale(length, width, height) { }
+    };
+
+    class VectorArrowScale : public Scale {
+    public:
+        VectorArrowScale(double shaft_diameter, double head_diameter, double head_length) : Scale(shaft_diameter, head_diameter, head_length) { }
+    };
+
+    class PointScale : public Scale {
+    public:
+        PointScale(double width, double height) : Scale(width, height, 0) { }
+    };
+
+    class LineScale : public Scale {
+    public:
+        LineScale(double width) : Scale(width, 0, 0) { }
+    };
+
+    class TextScale : public Scale {
+    public:
+        TextScale(double height) : Scale(0, 0, height) { }
+    };
+
+
+    class Quaternion {
+        geometry_msgs::Quaternion quaternion;
+
+    public:
+        Quaternion(const geometry_msgs::Quaternion arg): quaternion(arg)
+        { }
+
+        Quaternion(double w = 1.0, double x = 0.0, double y = 0.0, double z = 0.0)
+        {
+            quaternion.w = w;
+            quaternion.x = x;
+            quaternion.y = y;
+            quaternion.z = z;
+        }
+
+        static Quaternion from_angle_axis(double theta, Vector3 axis = Vector3::UNIT_Z) noexcept
+        {
+            geometry_msgs::Vector3 vector3 = axis;
+            return {
+                std::cos(theta / 2),
+                vector3.x * std::sin(theta / 2),
+                vector3.y * std::sin(theta / 2),
+                vector3.z * std::sin(theta / 2)
+            };
+        }
+
+        operator const geometry_msgs::Quaternion &() const noexcept
+        {
+            return quaternion;
+        }
+    };
+
+    class Point {
+        geometry_msgs::Point point;
+
+    public:
+        Point(const geometry_msgs::Point arg): point(arg)
+        { }
+
+        Point(double x, double y, double z = 0.0)
+        {
+            point.x = x;
+            point.y = y;
+            point.z = z;
+        }
+
+        operator const geometry_msgs::Point &() const noexcept
+        {
+            return point;
+        }
+    };
+
+    class Color {
+        std_msgs::ColorRGBA color;
+
+    public:
+        Color(std_msgs::ColorRGBA arg): color(arg)
+        { }
+
+        Color(float r, float g, float b, float a = 1.0)
+        {
+            color.r = r;
+            color.g = g;
+            color.b = b;
+            color.a = a;
+        }
+
+        static Color from_hex(int32_t hex, float a = 1.0) noexcept
+        {
+            return {
+                ((hex >> 16) & 0xff) / 255.0f,
+                ((hex >> 8) & 0xff) / 255.0f,
+                (hex & 0xff) / 255.0f,
+                a
+            };
+        }
+
+        operator const std_msgs::ColorRGBA &() const noexcept
+        {
+            return color;
+        }
+    };
+
+    class PointVector {
+        std::vector<geometry_msgs::Point> points;
+
+    public:
+        PointVector &add_point(Point point)
+        {
+            points.push_back(point);
+            return *this;
+        }
+
+        operator const std::vector<geometry_msgs::Point> &() const noexcept
+        {
+            return points;
+        }
+    };
+
+    class LineVector {
+        std::vector<geometry_msgs::Point> points;
+
+    public:
+        LineVector &add_line(Point start, Point end)
+        {
+            points.push_back(start);
+            points.push_back(end);
+            return *this;
+        }
+
+        operator const std::vector<geometry_msgs::Point> &() const noexcept
+        {
+            return points;
+        }
+    };
+
+    class TriangleVector {
+        std::vector<geometry_msgs::Point> points;
+
+    public:
+        TriangleVector &add_triangle(Point a, Point b, Point c)
+        {
+            points.push_back(a);
+            points.push_back(b);
+            points.push_back(c);
+            return *this;
+        }
+
+        operator const std::vector<geometry_msgs::Point> &() const noexcept
+        {
+            return points;
+        }
+    };
+
+    class ColorVector {
+        std::vector<std_msgs::ColorRGBA> colors;
+
+    public:
+        ColorVector &add_color(Color color)
+        {
+            colors.push_back(color);
+            return *this;
+        }
+
+        operator const std::vector<std_msgs::ColorRGBA> &() const noexcept
+        {
+            return colors;
+        }
+    };
+} // namespace param
+
+namespace internal {
     template<typename T>
     struct position_helper {
-        [[nodiscard]] T &&position(double x, double y, double z) && noexcept
+        [[nodiscard]] T &&position(const param::Point position) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
-            marker.pose.position.x = x;
-            marker.pose.position.y = y;
-            marker.pose.position.z = z;
+            marker.pose.position = position;
             return std::move(self);
         }
     };
 
     template<typename T>
     struct orientation_helper {
-        [[nodiscard]] T &&orientation(double w, double x = 0, double y = 0, double z = 0) && noexcept
+        [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
-            marker.pose.orientation.w = w;
-            marker.pose.orientation.x = x;
-            marker.pose.orientation.y = y;
-            marker.pose.orientation.z = z;
+            marker.pose.orientation = orientation;
+            return std::move(self);
+        }
+    };
+
+    template<typename T, typename ScaleParamType = param::Scale>
+    struct scale_helper {
+        [[nodiscard]] T &&scale(const ScaleParamType scale) && noexcept
+        {
+            T &self = static_cast<T &>(*this);
+            visualization_msgs::Marker &marker = self.msg();
+            marker.scale = scale;
             return std::move(self);
         }
     };
 
     template<typename T>
-    struct scale3_helper {
-        [[nodiscard]] T &&scale(double x, double y, double z) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.scale.x = x;
-            marker.scale.y = y;
-            marker.scale.z = z;
-            return std::move(self);
-        }
-    };
-
+    using scale_pose_arrow_helper = scale_helper<T, param::PoseArrowScale>;
     template<typename T>
-    struct scale2_helper {
-        [[nodiscard]] T &&scale(double x, double y) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.scale.x = x;
-            marker.scale.y = y;
-            return std::move(self);
-        }
-    };
-
+    using scale_vector_arrow_helper = scale_helper<T, param::VectorArrowScale>;
     template<typename T>
-    struct scale_width_helper {
-        [[nodiscard]] T &&scale(double width) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.scale.x = width;
-            return std::move(self);
-        }
-    };
-
+    using scale_point_helper = scale_helper<T, param::PointScale>;
     template<typename T>
-    struct scale_height_helper {
-        [[nodiscard]] T &&scale(double height) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.scale.z = height;
-            return std::move(self);
-        }
-    };
+    using scale_line_helper = scale_helper<T, param::LineScale>;
+    template<typename T>
+    using scale_text_helper = scale_helper<T, param::TextScale>;
 
     template<typename T>
     struct color_helper {
-        [[nodiscard]] T &&color(int32_t hexcolor) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            float r = ((hexcolor >> 16) & 0xff) / 255.0;
-            float g = ((hexcolor >> 8) & 0xff) / 255.0;
-            float b = (hexcolor & 0xff) / 255.0;
-            return std::move(self).color(r, g, b);
-        }
-
-        [[nodiscard]] T &&color(float r, float g, float b) && noexcept
+        [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
-            marker.color.r = r;
-            marker.color.g = g;
-            marker.color.b = b;
-            return std::move(self);
-        }
-
-        [[nodiscard]] T &&opacity(double opacity) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.color.a = opacity;
+            marker.color = color;
             return std::move(self);
         }
     };
@@ -132,14 +349,6 @@ namespace internal {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &Marker = self.msg();
             Marker.lifetime = ros::Duration(lifetime);
-            return std::move(self);
-        }
-
-        [[nodiscard]] T &&lifetime(int32_t sec, int32_t nsec) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &Marker = self.msg();
-            Marker.lifetime = ros::Duration(sec, nsec);
             return std::move(self);
         }
     };
@@ -165,7 +374,7 @@ namespace internal {
             return std::move(self);
         }
 
-        [[nodiscard]] T &&points(const std::vector<geometry_msgs::Point> &&points) && noexcept
+        [[nodiscard]] T &&points(std::vector<geometry_msgs::Point> &&points) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -176,26 +385,24 @@ namespace internal {
 
     template<typename T>
     struct arrow_point_helper {
-        [[nodiscard]] T &&start(float x, float y, float z) && noexcept
+        [[nodiscard]] T &&start(const param::Point point) && noexcept
         {
             T &self = static_cast<T &>(*this);
-            return std::move(self).set_point(0, x, y, z);
+            return std::move(self).set_point(0, point);
         }
 
-        [[nodiscard]] T &&end(float x, float y, float z) && noexcept
+        [[nodiscard]] T &&end(const param::Point point) && noexcept
         {
             T &self = static_cast<T &>(*this);
-            return std::move(self).set_point(1, x, y, z);
+            return std::move(self).set_point(1, point);
         }
 
     private:
-        [[nodiscard]] T &&set_point(size_t idx, float x, float y, float z) && noexcept
+        [[nodiscard]] T &&set_point(size_t idx, const param::Point &point) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
-            marker.points[idx].x = x;
-            marker.points[idx].y = y;
-            marker.points[idx].z = z;
+            marker.points[idx] = point;
             return std::move(self);
         }
     };
@@ -210,7 +417,7 @@ namespace internal {
             return std::move(self);
         }
 
-        [[nodiscard]] T &&colors(const std::vector<std_msgs::ColorRGBA> &&colors) && noexcept
+        [[nodiscard]] T &&colors(std::vector<std_msgs::ColorRGBA> &&colors) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -229,7 +436,7 @@ namespace internal {
             return std::move(self);
         }
 
-        [[nodiscard]] T &&text(const std::string &&text) && noexcept
+        [[nodiscard]] T &&text(std::string &&text) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -248,7 +455,7 @@ namespace internal {
             return std::move(self);
         }
 
-        [[nodiscard]] T &&mesh_resource(const std::string &&mesh_resource) && noexcept
+        [[nodiscard]] T &&mesh_resource(std::string &&mesh_resource) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -317,9 +524,8 @@ namespace internal {
     inline constexpr bool is_triangle_list_marker_v = MarkerType == visualization_msgs::Marker::TRIANGLE_LIST;
 
     template<int32_t MarkerType>
-    inline constexpr bool is_scale3_available_v =
-        is_arrow_marker_v<MarkerType>
-        || is_cube_marker_v<MarkerType>
+    inline constexpr bool is_scale_available_v =
+        is_cube_marker_v<MarkerType>
         || is_sphere_marker_v<MarkerType>
         || is_cylinder_marker_v<MarkerType>
         || is_cube_list_marker_v<MarkerType>
@@ -328,17 +534,9 @@ namespace internal {
         || is_triangle_list_marker_v<MarkerType>;
 
     template<int32_t MarkerType>
-    inline constexpr bool is_scale2_available_v =
-        is_points_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_line_scale_available_v =
+    inline constexpr bool is_line_v =
         is_line_strip_marker_v<MarkerType>
         || is_line_list_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_text_scale_available_v =
-        is_text_view_facing_marker_v<MarkerType>;
 
     template<int32_t MarkerType>
     inline constexpr bool is_points_available_by_point_v =
@@ -354,12 +552,6 @@ namespace internal {
     template<int32_t MarkerType>
     inline constexpr bool is_points_available_by_triangle_v =
         is_triangle_list_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_points_available_v =
-        is_points_available_by_point_v<MarkerType>
-        || is_points_available_by_line_v<MarkerType>
-        || is_points_available_by_triangle_v<MarkerType>;
 
     template<int32_t MarkerType>
     inline constexpr bool is_points_available_v =
@@ -381,15 +573,11 @@ namespace internal {
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_position
-        : conditional_extend<
-            !is_arrow_marker_v<MarkerType> || is_contained_v<option::Arrow::POSE, Options...>,
-            position_helper<Marker<MarkerType, Options...>>> { };
+        : position_helper<Marker<MarkerType, Options...>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_orientation
-        : conditional_extend<
-            !is_arrow_marker_v<MarkerType> || is_contained_v<option::Arrow::POSE, Options...>,
-            orientation_helper<Marker<MarkerType, Options...>>> { };
+        : orientation_helper<Marker<MarkerType, Options...>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_color
@@ -400,17 +588,23 @@ namespace internal {
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_scale
         : conditional_extend<
-            is_scale3_available_v<MarkerType>,
-            scale3_helper<Marker<MarkerType, Options...>>>
+            is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>,
+            scale_pose_arrow_helper<Marker<MarkerType, Options...>>>
         , conditional_extend<
-            is_scale2_available_v<MarkerType>,
-            scale2_helper<Marker<MarkerType, Options...>>>
+            is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>,
+            scale_vector_arrow_helper<Marker<MarkerType, Options...>>>
         , conditional_extend<
-            is_line_scale_available_v<MarkerType>,
-            scale_width_helper<Marker<MarkerType, Options...>>>
+            is_scale_available_v<MarkerType>,
+            scale_helper<Marker<MarkerType, Options...>>>
         , conditional_extend<
-            is_text_scale_available_v<MarkerType>,
-            scale_height_helper<Marker<MarkerType, Options...>>> { };
+            is_points_marker_v<MarkerType>,
+            scale_point_helper<Marker<MarkerType, Options...>>>
+        , conditional_extend<
+            is_line_v<MarkerType>,
+            scale_line_helper<Marker<MarkerType, Options...>>>
+        , conditional_extend<
+            is_text_view_facing_marker_v<MarkerType>,
+            scale_text_helper<Marker<MarkerType, Options...>>> { };
 
     template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
     struct conditional_points
@@ -492,19 +686,32 @@ public:
         marker.color.b = 1.0;
         marker.color.a = 1.0;
 
-        if constexpr (internal::is_scale3_available_v<MarkerType>) {
+        if constexpr (internal::is_scale_available_v<MarkerType>) {
             marker.scale.x = 1;
             marker.scale.y = 1;
             marker.scale.z = 1;
         }
 
-        if constexpr (internal::is_scale2_available_v<MarkerType>) {
+        if constexpr (internal::is_points_marker_v<MarkerType>) {
             marker.scale.x = 0.05;
             marker.scale.y = 0.05;
         }
 
-        if constexpr (internal::is_line_scale_available_v<MarkerType>) {
+        if constexpr (internal::is_line_v<MarkerType>) {
             marker.scale.x = 0.05;
+        }
+
+        if constexpr (internal::is_arrow_marker_v<MarkerType>) {
+            if constexpr (internal::is_contained_v<option::Arrow::POSE, Options...>) {
+                marker.scale.x = 1;
+                marker.scale.y = 1;
+                marker.scale.z = 1;
+            }
+            if constexpr (internal::is_contained_v<option::Arrow::VECTOR, Options...>) {
+                marker.scale.x = .2;
+                marker.scale.y = .4;
+                marker.scale.z = .4;
+            }
         }
 
         if constexpr (
