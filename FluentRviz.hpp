@@ -20,58 +20,15 @@ namespace option {
     };
 } // namespace option
 
-namespace internal {
-    namespace detail {
-        template<typename AlwaysVoid, template<typename...> typename Op, typename... Args>
-        struct detector : std::false_type { };
-
-        template<template<typename...> typename Op, typename... Args>
-        struct detector<std::void_t<Op<Args...>>, Op, Args...> : std::true_type { };
-    } // namespace detail
-
-    template<template<typename...> typename Op, typename... Args>
-    using is_detected = detail::detector<void, Op, Args...>;
-
-    template<typename T>
-    using x_var_accessible_t = decltype(std::declval<T>().x);
-
-    template<typename T>
-    using is_x_var_accessible = is_detected<x_var_accessible_t, T>;
-
-    template<typename T>
-    inline constexpr bool is_x_var_accessible_v = is_x_var_accessible<T>::value;
-
-    template<typename T>
-    using x_func_accessible_t = decltype(std::declval<T>().x());
-
-    template<typename T>
-    using is_x_func_accessible = is_detected<x_func_accessible_t, T>;
-
-    template<typename T>
-    inline constexpr bool is_x_func_accessible_v = is_x_func_accessible<T>::value;
-
-    template<typename T>
-    using index_accessible_t = decltype(std::declval<T>()[0]);
-
-    template<typename T>
-    using is_index_accessible = is_detected<index_accessible_t, T>;
-
-    template<typename T>
-    inline constexpr bool is_index_accessible_v = is_index_accessible<T>::value;
-
-    template<typename T>
-    inline constexpr bool false_v = false;
-
-    template<size_t index, typename T>
-    double get(T value) = delete;
-} // namespace internal
-
 namespace param {
     class Vector3 {
         geometry_msgs::Vector3 vector3;
 
     public:
-        Vector3(double x, double y, double z)
+        Vector3(const geometry_msgs::Vector3 arg): vector3(arg)
+        { }
+
+        Vector3(const double x, const double y, const double z) noexcept
         {
             vector3.x = x;
             vector3.y = y;
@@ -96,7 +53,7 @@ namespace param {
         geometry_msgs::Vector3 vector3;
 
     public:
-        Scale(double x, double y, double z)
+        Scale(const double x, const double y, const double z) noexcept
         {
             vector3.x = x;
             vector3.y = y;
@@ -111,46 +68,45 @@ namespace param {
 
     class PoseArrowScale : public Scale {
     public:
-        PoseArrowScale(double length, double width, double height) : Scale(length, width, height) { }
+        PoseArrowScale(const double length, const double width, const double height) noexcept : Scale(length, width, height) { }
     };
 
     class VectorArrowScale : public Scale {
     public:
-        VectorArrowScale(double shaft_diameter, double head_diameter, double head_length) : Scale(shaft_diameter, head_diameter, head_length) { }
+        VectorArrowScale(const double shaft_diameter, const double head_diameter, const double head_length) noexcept : Scale(shaft_diameter, head_diameter, head_length) { }
     };
 
     class PointScale : public Scale {
     public:
-        PointScale(double width, double height) : Scale(width, height, 0) { }
+        PointScale(const double width, const double height) noexcept : Scale(width, height, 0) { }
     };
 
     class LineScale : public Scale {
     public:
-        LineScale(double width) : Scale(width, 0, 0) { }
+        LineScale(const double width) noexcept : Scale(width, 0, 0) { }
     };
 
     class TextScale : public Scale {
     public:
-        TextScale(double height) : Scale(0, 0, height) { }
+        TextScale(const double height) noexcept : Scale(0, 0, height) { }
     };
-
 
     class Quaternion {
         geometry_msgs::Quaternion quaternion;
 
     public:
-        Quaternion(const geometry_msgs::Quaternion arg): quaternion(arg)
+        Quaternion(const geometry_msgs::Quaternion arg) noexcept : quaternion(arg)
         { }
 
-        Quaternion(double w = 1.0, double x = 0.0, double y = 0.0, double z = 0.0)
+        Quaternion(const double x, const double y, const double z, const double w) noexcept
         {
-            quaternion.w = w;
             quaternion.x = x;
             quaternion.y = y;
             quaternion.z = z;
+            quaternion.w = w;
         }
 
-        static Quaternion from_angle_axis(double theta, Vector3 axis = Vector3::UNIT_Z) noexcept
+        static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UNIT_Z) noexcept
         {
             geometry_msgs::Vector3 vector3 = axis;
             return {
@@ -171,10 +127,10 @@ namespace param {
         geometry_msgs::Point point;
 
     public:
-        Point(const geometry_msgs::Point arg): point(arg)
+        Point(const geometry_msgs::Point arg) noexcept : point(arg)
         { }
 
-        Point(double x, double y, double z = 0.0)
+        Point(const double x, const double y, const double z = 0.0) noexcept
         {
             point.x = x;
             point.y = y;
@@ -191,10 +147,10 @@ namespace param {
         std_msgs::ColorRGBA color;
 
     public:
-        Color(std_msgs::ColorRGBA arg): color(arg)
+        Color(const std_msgs::ColorRGBA arg): color(arg)
         { }
 
-        Color(float r, float g, float b, float a = 1.0)
+        Color(const float r, const float g, const float b, const float a = 1.0) noexcept
         {
             color.r = r;
             color.g = g;
@@ -202,7 +158,7 @@ namespace param {
             color.a = a;
         }
 
-        static Color from_hex(int32_t hex, float a = 1.0) noexcept
+        static Color from_hex(const int32_t hex, const float a = 1.0) noexcept
         {
             return {
                 ((hex >> 16) & 0xff) / 255.0f,
@@ -222,7 +178,7 @@ namespace param {
         std::vector<geometry_msgs::Point> points;
 
     public:
-        PointVector &add_point(Point point)
+        PointVector &add_point(const Point point) noexcept
         {
             points.push_back(point);
             return *this;
@@ -238,7 +194,7 @@ namespace param {
         std::vector<geometry_msgs::Point> points;
 
     public:
-        LineVector &add_line(Point start, Point end)
+        LineVector &add_line(Point start, Point end) noexcept
         {
             points.push_back(start);
             points.push_back(end);
@@ -255,7 +211,7 @@ namespace param {
         std::vector<geometry_msgs::Point> points;
 
     public:
-        TriangleVector &add_triangle(Point a, Point b, Point c)
+        TriangleVector &add_triangle(Point a, Point b, Point c) noexcept
         {
             points.push_back(a);
             points.push_back(b);
@@ -273,7 +229,7 @@ namespace param {
         std::vector<std_msgs::ColorRGBA> colors;
 
     public:
-        ColorVector &add_color(Color color)
+        ColorVector &add_color(Color color) noexcept
         {
             colors.push_back(color);
             return *this;
@@ -344,7 +300,7 @@ namespace internal {
 
     template<typename T>
     struct lifetime_helper {
-        [[nodiscard]] T &&lifetime(double lifetime) && noexcept
+        [[nodiscard]] T &&lifetime(const double lifetime) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &Marker = self.msg();
@@ -355,7 +311,7 @@ namespace internal {
 
     template<typename T>
     struct frame_locked_helper {
-        [[nodiscard]] T &&frame_locked(bool frame_locked) && noexcept
+        [[nodiscard]] T &&frame_locked(const bool frame_locked) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -366,15 +322,7 @@ namespace internal {
 
     template<typename T>
     struct points_helper {
-        [[nodiscard]] T &&points(const std::vector<geometry_msgs::Point> &points) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.points = points;
-            return std::move(self);
-        }
-
-        [[nodiscard]] T &&points(std::vector<geometry_msgs::Point> &&points) && noexcept
+        [[nodiscard]] T &&points(std::vector<geometry_msgs::Point> points) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -398,7 +346,7 @@ namespace internal {
         }
 
     private:
-        [[nodiscard]] T &&set_point(size_t idx, const param::Point &point) && noexcept
+        [[nodiscard]] T &&set_point(const size_t idx, const param::Point &point) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -409,15 +357,7 @@ namespace internal {
 
     template<typename T>
     struct colors_helper {
-        [[nodiscard]] T &&colors(const std::vector<std_msgs::ColorRGBA> &colors) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.colors = colors;
-            return std::move(self);
-        }
-
-        [[nodiscard]] T &&colors(std::vector<std_msgs::ColorRGBA> &&colors) && noexcept
+        [[nodiscard]] T &&colors(std::vector<std_msgs::ColorRGBA> colors) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -428,15 +368,7 @@ namespace internal {
 
     template<typename T>
     struct text_helper {
-        [[nodiscard]] T &&text(const std::string &text) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.text = text;
-            return std::move(self);
-        }
-
-        [[nodiscard]] T &&text(std::string &&text) && noexcept
+        [[nodiscard]] T &&text(std::string text) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -447,15 +379,7 @@ namespace internal {
 
     template<typename T>
     struct mesh_resource_helper {
-        [[nodiscard]] T &&mesh_resource(const std::string &mesh_resource) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.mesh_resource = mesh_resource;
-            return std::move(self);
-        }
-
-        [[nodiscard]] T &&mesh_resource(std::string &&mesh_resource) && noexcept
+        [[nodiscard]] T &&mesh_resource(std::string mesh_resource) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -463,7 +387,7 @@ namespace internal {
             return std::move(self);
         }
 
-        [[nodiscard]] T &&mesh_use_embedded_materials(bool mesh_use_embedded_materials) && noexcept
+        [[nodiscard]] T &&mesh_use_embedded_materials(const bool mesh_use_embedded_materials) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
@@ -675,10 +599,10 @@ class Marker
     visualization_msgs::Marker marker;
 
 public:
-    Marker(int32_t id, std::string ns = "")
+    Marker(int32_t id, std::string ns = "") noexcept
     {
         marker.id = id;
-        marker.ns = ns;
+        marker.ns = std::move(ns);
         marker.type = MarkerType;
         marker.pose.orientation.w = 1.0;
         marker.color.r = 1.0;
@@ -729,7 +653,7 @@ public:
     Marker(const Marker<MarkerType, Options...> &) = delete;
     Marker(Marker<MarkerType, Options...> &&) = default;
 
-    visualization_msgs::Marker &msg() { return marker; }
+    visualization_msgs::Marker &msg() noexcept { return marker; }
 };
 
 namespace marker {
@@ -762,7 +686,7 @@ class Rviz {
     std::string frame_id_;
 
 public:
-    Rviz(std::string frame_id = "map", std::string topic = "visualization_marker")
+    Rviz(const std::string frame_id = "map", const std::string topic = "visualization_marker") noexcept
         : pub(nh.advertise<visualization_msgs::Marker>(topic, 1))
         , frame_id_(frame_id)
     { }
@@ -778,23 +702,23 @@ public:
     template<int32_t MarkerType, auto... Options>
     void add(Marker<MarkerType, Options...> &&m) { add(m); }
 
-    void delete_marker(int32_t id, std::string ns = "")
+    void delete_marker(const int32_t id, std::string ns = "") noexcept
     {
         visualization_msgs::Marker marker;
         marker.id = id;
-        marker.ns = ns;
+        marker.ns = std::move(ns);
         marker.action = visualization_msgs::Marker::DELETE;
         publish(marker);
     }
 
-    void delete_all_marker()
+    void delete_all_marker() noexcept
     {
         visualization_msgs::Marker marker;
         marker.action = visualization_msgs::Marker::DELETEALL;
         publish(marker);
     }
 
-    void publish(visualization_msgs::Marker &marker)
+    void publish(visualization_msgs::Marker &marker) noexcept
     {
         marker.header.frame_id = frame_id_;
         marker.header.stamp = ros::Time::now();
