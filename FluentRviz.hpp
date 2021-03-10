@@ -707,18 +707,21 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    void add_marker(Marker<MarkerType, Options...> &&m) const { add_marker(m); }
+    void add_marker(Marker<MarkerType, Options...> &&m) const
+    {
+        add_marker(m);
+    }
 
     template<int32_t MarkerType, auto... Options>
     void operator+=(Marker<MarkerType, Options...> &m) const
     {
-        this->add_marker(m);
+        add_marker(m);
     }
 
     template<int32_t MarkerType, auto... Options>
     void operator+=(Marker<MarkerType, Options...> &&m) const
     {
-        this->add_marker(m);
+        add_marker(m);
     }
 
     void delete_marker(const int32_t id, std::string ns = "") const
@@ -739,15 +742,21 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
+    void delete_marker(Marker<MarkerType, Options...> &&m) const
+    {
+        delete_marker(m);
+    }
+
+    template<int32_t MarkerType, auto... Options>
     void operator-=(Marker<MarkerType, Options...> &m) const
     {
-        this->delete_marker(m);
+        delete_marker(m);
     }
 
     template<int32_t MarkerType, auto... Options>
     void operator-=(Marker<MarkerType, Options...> &&m) const
     {
-        this->delete_marker(m);
+        delete_marker(m);
     }
 
     void delete_all_marker() const
