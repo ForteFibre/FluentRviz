@@ -20,6 +20,30 @@ namespace option {
     };
 } // namespace option
 
+namespace color {
+    inline constexpr static int32_t RED = 0xF44336;
+    inline constexpr static int32_t PINK = 0xFF4081;
+    inline constexpr static int32_t PURPLE = 0x9C27B0;
+    inline constexpr static int32_t DEEP_PURPLE = 0x7B1FA2;
+    inline constexpr static int32_t INDIGO = 0x3F51B5;
+    inline constexpr static int32_t BRUE = 0x448aff;
+    inline constexpr static int32_t LIGHT_BRUE = 0x03A9F4;
+    inline constexpr static int32_t CYAN = 0x00BCD4;
+    inline constexpr static int32_t TEAL = 0x009688;
+    inline constexpr static int32_t GREEN = 0x4CAF50;
+    inline constexpr static int32_t LIGHT_GREEN = 0x8BC34A;
+    inline constexpr static int32_t LIME = 0xCDDC39;
+    inline constexpr static int32_t YELLOW = 0xFFEB3B;
+    inline constexpr static int32_t AMBER = 0xFFC107;
+    inline constexpr static int32_t ORANGE = 0xFF9800;
+    inline constexpr static int32_t DEEP_ORANGE = 0xFF5722;
+    inline constexpr static int32_t BROWN = 0x795548;
+    inline constexpr static int32_t GREY = 0x9E9E9E;
+    inline constexpr static int32_t BLUE_GREY = 0x607D8B;
+    inline constexpr static int32_t WHITE = 0xffffff;
+    inline constexpr static int32_t BLACK = 0x000000;
+} // namespace color
+
 namespace param {
     class Vector3 {
         geometry_msgs::Vector3 vector3;
@@ -35,17 +59,17 @@ namespace param {
             vector3.z = z;
         }
 
-        static Vector3 UnitX()
+        [[nodiscard]] static Vector3 UnitX() noexcept
         {
             return { 1, 0, 0 };
         }
 
-        static Vector3 UnitY()
+        [[nodiscard]] static Vector3 UnitY() noexcept
         {
             return { 0, 1, 0 };
         }
 
-        static Vector3 UnitZ()
+        [[nodiscard]] static Vector3 UnitZ() noexcept
         {
             return { 0, 0, 1 };
         }
@@ -113,7 +137,7 @@ namespace param {
             quaternion.w = w;
         }
 
-        static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UnitZ()) noexcept
+        [[nodiscard]] static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UnitZ()) noexcept
         {
             geometry_msgs::Vector3 vector3 = axis;
             return {
@@ -165,7 +189,7 @@ namespace param {
             color.a = a;
         }
 
-        static Color from_hex(const int32_t hex, const float a = 1.0) noexcept
+        [[nodiscard]] static Color from_hex(const int32_t hex, const float a = 1.0) noexcept
         {
             return {
                 ((hex >> 16) & 0xff) / 255.0f,
@@ -566,30 +590,6 @@ namespace internal {
 
 } // namespace internal
 
-namespace color {
-    inline constexpr static int32_t RED = 0xF44336;
-    inline constexpr static int32_t PINK = 0xFF4081;
-    inline constexpr static int32_t PURPLE = 0x9C27B0;
-    inline constexpr static int32_t DEEP_PURPLE = 0x7B1FA2;
-    inline constexpr static int32_t INDIGO = 0x3F51B5;
-    inline constexpr static int32_t BRUE = 0x448aff;
-    inline constexpr static int32_t LIGHT_BRUE = 0x03A9F4;
-    inline constexpr static int32_t CYAN = 0x00BCD4;
-    inline constexpr static int32_t TEAL = 0x009688;
-    inline constexpr static int32_t GREEN = 0x4CAF50;
-    inline constexpr static int32_t LIGHT_GREEN = 0x8BC34A;
-    inline constexpr static int32_t LIME = 0xCDDC39;
-    inline constexpr static int32_t YELLOW = 0xFFEB3B;
-    inline constexpr static int32_t AMBER = 0xFFC107;
-    inline constexpr static int32_t ORANGE = 0xFF9800;
-    inline constexpr static int32_t DEEP_ORANGE = 0xFF5722;
-    inline constexpr static int32_t BROWN = 0x795548;
-    inline constexpr static int32_t GREY = 0x9E9E9E;
-    inline constexpr static int32_t BLUE_GREY = 0x607D8B;
-    inline constexpr static int32_t WHITE = 0xffffff;
-    inline constexpr static int32_t BLACK = 0x000000;
-} // namespace color
-
 template<int32_t MarkerType, auto... Options>
 class Marker
     : public internal::conditional_position<Marker, MarkerType, Options...>
@@ -660,7 +660,7 @@ public:
     Marker(const Marker<MarkerType, Options...> &) = delete;
     Marker(Marker<MarkerType, Options...> &&) = default;
 
-    visualization_msgs::Marker &msg() noexcept { return marker; }
+    [[nodiscard]] visualization_msgs::Marker &msg() noexcept { return marker; }
 };
 
 namespace marker {
@@ -699,7 +699,7 @@ public:
     { }
 
     template<int32_t MarkerType, auto... Options>
-    void add_marker(Marker<MarkerType, Options...> &m)
+    void add_marker(Marker<MarkerType, Options...> &m) const
     {
         visualization_msgs::Marker &marker = m.msg();
         marker.action = visualization_msgs::Marker::ADD;
@@ -707,23 +707,23 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    void add_marker(Marker<MarkerType, Options...> &&m) { add_marker(m); }
+    void add_marker(Marker<MarkerType, Options...> &&m) const { add_marker(m); }
 
     template<int32_t MarkerType, auto... Options>
-    Rviz &operator+=(Marker<MarkerType, Options...> &m)
+    Rviz &operator+=(Marker<MarkerType, Options...> &m) const
     {
         this->add_marker(m);
         return *this;
     }
 
     template<int32_t MarkerType, auto... Options>
-    Rviz &operator+=(Marker<MarkerType, Options...> &&m)
+    Rviz &operator+=(Marker<MarkerType, Options...> &&m) const
     {
         this->add_marker(m);
         return *this;
     }
 
-    void delete_marker(const int32_t id, std::string ns = "") noexcept
+    void delete_marker(const int32_t id, std::string ns = "") const
     {
         visualization_msgs::Marker marker;
         marker.id = id;
@@ -733,7 +733,7 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    void delete_marker(Marker<MarkerType, Options...> &m)
+    void delete_marker(Marker<MarkerType, Options...> &m) const
     {
         visualization_msgs::Marker &marker = m.msg();
         marker.action = visualization_msgs::Marker::DELETE;
@@ -741,27 +741,27 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    Rviz &operator-=(Marker<MarkerType, Options...> &m)
+    Rviz &operator-=(Marker<MarkerType, Options...> &m) const
     {
         this->delete_marker(m);
         return *this;
     }
 
     template<int32_t MarkerType, auto... Options>
-    Rviz &operator-=(Marker<MarkerType, Options...> &&m)
+    Rviz &operator-=(Marker<MarkerType, Options...> &&m) const
     {
         this->delete_marker(m);
         return *this;
     }
 
-    void delete_all_marker() noexcept
+    void delete_all_marker() const
     {
         visualization_msgs::Marker marker;
         marker.action = visualization_msgs::Marker::DELETEALL;
         publish(marker);
     }
 
-    void publish(visualization_msgs::Marker &marker) noexcept
+    void publish(visualization_msgs::Marker &marker) const
     {
         marker.header.frame_id = frame_id_;
         marker.header.stamp = ros::Time::now();
