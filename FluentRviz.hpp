@@ -59,20 +59,9 @@ namespace param {
             vector3.z = z;
         }
 
-        [[nodiscard]] static Vector3 UnitX() noexcept
-        {
-            return { 1, 0, 0 };
-        }
-
-        [[nodiscard]] static Vector3 UnitY() noexcept
-        {
-            return { 0, 1, 0 };
-        }
-
-        [[nodiscard]] static Vector3 UnitZ() noexcept
-        {
-            return { 0, 0, 1 };
-        }
+        [[nodiscard]] static inline Vector3 UnitX() noexcept { return { 1, 0, 0 }; }
+        [[nodiscard]] static inline Vector3 UnitY() noexcept { return { 0, 1, 0 }; }
+        [[nodiscard]] static inline Vector3 UnitZ() noexcept { return { 0, 0, 1 }; }
 
         operator const geometry_msgs::Vector3 &() const noexcept
         {
@@ -204,27 +193,27 @@ namespace param {
             return *this;
         }
 
-        [[nodiscard]] static Color Red() noexcept { return from_hex(color::RED); }
-        [[nodiscard]] static Color Pink() noexcept { return from_hex(color::PINK); }
-        [[nodiscard]] static Color Purple() noexcept { return from_hex(color::PURPLE); }
-        [[nodiscard]] static Color DeepPurple() noexcept { return from_hex(color::DEEP_PURPLE); }
-        [[nodiscard]] static Color Indigo() noexcept { return from_hex(color::INDIGO); }
-        [[nodiscard]] static Color Blue() noexcept { return from_hex(color::BRUE); }
-        [[nodiscard]] static Color LightBlue() noexcept { return from_hex(color::LIGHT_BRUE); }
-        [[nodiscard]] static Color Cyan() noexcept { return from_hex(color::CYAN); }
-        [[nodiscard]] static Color Teal() noexcept { return from_hex(color::TEAL); }
-        [[nodiscard]] static Color Green() noexcept { return from_hex(color::GREEN); }
-        [[nodiscard]] static Color LightGreen() noexcept { return from_hex(color::LIGHT_GREEN); }
-        [[nodiscard]] static Color Lime() noexcept { return from_hex(color::LIME); }
-        [[nodiscard]] static Color Yellow() noexcept { return from_hex(color::YELLOW); }
-        [[nodiscard]] static Color Amber() noexcept { return from_hex(color::AMBER); }
-        [[nodiscard]] static Color Orange() noexcept { return from_hex(color::ORANGE); }
-        [[nodiscard]] static Color DeepOrange() noexcept { return from_hex(color::DEEP_ORANGE); }
-        [[nodiscard]] static Color Brown() noexcept { return from_hex(color::BROWN); }
-        [[nodiscard]] static Color Grey() noexcept { return from_hex(color::GREY); }
-        [[nodiscard]] static Color BlueGrey() noexcept { return from_hex(color::BLUE_GREY); }
-        [[nodiscard]] static Color White() noexcept { return from_hex(color::WHITE); }
-        [[nodiscard]] static Color Black() noexcept { return from_hex(color::BLACK); }
+        [[nodiscard]] static inline Color Red() noexcept { return from_hex(color::RED); }
+        [[nodiscard]] static inline Color Pink() noexcept { return from_hex(color::PINK); }
+        [[nodiscard]] static inline Color Purple() noexcept { return from_hex(color::PURPLE); }
+        [[nodiscard]] static inline Color DeepPurple() noexcept { return from_hex(color::DEEP_PURPLE); }
+        [[nodiscard]] static inline Color Indigo() noexcept { return from_hex(color::INDIGO); }
+        [[nodiscard]] static inline Color Blue() noexcept { return from_hex(color::BRUE); }
+        [[nodiscard]] static inline Color LightBlue() noexcept { return from_hex(color::LIGHT_BRUE); }
+        [[nodiscard]] static inline Color Cyan() noexcept { return from_hex(color::CYAN); }
+        [[nodiscard]] static inline Color Teal() noexcept { return from_hex(color::TEAL); }
+        [[nodiscard]] static inline Color Green() noexcept { return from_hex(color::GREEN); }
+        [[nodiscard]] static inline Color LightGreen() noexcept { return from_hex(color::LIGHT_GREEN); }
+        [[nodiscard]] static inline Color Lime() noexcept { return from_hex(color::LIME); }
+        [[nodiscard]] static inline Color Yellow() noexcept { return from_hex(color::YELLOW); }
+        [[nodiscard]] static inline Color Amber() noexcept { return from_hex(color::AMBER); }
+        [[nodiscard]] static inline Color Orange() noexcept { return from_hex(color::ORANGE); }
+        [[nodiscard]] static inline Color DeepOrange() noexcept { return from_hex(color::DEEP_ORANGE); }
+        [[nodiscard]] static inline Color Brown() noexcept { return from_hex(color::BROWN); }
+        [[nodiscard]] static inline Color Grey() noexcept { return from_hex(color::GREY); }
+        [[nodiscard]] static inline Color BlueGrey() noexcept { return from_hex(color::BLUE_GREY); }
+        [[nodiscard]] static inline Color White() noexcept { return from_hex(color::WHITE); }
+        [[nodiscard]] static inline Color Black() noexcept { return from_hex(color::BLACK); }
 
         operator const std_msgs::ColorRGBA &() const noexcept
         {
