@@ -189,15 +189,42 @@ namespace param {
             color.a = a;
         }
 
-        [[nodiscard]] static Color from_hex(const int32_t hex, const float a = 1.0) noexcept
+        [[nodiscard]] static Color from_hex(const int32_t hex) noexcept
         {
             return {
                 ((hex >> 16) & 0xff) / 255.0f,
                 ((hex >> 8) & 0xff) / 255.0f,
                 (hex & 0xff) / 255.0f,
-                a
             };
         }
+
+        [[nodiscard]] Color &alpha(const float a) noexcept
+        {
+            color.a = a;
+            return *this;
+        }
+
+        [[nodiscard]] static Color Red() noexcept { return from_hex(color::RED); }
+        [[nodiscard]] static Color Pink() noexcept { return from_hex(color::PINK); }
+        [[nodiscard]] static Color Purple() noexcept { return from_hex(color::PURPLE); }
+        [[nodiscard]] static Color DeepPurple() noexcept { return from_hex(color::DEEP_PURPLE); }
+        [[nodiscard]] static Color Indigo() noexcept { return from_hex(color::INDIGO); }
+        [[nodiscard]] static Color Blue() noexcept { return from_hex(color::BRUE); }
+        [[nodiscard]] static Color LightBlue() noexcept { return from_hex(color::LIGHT_BRUE); }
+        [[nodiscard]] static Color Cyan() noexcept { return from_hex(color::CYAN); }
+        [[nodiscard]] static Color Teal() noexcept { return from_hex(color::TEAL); }
+        [[nodiscard]] static Color Green() noexcept { return from_hex(color::GREEN); }
+        [[nodiscard]] static Color LightGreen() noexcept { return from_hex(color::LIGHT_GREEN); }
+        [[nodiscard]] static Color Lime() noexcept { return from_hex(color::LIME); }
+        [[nodiscard]] static Color Yellow() noexcept { return from_hex(color::YELLOW); }
+        [[nodiscard]] static Color Amber() noexcept { return from_hex(color::AMBER); }
+        [[nodiscard]] static Color Orange() noexcept { return from_hex(color::ORANGE); }
+        [[nodiscard]] static Color DeepOrange() noexcept { return from_hex(color::DEEP_ORANGE); }
+        [[nodiscard]] static Color Brown() noexcept { return from_hex(color::BROWN); }
+        [[nodiscard]] static Color Grey() noexcept { return from_hex(color::GREY); }
+        [[nodiscard]] static Color BlueGrey() noexcept { return from_hex(color::BLUE_GREY); }
+        [[nodiscard]] static Color White() noexcept { return from_hex(color::WHITE); }
+        [[nodiscard]] static Color Black() noexcept { return from_hex(color::BLACK); }
 
         operator const std_msgs::ColorRGBA &() const noexcept
         {
@@ -707,21 +734,18 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    void add_marker(Marker<MarkerType, Options...> &&m) const
-    {
-        add_marker(m);
-    }
+    void add_marker(Marker<MarkerType, Options...> &&m) const { add_marker(m); }
 
     template<int32_t MarkerType, auto... Options>
     void operator+=(Marker<MarkerType, Options...> &m) const
     {
-        add_marker(m);
+        this->add_marker(m);
     }
 
     template<int32_t MarkerType, auto... Options>
     void operator+=(Marker<MarkerType, Options...> &&m) const
     {
-        add_marker(m);
+        this->add_marker(m);
     }
 
     void delete_marker(const int32_t id, std::string ns = "") const
@@ -742,21 +766,15 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    void delete_marker(Marker<MarkerType, Options...> &&m) const
-    {
-        delete_marker(m);
-    }
-
-    template<int32_t MarkerType, auto... Options>
     void operator-=(Marker<MarkerType, Options...> &m) const
     {
-        delete_marker(m);
+        this->delete_marker(m);
     }
 
     template<int32_t MarkerType, auto... Options>
     void operator-=(Marker<MarkerType, Options...> &&m) const
     {
-        delete_marker(m);
+        this->delete_marker(m);
     }
 
     void delete_all_marker() const
