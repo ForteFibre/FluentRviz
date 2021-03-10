@@ -35,19 +35,26 @@ namespace param {
             vector3.z = z;
         }
 
-        static const Vector3 UNIT_X;
-        static const Vector3 UNIT_Y;
-        static const Vector3 UNIT_Z;
+        static Vector3 UnitX()
+        {
+            return { 1, 0, 0 };
+        }
+
+        static Vector3 UnitY()
+        {
+            return { 0, 1, 0 };
+        }
+
+        static Vector3 UnitZ()
+        {
+            return { 0, 0, 1 };
+        }
 
         operator const geometry_msgs::Vector3 &() const noexcept
         {
             return vector3;
         }
     };
-
-    const Vector3 Vector3::UNIT_X = { 1, 0, 0 };
-    const Vector3 Vector3::UNIT_Y = { 0, 1, 0 };
-    const Vector3 Vector3::UNIT_Z = { 0, 0, 1 };
 
     class Scale {
         geometry_msgs::Vector3 vector3;
@@ -106,7 +113,7 @@ namespace param {
             quaternion.w = w;
         }
 
-        static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UNIT_Z) noexcept
+        static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UnitZ()) noexcept
         {
             geometry_msgs::Vector3 vector3 = axis;
             return {
