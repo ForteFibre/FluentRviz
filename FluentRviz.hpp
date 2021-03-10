@@ -110,10 +110,10 @@ namespace param {
         {
             geometry_msgs::Vector3 vector3 = axis;
             return {
-                std::cos(theta / 2),
                 vector3.x * std::sin(theta / 2),
                 vector3.y * std::sin(theta / 2),
-                vector3.z * std::sin(theta / 2)
+                vector3.z * std::sin(theta / 2),
+                std::cos(theta / 2),
             };
         }
 
