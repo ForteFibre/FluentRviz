@@ -692,7 +692,7 @@ public:
     { }
 
     template<int32_t MarkerType, auto... Options>
-    void add(Marker<MarkerType, Options...> &m)
+    void add_marker(Marker<MarkerType, Options...> &m)
     {
         visualization_msgs::Marker &marker = m.msg();
         marker.action = visualization_msgs::Marker::ADD;
@@ -700,7 +700,21 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    void add(Marker<MarkerType, Options...> &&m) { add(m); }
+    void add_marker(Marker<MarkerType, Options...> &&m) { add_marker(m); }
+
+    template<int32_t MarkerType, auto... Options>
+    Rviz &operator+=(Marker<MarkerType, Options...> &m)
+    {
+        this->add_marker(m);
+        return *this;
+    }
+
+    template<int32_t MarkerType, auto... Options>
+    Rviz &operator+=(Marker<MarkerType, Options...> &&m)
+    {
+        this->add_marker(m);
+        return *this;
+    }
 
     void delete_marker(const int32_t id, std::string ns = "") noexcept
     {
@@ -709,6 +723,28 @@ public:
         marker.ns = std::move(ns);
         marker.action = visualization_msgs::Marker::DELETE;
         publish(marker);
+    }
+
+    template<int32_t MarkerType, auto... Options>
+    void delete_marker(Marker<MarkerType, Options...> &m)
+    {
+        visualization_msgs::Marker &marker = m.msg();
+        marker.action = visualization_msgs::Marker::DELETE;
+        publish(marker);
+    }
+
+    template<int32_t MarkerType, auto... Options>
+    Rviz &operator-=(Marker<MarkerType, Options...> &m)
+    {
+        this->delete_marker(m);
+        return *this;
+    }
+
+    template<int32_t MarkerType, auto... Options>
+    Rviz &operator-=(Marker<MarkerType, Options...> &&m)
+    {
+        this->delete_marker(m);
+        return *this;
     }
 
     void delete_all_marker() noexcept
