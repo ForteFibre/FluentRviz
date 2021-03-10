@@ -710,17 +710,15 @@ public:
     void add_marker(Marker<MarkerType, Options...> &&m) const { add_marker(m); }
 
     template<int32_t MarkerType, auto... Options>
-    Rviz &operator+=(Marker<MarkerType, Options...> &m) const
+    void operator+=(Marker<MarkerType, Options...> &m) const
     {
         this->add_marker(m);
-        return *this;
     }
 
     template<int32_t MarkerType, auto... Options>
-    Rviz &operator+=(Marker<MarkerType, Options...> &&m) const
+    void operator+=(Marker<MarkerType, Options...> &&m) const
     {
         this->add_marker(m);
-        return *this;
     }
 
     void delete_marker(const int32_t id, std::string ns = "") const
@@ -741,17 +739,15 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    Rviz &operator-=(Marker<MarkerType, Options...> &m) const
+    void operator-=(Marker<MarkerType, Options...> &m) const
     {
         this->delete_marker(m);
-        return *this;
     }
 
     template<int32_t MarkerType, auto... Options>
-    Rviz &operator-=(Marker<MarkerType, Options...> &&m) const
+    void operator-=(Marker<MarkerType, Options...> &&m) const
     {
         this->delete_marker(m);
-        return *this;
     }
 
     void delete_all_marker() const
