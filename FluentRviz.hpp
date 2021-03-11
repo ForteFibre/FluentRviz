@@ -383,17 +383,17 @@ namespace internal {
         [[nodiscard]] T &&start(const param::Point point) && noexcept
         {
             T &self = static_cast<T &>(*this);
-            return std::move(self).set_point(0, point);
+            return set_point(0, point);
         }
 
         [[nodiscard]] T &&end(const param::Point point) && noexcept
         {
             T &self = static_cast<T &>(*this);
-            return std::move(self).set_point(1, point);
+            return set_point(1, point);
         }
 
     private:
-        [[nodiscard]] T &&set_point(const size_t idx, const param::Point &point) && noexcept
+        [[nodiscard]] T &&set_point(const size_t idx, const param::Point &point) noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
