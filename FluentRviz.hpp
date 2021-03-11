@@ -44,6 +44,116 @@ namespace color {
     inline constexpr static int32_t BLACK = 0x000000;
 } // namespace color
 
+namespace traits {
+    namespace detail {
+        template<typename AlwaysVoid, template<typename...> typename Op, typename... Args>
+        struct detector : std::false_type { };
+
+        template<template<typename...> typename Op, typename... Args>
+        struct detector<std::void_t<Op<Args...>>, Op, Args...> : std::true_type { };
+    } // namespace detail
+
+    template<template<typename...> typename Op, typename... Args>
+    constexpr inline bool is_detected_v = detail::detector<void, Op, Args...>::value;
+
+    template<typename T>
+    using x_var_t = decltype(std::declval<T>().x);
+    template<typename T>
+    inline constexpr bool is_x_var_accessible_v = is_detected_v<x_var_t, T>;
+    template<typename T>
+    using y_var_t = decltype(std::declval<T>().y);
+    template<typename T>
+    inline constexpr bool is_y_var_accessible_v = is_detected_v<y_var_t, T>;
+    template<typename T>
+    using z_var_t = decltype(std::declval<T>().z);
+    template<typename T>
+    inline constexpr bool is_z_var_accessible_v = is_detected_v<z_var_t, T>;
+    template<typename T>
+    using w_var_t = decltype(std::declval<T>().w);
+    template<typename T>
+    inline constexpr bool is_w_var_accessible_v = is_detected_v<w_var_t, T>;
+
+    template<typename T>
+    using x_func_t = decltype(std::declval<T>().x());
+    template<typename T>
+    inline constexpr bool is_x_func_accessible_v = is_detected_v<x_func_t, T>;
+    template<typename T>
+    using y_func_t = decltype(std::declval<T>().y());
+    template<typename T>
+    inline constexpr bool is_y_func_accessible_v = is_detected_v<y_func_t, T>;
+    template<typename T>
+    using z_func_t = decltype(std::declval<T>().z());
+    template<typename T>
+    inline constexpr bool is_z_func_accessible_v = is_detected_v<z_func_t, T>;
+    template<typename T>
+    using w_func_t = decltype(std::declval<T>().w());
+    template<typename T>
+    inline constexpr bool is_w_func_accessible_v = is_detected_v<w_func_t, T>;
+
+    template<typename T>
+    using index_t = decltype(std::declval<T>()[0]);
+    template<typename T>
+    inline constexpr bool is_index_accessible_v = is_detected_v<index_t, T>;
+
+    template<typename T>
+    inline constexpr bool false_v = false;
+
+    enum class Member {
+        X, Y, Z, W
+    };
+
+    template<typename T, auto M, typename Enable = void>
+    struct access;
+
+    template<typename T>
+    struct access<T, Member::X, std::enable_if_t<is_x_var_accessible_v<T>>> {
+        [[nodiscard]] static inline double get(const T &value) noexcept
+        { return value.x; }
+    };
+    template<typename T>
+    struct access<T, Member::X, std::enable_if_t<is_x_func_accessible_v<T>>> {
+        [[nodiscard]] static inline double get(const T &value) noexcept
+        { return value.x(); }
+    };
+
+    template<typename T>
+    struct access<T, Member::Y, std::enable_if_t<is_y_var_accessible_v<T>>> {
+        [[nodiscard]] static inline double get(const T &value) noexcept
+        { return value.y; }
+    };
+    template<typename T>
+    struct access<T, Member::Y, std::enable_if_t<is_y_func_accessible_v<T>>> {
+        [[nodiscard]] static inline double get(const T &value) noexcept
+        { return value.y(); }
+    };
+
+    template<typename T>
+    struct access<T, Member::Z, std::enable_if_t<is_z_var_accessible_v<T>>> {
+        [[nodiscard]] static inline double get(const T &value) noexcept
+        { return value.z; }
+    };
+    template<typename T>
+    struct access<T, Member::Z, std::enable_if_t<is_z_func_accessible_v<T>>> {
+        [[nodiscard]] static inline double get(const T &value) noexcept
+        { return value.z(); }
+    };
+
+    template<typename T>
+    struct access<T, Member::W, std::enable_if_t<is_w_var_accessible_v<T>>> {
+        [[nodiscard]] static inline double get(const T &value) noexcept
+        { return value.w; }
+    };
+    template<typename T>
+    struct access<T, Member::W, std::enable_if_t<is_w_func_accessible_v<T>>> {
+        [[nodiscard]] static inline double get(const T &value) noexcept
+        { return value.w(); }
+    };
+
+    template<auto M, typename T>
+    [[nodiscard]] inline double get(const T &value) noexcept
+    { return access<T, M>::get(value); }
+} // namespace internal
+
 namespace param {
     class Vector3 {
         geometry_msgs::Vector3 vector3;
@@ -59,9 +169,27 @@ namespace param {
             vector3.z = z;
         }
 
+        template<typename T>
+        Vector3(const T &value)
+            : Vector3(
+                traits::get<traits::Member::X>(value),
+                traits::get<traits::Member::Y>(value),
+                traits::get<traits::Member::Z>(value))
+        { }
+
         [[nodiscard]] static inline Vector3 UnitX() noexcept { return { 1, 0, 0 }; }
         [[nodiscard]] static inline Vector3 UnitY() noexcept { return { 0, 1, 0 }; }
         [[nodiscard]] static inline Vector3 UnitZ() noexcept { return { 0, 0, 1 }; }
+
+        template<typename T>
+        [[nodiscard]] static Vector3 from_2d(const T &point, const double z = 0.0) noexcept
+        {
+            return {
+                traits::get<traits::Member::X>(point),
+                traits::get<traits::Member::Y>(point),
+                z
+            };
+        }
 
         operator const geometry_msgs::Vector3 &() const noexcept
         {
@@ -126,6 +254,15 @@ namespace param {
             quaternion.w = w;
         }
 
+        template<typename T>
+        Quaternion(const T &value)
+            : Quaternion(
+                traits::get<traits::Member::X>(value),
+                traits::get<traits::Member::Y>(value),
+                traits::get<traits::Member::Z>(value),
+                traits::get<traits::Member::W>(value))
+        { }
+
         [[nodiscard]] static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UnitZ()) noexcept
         {
             geometry_msgs::Vector3 vector3 = axis;
@@ -155,6 +292,24 @@ namespace param {
             point.x = x;
             point.y = y;
             point.z = z;
+        }
+
+        template<typename T>
+        Point(const T &value)
+            : Point(
+                traits::get<traits::Member::X>(value),
+                traits::get<traits::Member::Y>(value),
+                traits::get<traits::Member::Z>(value))
+        { }
+
+        template<typename T>
+        [[nodiscard]] static Point from_2d(const T &point, const double z = 0.0) noexcept
+        {
+            return {
+                traits::get<traits::Member::X>(point),
+                traits::get<traits::Member::Y>(point),
+                z
+            };
         }
 
         operator const geometry_msgs::Point &() const noexcept
@@ -225,6 +380,26 @@ namespace param {
         std::vector<geometry_msgs::Point> points;
 
     public:
+        PointVector() = default;
+
+        PointVector(std::vector<geometry_msgs::Point> arg): points(std::move(arg))
+        { }
+
+        template<typename T>
+        PointVector(const std::vector<T> &arg)
+        {
+            points.reserve(arg.size());
+            for (auto& e : arg) add_point(e);
+        }
+
+        template<typename T>
+        [[nodiscard]] static PointVector from_2d(const std::vector<T> &arg, double z = 0.0) noexcept {
+            PointVector res;
+            res.points.reserve(arg.size());
+            for (auto& e : arg) res.add_point(param::Point::from_2d(e, z));
+            return res;
+        }
+
         PointVector &add_point(const Point point) noexcept
         {
             points.push_back(point);
