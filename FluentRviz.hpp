@@ -139,34 +139,34 @@ namespace traits {
 
     template<typename T>
     struct access<T, Member::X, std::enable_if_t<is_func_accessible_v<T, Member::X>>> {
-        [[nodiscard]] static inline auto get(const T &value) noexcept
+        [[nodiscard]] static inline auto get(const T &value)
         { return value.x(); }
     };
     template<typename T>
     struct access<T, Member::Y, std::enable_if_t<is_func_accessible_v<T, Member::Y>>> {
-        [[nodiscard]] static inline auto get(const T &value) noexcept
+        [[nodiscard]] static inline auto get(const T &value)
         { return value.y(); }
     };
     template<typename T>
     struct access<T, Member::Z, std::enable_if_t<is_func_accessible_v<T, Member::Z>>> {
-        [[nodiscard]] static inline auto get(const T &value) noexcept
+        [[nodiscard]] static inline auto get(const T &value)
         { return value.z(); }
     };
     template<typename T>
     struct access<T, Member::W, std::enable_if_t<is_func_accessible_v<T, Member::W>>> {
-        [[nodiscard]] static inline auto get(const T &value) noexcept
+        [[nodiscard]] static inline auto get(const T &value)
         { return value.w(); }
     };
 
     template<typename T, auto M>
     struct access<T, M, std::enable_if_t<!is_var_accessible_v<T, M> && !is_func_accessible_v<T, M> && is_index_accessible_v<T>>> {
-        [[nodiscard]] static inline auto get(const T &value) noexcept
+        [[nodiscard]] static inline auto get(const T &value)
         { return value[static_cast<size_t>(M)]; }
     };
 
     template<typename T, auto M>
     struct access<T, M, std::enable_if_t<is_std_get_defined_v<T>>> {
-        [[nodiscard]] static inline auto get(const T &value) noexcept
+        [[nodiscard]] static inline auto get(const T &value)
         { return std::get<static_cast<size_t>(M)>(value); }
     };
 
@@ -182,7 +182,7 @@ namespace traits {
     };
 
     template<auto M, typename T>
-    [[nodiscard]] inline auto get(const T &value) noexcept
+    [[nodiscard]] inline auto get(const T &value)
     { return access<T, M>::get(value); }
 } // namespace internal
 
