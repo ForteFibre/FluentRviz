@@ -165,7 +165,7 @@ namespace traits {
     };
 
     template<typename T, auto M>
-    struct access<T, M, std::enable_if_t<is_std_get_defined_v<T>>> {
+    struct access<T, M, std::enable_if_t<!is_index_accessible_v<T> && is_std_get_defined_v<T>>> {
         [[nodiscard]] static inline auto get(const T &value)
         { return std::get<static_cast<size_t>(M)>(value); }
     };
