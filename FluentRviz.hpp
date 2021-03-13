@@ -56,101 +56,133 @@ namespace traits {
     template<template<typename...> typename Op, typename... Args>
     constexpr inline bool is_detected_v = detail::detector<void, Op, Args...>::value;
 
+    enum class Member : size_t {
+        X = 0, Y = 1, Z = 2, W = 3,
+    };
+
     template<typename T>
     using x_var_t = decltype(std::declval<T>().x);
     template<typename T>
-    inline constexpr bool is_x_var_accessible_v = is_detected_v<x_var_t, T>;
-    template<typename T>
     using y_var_t = decltype(std::declval<T>().y);
-    template<typename T>
-    inline constexpr bool is_y_var_accessible_v = is_detected_v<y_var_t, T>;
     template<typename T>
     using z_var_t = decltype(std::declval<T>().z);
     template<typename T>
-    inline constexpr bool is_z_var_accessible_v = is_detected_v<z_var_t, T>;
-    template<typename T>
     using w_var_t = decltype(std::declval<T>().w);
+
+    template<typename T, auto M>
+    inline constexpr bool is_var_accessible_v = false;
     template<typename T>
-    inline constexpr bool is_w_var_accessible_v = is_detected_v<w_var_t, T>;
+    inline constexpr bool is_var_accessible_v<T, Member::X> = is_detected_v<x_var_t, T>;
+    template<typename T>
+    inline constexpr bool is_var_accessible_v<T, Member::Y> = is_detected_v<y_var_t, T>;
+    template<typename T>
+    inline constexpr bool is_var_accessible_v<T, Member::Z> = is_detected_v<z_var_t, T>;
+    template<typename T>
+    inline constexpr bool is_var_accessible_v<T, Member::W> = is_detected_v<w_var_t, T>;
 
     template<typename T>
     using x_func_t = decltype(std::declval<T>().x());
     template<typename T>
-    inline constexpr bool is_x_func_accessible_v = is_detected_v<x_func_t, T>;
-    template<typename T>
     using y_func_t = decltype(std::declval<T>().y());
-    template<typename T>
-    inline constexpr bool is_y_func_accessible_v = is_detected_v<y_func_t, T>;
     template<typename T>
     using z_func_t = decltype(std::declval<T>().z());
     template<typename T>
-    inline constexpr bool is_z_func_accessible_v = is_detected_v<z_func_t, T>;
-    template<typename T>
     using w_func_t = decltype(std::declval<T>().w());
+
+    template<typename T, auto M>
+    inline constexpr bool is_func_accessible_v = false;
     template<typename T>
-    inline constexpr bool is_w_func_accessible_v = is_detected_v<w_func_t, T>;
+    inline constexpr bool is_func_accessible_v<T, Member::X> = is_detected_v<x_func_t, T>;
+    template<typename T>
+    inline constexpr bool is_func_accessible_v<T, Member::Y> = is_detected_v<y_func_t, T>;
+    template<typename T>
+    inline constexpr bool is_func_accessible_v<T, Member::Z> = is_detected_v<z_func_t, T>;
+    template<typename T>
+    inline constexpr bool is_func_accessible_v<T, Member::W> = is_detected_v<w_func_t, T>;
 
     template<typename T>
-    using index_t = decltype(std::declval<T>()[0]);
+    using index_t = decltype(std::declval<T>()[std::declval<size_t>()]);
     template<typename T>
     inline constexpr bool is_index_accessible_v = is_detected_v<index_t, T>;
 
     template<typename T>
-    inline constexpr bool false_v = false;
+    using std_get_t = decltype(std::get<std::declval<size_t>()>(std::declval<T>()));
+    template<typename T>
+    inline constexpr bool is_std_get_defined_v = is_detected_v<std_get_t, T>;
 
-    enum class Member {
-        X, Y, Z, W
-    };
+    template<typename T>
+    inline constexpr bool false_v = false;
 
     template<typename T, auto M, typename Enable = void>
     struct access;
 
     template<typename T>
-    struct access<T, Member::X, std::enable_if_t<is_x_var_accessible_v<T>>> {
-        [[nodiscard]] static inline double get(const T &value) noexcept
+    struct access<T, Member::X, std::enable_if_t<is_var_accessible_v<T, Member::X>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
         { return value.x; }
     };
     template<typename T>
-    struct access<T, Member::X, std::enable_if_t<is_x_func_accessible_v<T>>> {
-        [[nodiscard]] static inline double get(const T &value) noexcept
-        { return value.x(); }
-    };
-
-    template<typename T>
-    struct access<T, Member::Y, std::enable_if_t<is_y_var_accessible_v<T>>> {
-        [[nodiscard]] static inline double get(const T &value) noexcept
+    struct access<T, Member::Y, std::enable_if_t<is_var_accessible_v<T, Member::Y>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
         { return value.y; }
     };
     template<typename T>
-    struct access<T, Member::Y, std::enable_if_t<is_y_func_accessible_v<T>>> {
-        [[nodiscard]] static inline double get(const T &value) noexcept
-        { return value.y(); }
-    };
-
-    template<typename T>
-    struct access<T, Member::Z, std::enable_if_t<is_z_var_accessible_v<T>>> {
-        [[nodiscard]] static inline double get(const T &value) noexcept
+    struct access<T, Member::Z, std::enable_if_t<is_var_accessible_v<T, Member::Z>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
         { return value.z; }
     };
     template<typename T>
-    struct access<T, Member::Z, std::enable_if_t<is_z_func_accessible_v<T>>> {
-        [[nodiscard]] static inline double get(const T &value) noexcept
-        { return value.z(); }
+    struct access<T, Member::W, std::enable_if_t<is_var_accessible_v<T, Member::W>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
+        { return value.w; }
     };
 
     template<typename T>
-    struct access<T, Member::W, std::enable_if_t<is_w_var_accessible_v<T>>> {
-        [[nodiscard]] static inline double get(const T &value) noexcept
-        { return value.w; }
+    struct access<T, Member::X, std::enable_if_t<is_func_accessible_v<T, Member::X>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
+        { return value.x(); }
     };
     template<typename T>
-    struct access<T, Member::W, std::enable_if_t<is_w_func_accessible_v<T>>> {
-        [[nodiscard]] static inline double get(const T &value) noexcept
+    struct access<T, Member::Y, std::enable_if_t<is_func_accessible_v<T, Member::Y>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
+        { return value.y(); }
+    };
+    template<typename T>
+    struct access<T, Member::Z, std::enable_if_t<is_func_accessible_v<T, Member::Z>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
+        { return value.z(); }
+    };
+    template<typename T>
+    struct access<T, Member::W, std::enable_if_t<is_func_accessible_v<T, Member::W>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
         { return value.w(); }
     };
 
+    template<typename T, auto M>
+    struct access<T, M, std::enable_if_t<!is_var_accessible_v<T, M> && !is_func_accessible_v<T, M> && is_index_accessible_v<T>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
+        { return value[static_cast<size_t>(M)]; }
+    };
+
+    template<typename T, auto M>
+    struct access<T, M, std::enable_if_t<is_std_get_defined_v<T>>> {
+        [[nodiscard]] static inline auto get(const T &value) noexcept
+        { return std::get<static_cast<size_t>(M)>(value); }
+    };
+
+    template<typename T>
+    struct access<std::complex<T>, Member::X> {
+        [[nodiscard]] static inline auto get(const std::complex<T> &value)
+        { return value.real(); }
+    };
+    template<typename T>
+    struct access<std::complex<T>, Member::Y> {
+        [[nodiscard]] static inline auto get(const std::complex<T> &value)
+        { return value.imag(); }
+    };
+
     template<auto M, typename T>
-    [[nodiscard]] inline double get(const T &value) noexcept
+    [[nodiscard]] inline auto get(const T &value) noexcept
     { return access<T, M>::get(value); }
 } // namespace internal
 
