@@ -191,7 +191,8 @@ namespace param {
         geometry_msgs::Vector3 vector3;
 
     public:
-        Vector3(const geometry_msgs::Vector3 arg): vector3(arg)
+        Vector3(const geometry_msgs::Vector3 arg) noexcept
+            : vector3(arg)
         { }
 
         Vector3(const double x, const double y, const double z) noexcept
@@ -202,16 +203,19 @@ namespace param {
         }
 
         template<typename T>
-        Vector3(const T &value)
+        Vector3(const T &value) noexcept
             : Vector3(
                 traits::get<traits::Member::X>(value),
                 traits::get<traits::Member::Y>(value),
                 traits::get<traits::Member::Z>(value))
         { }
 
-        [[nodiscard]] static inline Vector3 UnitX() noexcept { return { 1, 0, 0 }; }
-        [[nodiscard]] static inline Vector3 UnitY() noexcept { return { 0, 1, 0 }; }
-        [[nodiscard]] static inline Vector3 UnitZ() noexcept { return { 0, 0, 1 }; }
+        [[nodiscard]] static inline Vector3 UnitX() noexcept
+        { return { 1, 0, 0 }; }
+        [[nodiscard]] static inline Vector3 UnitY() noexcept
+        { return { 0, 1, 0 }; }
+        [[nodiscard]] static inline Vector3 UnitZ() noexcept
+        { return { 0, 0, 1 }; }
 
         template<typename T>
         [[nodiscard]] static Vector3 from_2d(const T &point, const double z = 0.0) noexcept
@@ -224,9 +228,7 @@ namespace param {
         }
 
         operator const geometry_msgs::Vector3 &() const noexcept
-        {
-            return vector3;
-        }
+        { return vector3; }
     };
 
     class Scale {
@@ -241,41 +243,50 @@ namespace param {
         }
 
         operator const geometry_msgs::Vector3 &() const noexcept
-        {
-            return vector3;
-        }
+        { return vector3; }
     };
 
     class PoseArrowScale : public Scale {
     public:
-        PoseArrowScale(const double length, const double width, const double height) noexcept : Scale(length, width, height) { }
+        PoseArrowScale(const double length, const double width, const double height) noexcept
+            : Scale(length, width, height)
+        { }
     };
 
     class VectorArrowScale : public Scale {
     public:
-        VectorArrowScale(const double shaft_diameter, const double head_diameter, const double head_length) noexcept : Scale(shaft_diameter, head_diameter, head_length) { }
+        VectorArrowScale(const double shaft_diameter, const double head_diameter, const double head_length) noexcept
+            : Scale(shaft_diameter, head_diameter, head_length)
+        { }
     };
 
     class PointScale : public Scale {
     public:
-        PointScale(const double width, const double height) noexcept : Scale(width, height, 0) { }
+        PointScale(const double width, const double height) noexcept
+            : Scale(width, height, 0)
+        { }
     };
 
     class LineScale : public Scale {
     public:
-        LineScale(const double width) noexcept : Scale(width, 0, 0) { }
+        LineScale(const double width) noexcept
+            : Scale(width, 0, 0)
+        { }
     };
 
     class TextScale : public Scale {
     public:
-        TextScale(const double height) noexcept : Scale(0, 0, height) { }
+        TextScale(const double height) noexcept
+            : Scale(0, 0, height)
+        { }
     };
 
     class Quaternion {
         geometry_msgs::Quaternion quaternion;
 
     public:
-        Quaternion(const geometry_msgs::Quaternion arg) noexcept : quaternion(arg)
+        Quaternion(const geometry_msgs::Quaternion arg) noexcept
+            : quaternion(arg)
         { }
 
         Quaternion(const double x, const double y, const double z, const double w) noexcept
@@ -287,7 +298,7 @@ namespace param {
         }
 
         template<typename T>
-        Quaternion(const T &value)
+        Quaternion(const T &value) noexcept
             : Quaternion(
                 traits::get<traits::Member::X>(value),
                 traits::get<traits::Member::Y>(value),
@@ -307,16 +318,15 @@ namespace param {
         }
 
         operator const geometry_msgs::Quaternion &() const noexcept
-        {
-            return quaternion;
-        }
+        { return quaternion; }
     };
 
     class Point {
         geometry_msgs::Point point;
 
     public:
-        Point(const geometry_msgs::Point arg) noexcept : point(arg)
+        Point(const geometry_msgs::Point arg) noexcept
+            : point(arg)
         { }
 
         Point(const double x, const double y, const double z = 0.0) noexcept
@@ -345,16 +355,15 @@ namespace param {
         }
 
         operator const geometry_msgs::Point &() const noexcept
-        {
-            return point;
-        }
+        { return point; }
     };
 
     class Color {
         std_msgs::ColorRGBA color;
 
     public:
-        Color(const std_msgs::ColorRGBA arg): color(arg)
+        Color(const std_msgs::ColorRGBA arg) noexcept
+            : color(arg)
         { }
 
         Color(const float r, const float g, const float b, const float a = 1.0) noexcept
@@ -380,41 +389,61 @@ namespace param {
             return *this;
         }
 
-        [[nodiscard]] static inline Color Red() noexcept { return from_hex(color::RED); }
-        [[nodiscard]] static inline Color Pink() noexcept { return from_hex(color::PINK); }
-        [[nodiscard]] static inline Color Purple() noexcept { return from_hex(color::PURPLE); }
-        [[nodiscard]] static inline Color DeepPurple() noexcept { return from_hex(color::DEEP_PURPLE); }
-        [[nodiscard]] static inline Color Indigo() noexcept { return from_hex(color::INDIGO); }
-        [[nodiscard]] static inline Color Blue() noexcept { return from_hex(color::BRUE); }
-        [[nodiscard]] static inline Color LightBlue() noexcept { return from_hex(color::LIGHT_BRUE); }
-        [[nodiscard]] static inline Color Cyan() noexcept { return from_hex(color::CYAN); }
-        [[nodiscard]] static inline Color Teal() noexcept { return from_hex(color::TEAL); }
-        [[nodiscard]] static inline Color Green() noexcept { return from_hex(color::GREEN); }
-        [[nodiscard]] static inline Color LightGreen() noexcept { return from_hex(color::LIGHT_GREEN); }
-        [[nodiscard]] static inline Color Lime() noexcept { return from_hex(color::LIME); }
-        [[nodiscard]] static inline Color Yellow() noexcept { return from_hex(color::YELLOW); }
-        [[nodiscard]] static inline Color Amber() noexcept { return from_hex(color::AMBER); }
-        [[nodiscard]] static inline Color Orange() noexcept { return from_hex(color::ORANGE); }
-        [[nodiscard]] static inline Color DeepOrange() noexcept { return from_hex(color::DEEP_ORANGE); }
-        [[nodiscard]] static inline Color Brown() noexcept { return from_hex(color::BROWN); }
-        [[nodiscard]] static inline Color Grey() noexcept { return from_hex(color::GREY); }
-        [[nodiscard]] static inline Color BlueGrey() noexcept { return from_hex(color::BLUE_GREY); }
-        [[nodiscard]] static inline Color White() noexcept { return from_hex(color::WHITE); }
-        [[nodiscard]] static inline Color Black() noexcept { return from_hex(color::BLACK); }
+        [[nodiscard]] static inline Color Red() noexcept
+        { return from_hex(color::RED); }
+        [[nodiscard]] static inline Color Pink() noexcept
+        { return from_hex(color::PINK); }
+        [[nodiscard]] static inline Color Purple() noexcept
+        { return from_hex(color::PURPLE); }
+        [[nodiscard]] static inline Color DeepPurple() noexcept
+        { return from_hex(color::DEEP_PURPLE); }
+        [[nodiscard]] static inline Color Indigo() noexcept
+        { return from_hex(color::INDIGO); }
+        [[nodiscard]] static inline Color Blue() noexcept
+        { return from_hex(color::BRUE); }
+        [[nodiscard]] static inline Color LightBlue() noexcept
+        { return from_hex(color::LIGHT_BRUE); }
+        [[nodiscard]] static inline Color Cyan() noexcept
+        { return from_hex(color::CYAN); }
+        [[nodiscard]] static inline Color Teal() noexcept
+        { return from_hex(color::TEAL); }
+        [[nodiscard]] static inline Color Green() noexcept
+        { return from_hex(color::GREEN); }
+        [[nodiscard]] static inline Color LightGreen() noexcept
+        { return from_hex(color::LIGHT_GREEN); }
+        [[nodiscard]] static inline Color Lime() noexcept
+        { return from_hex(color::LIME); }
+        [[nodiscard]] static inline Color Yellow() noexcept
+        { return from_hex(color::YELLOW); }
+        [[nodiscard]] static inline Color Amber() noexcept
+        { return from_hex(color::AMBER); }
+        [[nodiscard]] static inline Color Orange() noexcept
+        { return from_hex(color::ORANGE); }
+        [[nodiscard]] static inline Color DeepOrange() noexcept
+        { return from_hex(color::DEEP_ORANGE); }
+        [[nodiscard]] static inline Color Brown() noexcept
+        { return from_hex(color::BROWN); }
+        [[nodiscard]] static inline Color Grey() noexcept
+        { return from_hex(color::GREY); }
+        [[nodiscard]] static inline Color BlueGrey() noexcept
+        { return from_hex(color::BLUE_GREY); }
+        [[nodiscard]] static inline Color White() noexcept
+        { return from_hex(color::WHITE); }
+        [[nodiscard]] static inline Color Black() noexcept
+        { return from_hex(color::BLACK); }
 
         operator const std_msgs::ColorRGBA &() const noexcept
-        {
-            return color;
-        }
+        { return color; }
     };
 
     class PointVector {
         std::vector<geometry_msgs::Point> points;
 
     public:
-        PointVector() = default;
+        PointVector() noexcept = default;
 
-        PointVector(std::vector<geometry_msgs::Point> arg): points(std::move(arg))
+        PointVector(std::vector<geometry_msgs::Point> arg) noexcept
+            : points(std::move(arg))
         { }
 
         template<typename T>
@@ -425,30 +454,29 @@ namespace param {
         }
 
         template<typename T>
-        [[nodiscard]] static PointVector from_2d(const std::vector<T> &arg, double z = 0.0) noexcept {
+        [[nodiscard]] static PointVector from_2d(const std::vector<T> &arg, double z = 0.0)
+        {
             PointVector res;
             res.points.reserve(arg.size());
             for (auto& e : arg) res.add_point(param::Point::from_2d(e, z));
             return res;
         }
 
-        PointVector &add_point(const Point point) noexcept
+        PointVector &add_point(const Point point)
         {
             points.push_back(point);
             return *this;
         }
 
         operator const std::vector<geometry_msgs::Point> &() const noexcept
-        {
-            return points;
-        }
+        { return points; }
     };
 
     class LineVector {
         std::vector<geometry_msgs::Point> points;
 
     public:
-        LineVector &add_line(Point start, Point end) noexcept
+        LineVector &add_line(Point start, Point end)
         {
             points.push_back(start);
             points.push_back(end);
@@ -456,16 +484,14 @@ namespace param {
         }
 
         operator const std::vector<geometry_msgs::Point> &() const noexcept
-        {
-            return points;
-        }
+        { return points; }
     };
 
     class TriangleVector {
         std::vector<geometry_msgs::Point> points;
 
     public:
-        TriangleVector &add_triangle(Point a, Point b, Point c) noexcept
+        TriangleVector &add_triangle(Point a, Point b, Point c)
         {
             points.push_back(a);
             points.push_back(b);
@@ -474,25 +500,21 @@ namespace param {
         }
 
         operator const std::vector<geometry_msgs::Point> &() const noexcept
-        {
-            return points;
-        }
+        { return points; }
     };
 
     class ColorVector {
         std::vector<std_msgs::ColorRGBA> colors;
 
     public:
-        ColorVector &add_color(Color color) noexcept
+        ColorVector &add_color(Color color)
         {
             colors.push_back(color);
             return *this;
         }
 
         operator const std::vector<std_msgs::ColorRGBA> &() const noexcept
-        {
-            return colors;
-        }
+        { return colors; }
     };
 } // namespace param
 
@@ -868,7 +890,8 @@ public:
     Marker(const Marker<MarkerType, Options...> &) = delete;
     Marker(Marker<MarkerType, Options...> &&) = default;
 
-    [[nodiscard]] visualization_msgs::Marker &msg() noexcept { return marker; }
+    [[nodiscard]] visualization_msgs::Marker &msg() noexcept
+    { return marker; }
 };
 
 namespace marker {
@@ -901,7 +924,7 @@ class Rviz {
     std::string frame_id_;
 
 public:
-    Rviz(const std::string frame_id = "map", const std::string topic = "visualization_marker") noexcept
+    Rviz(const std::string frame_id = "map", const std::string topic = "visualization_marker")
         : pub(nh.advertise<visualization_msgs::Marker>(topic, 1))
         , frame_id_(frame_id)
     { }
@@ -915,19 +938,16 @@ public:
     }
 
     template<int32_t MarkerType, auto... Options>
-    void add_marker(Marker<MarkerType, Options...> &&m) const { add_marker(m); }
+    void add_marker(Marker<MarkerType, Options...> &&m) const
+    { add_marker(m); }
 
     template<int32_t MarkerType, auto... Options>
     void operator+=(Marker<MarkerType, Options...> &m) const
-    {
-        this->add_marker(m);
-    }
+    { this->add_marker(m); }
 
     template<int32_t MarkerType, auto... Options>
     void operator+=(Marker<MarkerType, Options...> &&m) const
-    {
-        this->add_marker(m);
-    }
+    { this->add_marker(m); }
 
     void delete_marker(const int32_t id, std::string ns = "") const
     {
@@ -948,15 +968,11 @@ public:
 
     template<int32_t MarkerType, auto... Options>
     void operator-=(Marker<MarkerType, Options...> &m) const
-    {
-        this->delete_marker(m);
-    }
+    { this->delete_marker(m); }
 
     template<int32_t MarkerType, auto... Options>
     void operator-=(Marker<MarkerType, Options...> &&m) const
-    {
-        this->delete_marker(m);
-    }
+    { this->delete_marker(m); }
 
     void delete_all_marker() const
     {
