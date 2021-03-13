@@ -165,7 +165,7 @@ namespace traits {
     };
 
     template<typename T, auto M>
-    struct access<T, M, std::enable_if_t<!is_index_accessible_v<T> && is_std_get_defined_v<T>>> {
+    struct access<T, M, std::enable_if_t<is_std_get_defined_v<T>>> {
         [[nodiscard]] static inline auto get(const T &value)
         { return std::get<static_cast<size_t>(M)>(value); }
     };
@@ -519,8 +519,72 @@ namespace param {
 } // namespace param
 
 namespace internal {
+    template<auto Val1, auto Val2>
+    inline constexpr bool equals_v = false;
+
+    template<auto Val>
+    inline constexpr bool equals_v<Val, Val> = true;
+
+    template<auto Val, auto... Vals>
+    inline constexpr bool is_contained_v = (equals_v<Val, Vals> || ...);
+
+    template<int32_t MarkerType>
+    inline constexpr bool is_arrow_marker_v = MarkerType == visualization_msgs::Marker::ARROW;
+    template<int32_t MarkerType>
+    inline constexpr bool is_cube_marker_v = MarkerType == visualization_msgs::Marker::CUBE;
+    template<int32_t MarkerType>
+    inline constexpr bool is_sphere_marker_v = MarkerType == visualization_msgs::Marker::SPHERE;
+    template<int32_t MarkerType>
+    inline constexpr bool is_cylinder_marker_v = MarkerType == visualization_msgs::Marker::CYLINDER;
+    template<int32_t MarkerType>
+    inline constexpr bool is_line_strip_marker_v = MarkerType == visualization_msgs::Marker::LINE_STRIP;
+    template<int32_t MarkerType>
+    inline constexpr bool is_line_list_marker_v = MarkerType == visualization_msgs::Marker::LINE_LIST;
+    template<int32_t MarkerType>
+    inline constexpr bool is_cube_list_marker_v = MarkerType == visualization_msgs::Marker::CUBE_LIST;
+    template<int32_t MarkerType>
+    inline constexpr bool is_sphere_list_marker_v = MarkerType == visualization_msgs::Marker::SPHERE_LIST;
+    template<int32_t MarkerType>
+    inline constexpr bool is_points_marker_v = MarkerType == visualization_msgs::Marker::POINTS;
+    template<int32_t MarkerType>
+    inline constexpr bool is_text_view_facing_marker_v = MarkerType == visualization_msgs::Marker::TEXT_VIEW_FACING;
+    template<int32_t MarkerType>
+    inline constexpr bool is_mesh_resource_marker_v = MarkerType == visualization_msgs::Marker::MESH_RESOURCE;
+    template<int32_t MarkerType>
+    inline constexpr bool is_triangle_list_marker_v = MarkerType == visualization_msgs::Marker::TRIANGLE_LIST;
+
+    template<int32_t MarkerType>
+    inline constexpr bool is_common_scale_available_v =
+        is_cube_marker_v<MarkerType>
+        || is_sphere_marker_v<MarkerType>
+        || is_cylinder_marker_v<MarkerType>
+        || is_cube_list_marker_v<MarkerType>
+        || is_sphere_list_marker_v<MarkerType>
+        || is_mesh_resource_marker_v<MarkerType>
+        || is_triangle_list_marker_v<MarkerType>;
+
+    template<int32_t MarkerType>
+    inline constexpr bool is_line_marker_v =
+        is_line_strip_marker_v<MarkerType>
+        || is_line_list_marker_v<MarkerType>;
+
+    template<int32_t MarkerType>
+    inline constexpr bool is_points_available_v =
+        is_line_strip_marker_v<MarkerType>
+        || is_line_list_marker_v<MarkerType>
+        || is_cube_list_marker_v<MarkerType>
+        || is_sphere_list_marker_v<MarkerType>
+        || is_points_marker_v<MarkerType>
+        || is_triangle_list_marker_v<MarkerType>;
+
+    template<int32_t MarkerType>
+    inline constexpr bool is_colors_available_v = is_points_available_v<MarkerType>;
+
+    template<auto... Options>
+    struct OptionPack { };
+
     template<typename T>
-    struct position_helper {
+    struct Position {
         [[nodiscard]] T &&position(const param::Point position) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -530,8 +594,11 @@ namespace internal {
         }
     };
 
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    struct PositionHelper : Position<Marker> { };
+
     template<typename T>
-    struct orientation_helper {
+    struct Orientation {
         [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -541,8 +608,11 @@ namespace internal {
         }
     };
 
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    struct OrientationHelper : Orientation<Marker> { };
+
     template<typename T, typename ScaleParamType = param::Scale>
-    struct scale_helper {
+    struct Scale {
         [[nodiscard]] T &&scale(const ScaleParamType scale) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -552,19 +622,41 @@ namespace internal {
         }
     };
 
-    template<typename T>
-    using scale_pose_arrow_helper = scale_helper<T, param::PoseArrowScale>;
-    template<typename T>
-    using scale_vector_arrow_helper = scale_helper<T, param::VectorArrowScale>;
-    template<typename T>
-    using scale_point_helper = scale_helper<T, param::PointScale>;
-    template<typename T>
-    using scale_line_helper = scale_helper<T, param::LineScale>;
-    template<typename T>
-    using scale_text_helper = scale_helper<T, param::TextScale>;
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    struct ScaleHelper { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_common_scale_available_v<MarkerType>>>
+        : Scale<Marker> { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>>>
+        : Scale<Marker, param::PoseArrowScale> { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
+        : Scale<Marker, param::VectorArrowScale> { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_points_marker_v<MarkerType>>>
+        : Scale<Marker, param::PointScale> { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_line_marker_v<MarkerType>>>
+        : Scale<Marker, param::LineScale> { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
+        : Scale<Marker, param::TextScale> { };
 
     template<typename T>
-    struct color_helper {
+    struct Color {
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -574,8 +666,16 @@ namespace internal {
         }
     };
 
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    struct ColorHelper { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct ColorHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<!is_colors_available_v<MarkerType> || !is_contained_v<option::Color::SEPARATE, Options...>>>
+        : Color<Marker> { };
+
     template<typename T>
-    struct lifetime_helper {
+    struct Lifetime {
         [[nodiscard]] T &&lifetime(const double lifetime) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -586,7 +686,7 @@ namespace internal {
     };
 
     template<typename T>
-    struct frame_locked_helper {
+    struct FrameLocked {
         [[nodiscard]] T &&frame_locked(const bool frame_locked) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -597,7 +697,7 @@ namespace internal {
     };
 
     template<typename T>
-    struct points_helper {
+    struct Points {
         [[nodiscard]] T &&points(std::vector<geometry_msgs::Point> points) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -608,7 +708,7 @@ namespace internal {
     };
 
     template<typename T>
-    struct arrow_point_helper {
+    struct ArrowPoints {
         [[nodiscard]] T &&start(const param::Point point) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -631,8 +731,21 @@ namespace internal {
         }
     };
 
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    struct PointsHelper { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct PointsHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_points_available_v<MarkerType>>>
+        : Points<Marker> { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct PointsHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
+        : ArrowPoints<Marker> { };
+
     template<typename T>
-    struct colors_helper {
+    struct Colors {
         [[nodiscard]] T &&colors(std::vector<std_msgs::ColorRGBA> colors) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -642,8 +755,16 @@ namespace internal {
         }
     };
 
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    struct ColorsHelper { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct ColorsHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_colors_available_v<MarkerType> && is_contained_v<option::Color::SEPARATE, Options...>>>
+        : Colors<Marker> { };
+
     template<typename T>
-    struct text_helper {
+    struct Text {
         [[nodiscard]] T &&text(std::string text) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -653,8 +774,16 @@ namespace internal {
         }
     };
 
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    struct TextHelper { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct TextHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
+        : Text<Marker> { };
+
     template<typename T>
-    struct mesh_resource_helper {
+    struct MeshResource {
         [[nodiscard]] T &&mesh_resource(std::string mesh_resource) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -672,166 +801,27 @@ namespace internal {
         }
     };
 
-    template<bool condition, typename Type>
-    struct conditional_extend { };
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    struct MeshResourceHelper { };
 
-    template<typename Type>
-    struct conditional_extend<true, Type> : Type { };
-
-    template<auto Val1, auto Val2>
-    inline constexpr bool equals_v = false;
-
-    template<auto Val>
-    inline constexpr bool equals_v<Val, Val> = true;
-
-    template<auto Val, auto... Vals>
-    inline constexpr bool is_contained_v = (equals_v<Val, Vals> || ...);
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_arrow_marker_v = MarkerType == visualization_msgs::Marker::ARROW;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_cube_marker_v = MarkerType == visualization_msgs::Marker::CUBE;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_sphere_marker_v = MarkerType == visualization_msgs::Marker::SPHERE;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_cylinder_marker_v = MarkerType == visualization_msgs::Marker::CYLINDER;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_line_strip_marker_v = MarkerType == visualization_msgs::Marker::LINE_STRIP;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_line_list_marker_v = MarkerType == visualization_msgs::Marker::LINE_LIST;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_cube_list_marker_v = MarkerType == visualization_msgs::Marker::CUBE_LIST;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_sphere_list_marker_v = MarkerType == visualization_msgs::Marker::SPHERE_LIST;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_points_marker_v = MarkerType == visualization_msgs::Marker::POINTS;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_text_view_facing_marker_v = MarkerType == visualization_msgs::Marker::TEXT_VIEW_FACING;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_mesh_resource_marker_v = MarkerType == visualization_msgs::Marker::MESH_RESOURCE;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_triangle_list_marker_v = MarkerType == visualization_msgs::Marker::TRIANGLE_LIST;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_scale_available_v =
-        is_cube_marker_v<MarkerType>
-        || is_sphere_marker_v<MarkerType>
-        || is_cylinder_marker_v<MarkerType>
-        || is_cube_list_marker_v<MarkerType>
-        || is_sphere_list_marker_v<MarkerType>
-        || is_mesh_resource_marker_v<MarkerType>
-        || is_triangle_list_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_line_v =
-        is_line_strip_marker_v<MarkerType>
-        || is_line_list_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_points_available_v =
-        is_line_strip_marker_v<MarkerType>
-        || is_line_list_marker_v<MarkerType>
-        || is_cube_list_marker_v<MarkerType>
-        || is_sphere_list_marker_v<MarkerType>
-        || is_points_marker_v<MarkerType>
-        || is_triangle_list_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_colors_available_v =
-        is_line_strip_marker_v<MarkerType>
-        || is_line_list_marker_v<MarkerType>
-        || is_cube_list_marker_v<MarkerType>
-        || is_sphere_list_marker_v<MarkerType>
-        || is_points_marker_v<MarkerType>
-        || is_triangle_list_marker_v<MarkerType>;
-
-    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
-    struct conditional_position
-        : position_helper<Marker<MarkerType, Options...>> { };
-
-    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
-    struct conditional_orientation
-        : orientation_helper<Marker<MarkerType, Options...>> { };
-
-    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
-    struct conditional_color
-        : conditional_extend<
-            !is_colors_available_v<MarkerType> || !is_contained_v<option::Color::SEPARATE, Options...>,
-            color_helper<Marker<MarkerType, Options...>>> { };
-
-    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
-    struct conditional_scale
-        : conditional_extend<
-            is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>,
-            scale_pose_arrow_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>,
-            scale_vector_arrow_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_scale_available_v<MarkerType>,
-            scale_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_points_marker_v<MarkerType>,
-            scale_point_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_line_v<MarkerType>,
-            scale_line_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_text_view_facing_marker_v<MarkerType>,
-            scale_text_helper<Marker<MarkerType, Options...>>> { };
-
-    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
-    struct conditional_points
-        : conditional_extend<
-            is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>,
-            arrow_point_helper<Marker<MarkerType, Options...>>>
-        , conditional_extend<
-            is_points_available_v<MarkerType>,
-            points_helper<Marker<MarkerType, Options...>>> { };
-
-    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
-    struct conditional_colors
-        : conditional_extend<
-            is_colors_available_v<MarkerType> && is_contained_v<option::Color::SEPARATE, Options...>,
-            colors_helper<Marker<MarkerType, Options...>>> { };
-
-    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
-    struct conditional_text
-        : conditional_extend<
-            is_text_view_facing_marker_v<MarkerType>,
-            text_helper<Marker<MarkerType, Options...>>> { };
-
-    template<template<int32_t, auto...> typename Marker, int32_t MarkerType, auto... Options>
-    struct conditional_mesh_resource
-        : conditional_extend<
-            is_mesh_resource_marker_v<MarkerType>,
-            mesh_resource_helper<Marker<MarkerType, Options...>>> { };
-
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct MeshResourceHelper<Marker, MarkerType, OptionPack<Options...>,
+        std::enable_if_t<is_mesh_resource_marker_v<MarkerType>>>
+        : MeshResource<Marker> { };
 } // namespace internal
 
 template<int32_t MarkerType, auto... Options>
 class Marker
-    : public internal::conditional_position<Marker, MarkerType, Options...>
-    , public internal::conditional_orientation<Marker, MarkerType, Options...>
-    , public internal::conditional_scale<Marker, MarkerType, Options...>
-    , public internal::conditional_color<Marker, MarkerType, Options...>
-    , public internal::lifetime_helper<Marker<MarkerType, Options...>>
-    , public internal::frame_locked_helper<Marker<MarkerType, Options...>>
-    , public internal::conditional_points<Marker, MarkerType, Options...>
-    , public internal::conditional_colors<Marker, MarkerType, Options...>
-    , public internal::conditional_text<Marker, MarkerType, Options...>
-    , public internal::conditional_mesh_resource<Marker, MarkerType, Options...> {
+    : public internal::PositionHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::OrientationHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::ScaleHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::ColorHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::Lifetime<Marker<MarkerType, Options...>>
+    , public internal::FrameLocked<Marker<MarkerType, Options...>>
+    , public internal::PointsHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::ColorsHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::TextHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::MeshResourceHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>> {
 
     visualization_msgs::Marker marker;
 
@@ -847,7 +837,7 @@ public:
         marker.color.b = 1.0;
         marker.color.a = 1.0;
 
-        if constexpr (internal::is_scale_available_v<MarkerType>) {
+        if constexpr (internal::is_common_scale_available_v<MarkerType>) {
             marker.scale.x = 1;
             marker.scale.y = 1;
             marker.scale.z = 1;
@@ -858,7 +848,7 @@ public:
             marker.scale.y = 0.05;
         }
 
-        if constexpr (internal::is_line_v<MarkerType>) {
+        if constexpr (internal::is_line_marker_v<MarkerType>) {
             marker.scale.x = 0.05;
         }
 
