@@ -717,21 +717,6 @@ namespace internal {
         || is_line_list_marker_v<MarkerType>;
 
     template<int32_t MarkerType>
-    inline constexpr bool is_points_available_by_point_v =
-        is_line_strip_marker_v<MarkerType>
-        || is_cube_list_marker_v<MarkerType>
-        || is_sphere_list_marker_v<MarkerType>
-        || is_points_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_points_available_by_line_v =
-        is_line_list_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
-    inline constexpr bool is_points_available_by_triangle_v =
-        is_triangle_list_marker_v<MarkerType>;
-
-    template<int32_t MarkerType>
     inline constexpr bool is_points_available_v =
         is_line_strip_marker_v<MarkerType>
         || is_line_list_marker_v<MarkerType>
