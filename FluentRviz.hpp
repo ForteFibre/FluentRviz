@@ -584,7 +584,7 @@ namespace internal {
     struct OptionPack { };
 
     template<typename T>
-    struct Position {
+    struct PositionHelper {
         [[nodiscard]] T &&position(const param::Point position) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -595,10 +595,10 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct PositionHelper : Position<Marker> { };
+    struct PositionEnabler : PositionHelper<Marker> { };
 
     template<typename T>
-    struct Orientation {
+    struct OrientationHelper {
         [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -609,10 +609,10 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct OrientationHelper : Orientation<Marker> { };
+    struct OrientationEnabler : OrientationHelper<Marker> { };
 
     template<typename T, typename ScaleParamType = param::Scale>
-    struct Scale {
+    struct ScaleHelper {
         [[nodiscard]] T &&scale(const ScaleParamType scale) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -623,40 +623,40 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct ScaleHelper { };
+    struct ScaleEnabler { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_common_scale_available_v<MarkerType>>>
-        : Scale<Marker> { };
+        : ScaleHelper<Marker> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>>>
-        : Scale<Marker, param::PoseArrowScale> { };
+        : ScaleHelper<Marker, param::PoseArrowScale> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
-        : Scale<Marker, param::VectorArrowScale> { };
+        : ScaleHelper<Marker, param::VectorArrowScale> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_points_marker_v<MarkerType>>>
-        : Scale<Marker, param::PointScale> { };
+        : ScaleHelper<Marker, param::PointScale> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_line_marker_v<MarkerType>>>
-        : Scale<Marker, param::LineScale> { };
+        : ScaleHelper<Marker, param::LineScale> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct ScaleHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
-        : Scale<Marker, param::TextScale> { };
+        : ScaleHelper<Marker, param::TextScale> { };
 
     template<typename T>
-    struct Color {
+    struct ColorHelper {
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -667,15 +667,15 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct ColorHelper { };
+    struct ColorEnabler { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct ColorHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct ColorEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<!is_colors_available_v<MarkerType> || !is_contained_v<option::Color::SEPARATE, Options...>>>
-        : Color<Marker> { };
+        : ColorHelper<Marker> { };
 
     template<typename T>
-    struct Lifetime {
+    struct LifetimeHelper {
         [[nodiscard]] T &&lifetime(const double lifetime) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -686,7 +686,7 @@ namespace internal {
     };
 
     template<typename T>
-    struct FrameLocked {
+    struct FrameLockedHelper {
         [[nodiscard]] T &&frame_locked(const bool frame_locked) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -697,7 +697,7 @@ namespace internal {
     };
 
     template<typename T>
-    struct Points {
+    struct PointsHelper {
         [[nodiscard]] T &&points(std::vector<geometry_msgs::Point> points) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -708,7 +708,7 @@ namespace internal {
     };
 
     template<typename T>
-    struct ArrowPoints {
+    struct ArrowPointsHelper {
         [[nodiscard]] T &&start(const param::Point point) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -732,20 +732,20 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct PointsHelper { };
+    struct PointsEnabler { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct PointsHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_points_available_v<MarkerType>>>
-        : Points<Marker> { };
+        : PointsHelper<Marker> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct PointsHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
-        : ArrowPoints<Marker> { };
+        : ArrowPointsHelper<Marker> { };
 
     template<typename T>
-    struct Colors {
+    struct ColorsHelper {
         [[nodiscard]] T &&colors(std::vector<std_msgs::ColorRGBA> colors) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -756,15 +756,15 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct ColorsHelper { };
+    struct ColorsEnabler { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct ColorsHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct ColorsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_colors_available_v<MarkerType> && is_contained_v<option::Color::SEPARATE, Options...>>>
-        : Colors<Marker> { };
+        : ColorsHelper<Marker> { };
 
     template<typename T>
-    struct Text {
+    struct TextHelper {
         [[nodiscard]] T &&text(std::string text) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -775,15 +775,15 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct TextHelper { };
+    struct TextEnabler { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct TextHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct TextEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
-        : Text<Marker> { };
+        : TextHelper<Marker> { };
 
     template<typename T>
-    struct MeshResource {
+    struct MeshResourceHelper {
         [[nodiscard]] T &&mesh_resource(std::string mesh_resource) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -802,26 +802,26 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct MeshResourceHelper { };
+    struct MeshResourceEnabler { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
-    struct MeshResourceHelper<Marker, MarkerType, OptionPack<Options...>,
+    struct MeshResourceEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_mesh_resource_marker_v<MarkerType>>>
-        : MeshResource<Marker> { };
+        : MeshResourceHelper<Marker> { };
 } // namespace internal
 
 template<int32_t MarkerType, auto... Options>
 class Marker
-    : public internal::PositionHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::OrientationHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::ScaleHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::ColorHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::Lifetime<Marker<MarkerType, Options...>>
-    , public internal::FrameLocked<Marker<MarkerType, Options...>>
-    , public internal::PointsHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::ColorsHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::TextHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::MeshResourceHelper<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>> {
+    : public internal::PositionEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::OrientationEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::ScaleEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::ColorEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::LifetimeHelper<Marker<MarkerType, Options...>>
+    , public internal::FrameLockedHelper<Marker<MarkerType, Options...>>
+    , public internal::PointsEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::ColorsEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::TextEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+    , public internal::MeshResourceEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>> {
 
     visualization_msgs::Marker marker;
 
