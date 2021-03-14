@@ -614,8 +614,8 @@ namespace internal {
             return std::move(self);
         }
 
-        template<typename S>
-        [[nodiscard]] T &&points(std::vector<S> points) && noexcept
+        template<typename PointAlike>
+        [[nodiscard]] T &&points(std::vector<PointAlike> points) && noexcept
         {
             std::vector<geometry_msgs::Point> converted(points.size());
             std::transform(std::begin(points), std::end(points), std::begin(converted),
@@ -675,6 +675,13 @@ namespace internal {
             visualization_msgs::Marker &marker = self.msg();
             marker.colors = std::move(colors);
             return std::move(self);
+        }
+
+        template<typename S>
+        [[nodiscard]] T &&colors(std::vector<param::Color> colors) && noexcept
+        {
+            std::vector<geometry_msgs::Point> converted(std::begin(colors), std::end(colors));
+            return std::move(*this).points(std::move(converted));
         }
     };
 
