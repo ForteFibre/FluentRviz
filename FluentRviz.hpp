@@ -740,81 +740,88 @@ namespace internal {
         : MeshResourceHelper<Marker> { };
 } // namespace internal
 
-template<int32_t MarkerType, auto... Options>
-class Marker
-    : public internal::PositionEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::OrientationEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::ScaleEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::ColorEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::LifetimeHelper<Marker<MarkerType, Options...>>
-    , public internal::FrameLockedHelper<Marker<MarkerType, Options...>>
-    , public internal::PointsEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::ColorsEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::TextEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-    , public internal::MeshResourceEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>> {
+namespace marker {
+    class MarkerBase {
+        visualization_msgs::Marker marker;
 
-    visualization_msgs::Marker marker;
+    public:
+        MarkerBase() = default;
+        MarkerBase(const MarkerBase &) = delete;
+        MarkerBase(MarkerBase &&) = default;
 
-public:
-    Marker(int32_t id, std::string ns = "") noexcept
-    {
-        marker.id = id;
-        marker.ns = std::move(ns);
-        marker.type = MarkerType;
-        marker.pose.orientation.w = 1.0;
-        marker.color.r = 1.0;
-        marker.color.g = 1.0;
-        marker.color.b = 1.0;
-        marker.color.a = 1.0;
+        [[nodiscard]] visualization_msgs::Marker &msg() noexcept
+        { return marker; }
+    };
 
-        if constexpr (internal::is_common_scale_available_v<MarkerType>) {
-            marker.scale.x = 1;
-            marker.scale.y = 1;
-            marker.scale.z = 1;
-        }
+    template<int32_t MarkerType, auto... Options>
+    class Marker
+        : public MarkerBase
+        , public internal::PositionEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+        , public internal::OrientationEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+        , public internal::ScaleEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+        , public internal::ColorEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+        , public internal::LifetimeHelper<Marker<MarkerType, Options...>>
+        , public internal::FrameLockedHelper<Marker<MarkerType, Options...>>
+        , public internal::PointsEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+        , public internal::ColorsEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+        , public internal::TextEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
+        , public internal::MeshResourceEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>> {
 
-        if constexpr (internal::is_points_marker_v<MarkerType>) {
-            marker.scale.x = 0.05;
-            marker.scale.y = 0.05;
-        }
+    public:
+        Marker(int32_t id, std::string ns = "") noexcept
+        {
+            auto& marker = msg();
 
-        if constexpr (internal::is_line_marker_v<MarkerType>) {
-            marker.scale.x = 0.05;
-        }
+            marker.id = id;
+            marker.ns = std::move(ns);
+            marker.type = MarkerType;
+            marker.pose.orientation.w = 1.0;
+            marker.color.r = 1.0;
+            marker.color.g = 1.0;
+            marker.color.b = 1.0;
+            marker.color.a = 1.0;
 
-        if constexpr (internal::is_arrow_marker_v<MarkerType>) {
-            if constexpr (internal::is_contained_v<option::Arrow::POSE, Options...>) {
+            if constexpr (internal::is_common_scale_available_v<MarkerType>) {
                 marker.scale.x = 1;
                 marker.scale.y = 1;
                 marker.scale.z = 1;
             }
-            if constexpr (internal::is_contained_v<option::Arrow::VECTOR, Options...>) {
-                marker.scale.x = .2;
-                marker.scale.y = .4;
-                marker.scale.z = .4;
+
+            if constexpr (internal::is_points_marker_v<MarkerType>) {
+                marker.scale.x = 0.05;
+                marker.scale.y = 0.05;
+            }
+
+            if constexpr (internal::is_line_marker_v<MarkerType>) {
+                marker.scale.x = 0.05;
+            }
+
+            if constexpr (internal::is_arrow_marker_v<MarkerType>) {
+                if constexpr (internal::is_contained_v<option::Arrow::POSE, Options...>) {
+                    marker.scale.x = 1;
+                    marker.scale.y = 1;
+                    marker.scale.z = 1;
+                }
+                if constexpr (internal::is_contained_v<option::Arrow::VECTOR, Options...>) {
+                    marker.scale.x = .2;
+                    marker.scale.y = .4;
+                    marker.scale.z = .4;
+                }
+            }
+
+            if constexpr (
+                internal::is_arrow_marker_v<MarkerType>
+                && internal::is_contained_v<option::Arrow::VECTOR, Options...>) {
+                marker.points.resize(2);
+            }
+
+            if constexpr (internal::is_text_view_facing_marker_v<MarkerType>) {
+                marker.scale.z = 1;
+                marker.text = "visualization_msgs::Marker::TEXT_VIEW_FACING";
             }
         }
+    };
 
-        if constexpr (
-            internal::is_arrow_marker_v<MarkerType>
-            && internal::is_contained_v<option::Arrow::VECTOR, Options...>) {
-            marker.points.resize(2);
-        }
-
-        if constexpr (internal::is_text_view_facing_marker_v<MarkerType>) {
-            marker.scale.z = 1;
-            marker.text = "visualization_msgs::Marker::TEXT_VIEW_FACING";
-        }
-    }
-
-    Marker(const Marker<MarkerType, Options...> &) = delete;
-    Marker(Marker<MarkerType, Options...> &&) = default;
-
-    [[nodiscard]] visualization_msgs::Marker &msg() noexcept
-    { return marker; }
-};
-
-namespace marker {
     using PoseArrow = Marker<visualization_msgs::Marker::ARROW, option::Arrow::POSE>;
     using VectorArrow = Marker<visualization_msgs::Marker::ARROW, option::Arrow::VECTOR>;
     using Arrow = VectorArrow;
@@ -835,6 +842,26 @@ namespace marker {
     using MeshResource = Marker<visualization_msgs::Marker::MESH_RESOURCE>;
     using TriangleList = Marker<visualization_msgs::Marker::TRIANGLE_LIST>;
     using ColorfulTriangleList = Marker<visualization_msgs::Marker::TRIANGLE_LIST, option::Color::SEPARATE>;
+
+    class Delete : public MarkerBase {
+    public:
+        Delete(int32_t id, std::string ns = "")
+        {
+            auto& marker = msg();
+            marker.id = id;
+            marker.ns = std::move(ns);
+            marker.action = visualization_msgs::Marker::DELETE;
+        }
+    };
+
+    class DeleteAll : public MarkerBase {
+    public:
+        DeleteAll()
+        {
+            auto& marker = msg();
+            marker.action = visualization_msgs::Marker::DELETEALL;
+        }
+    };
 } // namespace marker
 
 class Rviz {
@@ -849,56 +876,11 @@ public:
         , frame_id_(frame_id)
     { }
 
-    template<int32_t MarkerType, auto... Options>
-    void add_marker(Marker<MarkerType, Options...> &m) const
+    template<typename T>
+    const Rviz &operator<<(T &&marker) const
     {
-        visualization_msgs::Marker &marker = m.msg();
-        marker.action = visualization_msgs::Marker::ADD;
-        publish(marker);
-    }
-
-    template<int32_t MarkerType, auto... Options>
-    void add_marker(Marker<MarkerType, Options...> &&m) const
-    { add_marker(m); }
-
-    template<int32_t MarkerType, auto... Options>
-    void operator+=(Marker<MarkerType, Options...> &m) const
-    { this->add_marker(m); }
-
-    template<int32_t MarkerType, auto... Options>
-    void operator+=(Marker<MarkerType, Options...> &&m) const
-    { this->add_marker(m); }
-
-    void delete_marker(const int32_t id, std::string ns = "") const
-    {
-        visualization_msgs::Marker marker;
-        marker.id = id;
-        marker.ns = std::move(ns);
-        marker.action = visualization_msgs::Marker::DELETE;
-        publish(marker);
-    }
-
-    template<int32_t MarkerType, auto... Options>
-    void delete_marker(Marker<MarkerType, Options...> &m) const
-    {
-        visualization_msgs::Marker &marker = m.msg();
-        marker.action = visualization_msgs::Marker::DELETE;
-        publish(marker);
-    }
-
-    template<int32_t MarkerType, auto... Options>
-    void operator-=(Marker<MarkerType, Options...> &m) const
-    { this->delete_marker(m); }
-
-    template<int32_t MarkerType, auto... Options>
-    void operator-=(Marker<MarkerType, Options...> &&m) const
-    { this->delete_marker(m); }
-
-    void delete_all_marker() const
-    {
-        visualization_msgs::Marker marker;
-        marker.action = visualization_msgs::Marker::DELETEALL;
-        publish(marker);
+        publish(marker.msg());
+        return *this;
     }
 
     void publish(visualization_msgs::Marker &marker) const
