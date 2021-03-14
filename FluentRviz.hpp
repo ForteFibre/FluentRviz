@@ -614,8 +614,8 @@ namespace internal {
             return std::move(self);
         }
 
-        template<typename PointAlike>
-        [[nodiscard]] T &&points(std::vector<PointAlike> points) && noexcept
+        template<typename PointLike>
+        [[nodiscard]] T &&points(std::vector<PointLike> points) && noexcept
         {
             std::vector<geometry_msgs::Point> converted(points.size());
             std::transform(std::begin(points), std::end(points), std::begin(converted),
