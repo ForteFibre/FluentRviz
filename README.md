@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "example");
     flrviz::Rviz rviz("map", "visualization_msgs");
-    rviz += flrviz::marker::Cube(0)
-        .color({ 1, 0, 0 });
+    rviz << flrviz::marker::Cube(0)
+        .color(1, 0, 0);
 }
 ```
