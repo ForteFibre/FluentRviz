@@ -466,7 +466,7 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct PositionEnabler : PositionHelper<Marker> { };
 
     template<typename T>
@@ -483,11 +483,14 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct OrientationEnabler : OrientationHelper<Marker> { };
 
     template<typename T>
     struct ScaleHelper {
+        ScaleHelper()
+        { static_cast<void>(std::move(*this).scale(1, 1, 1)); }
+
         [[nodiscard]] T &&scale(const double x, const double y, const double z) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -499,63 +502,78 @@ namespace internal {
 
     template<typename T>
     struct PoseArrowScaleHelper : ScaleHelper<T> {
+        PoseArrowScaleHelper()
+        { static_cast<void>(std::move(*this).scale(0.05, 0.05)); }
+
         [[nodiscard]] T &&scale(const double length, const double width, const double height) && noexcept
         { return std::move(*this).ScaleHelper<T>::scale(length, width, height); }
     };
 
     template<typename T>
     struct VectorArrowScaleHelper : ScaleHelper<T> {
+        VectorArrowScaleHelper()
+        { static_cast<void>(std::move(*this).scale(0.2, 0.4, 0.4)); }
+
         [[nodiscard]] T &&scale(const double shaft_diameter, const double head_diameter, const double head_length) && noexcept
         { return std::move(*this).ScaleHelper<T>::scale(shaft_diameter, head_diameter, head_length); }
     };
 
     template<typename T>
     struct PointScaleHelper : ScaleHelper<T> {
+        PointScaleHelper()
+        { static_cast<void>(std::move(*this).scale(0.05, 0.05)); }
+
         [[nodiscard]] T &&scale(const double width, const double height) && noexcept
         { return std::move(*this).ScaleHelper<T>::scale(width, height, 0); }
     };
 
     template<typename T>
     struct LineScaleHelper : ScaleHelper<T> {
+        LineScaleHelper()
+        { static_cast<void>(std::move(*this).scale(0.05)); }
+
         [[nodiscard]] T &&scale(const double width) && noexcept
         { return std::move(*this).ScaleHelper<T>::scale(width, 0, 0); }
     };
 
     template<typename T>
     struct TextScaleHelper : ScaleHelper<T> {
+        TextScaleHelper()
+        { static_cast<void>(std::move(*this).scale(1)); }
+
         [[nodiscard]] T &&scale(const double height) && noexcept
         { return std::move(*this).ScaleHelper<T>::scale(0, 0, height); }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct ScaleEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_common_scale_available_v<MarkerType>>>
         : ScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>>>
         : PoseArrowScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
         : VectorArrowScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_points_marker_v<MarkerType>>>
         : PointScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_line_marker_v<MarkerType>>>
         : LineScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
         : TextScaleHelper<Marker> { };
@@ -574,10 +592,10 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct ColorEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ColorEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<!is_colors_available_v<MarkerType> || !is_contained_v<option::Color::SEPARATE, Options...>>>
         : ColorHelper<Marker> { };
@@ -626,6 +644,13 @@ namespace internal {
 
     template<typename T>
     struct ArrowPointsHelper {
+        ArrowPointsHelper()
+        {
+            T &self = static_cast<T &>(*this);
+            visualization_msgs::Marker &marker = self.msg();
+            marker.points.resize(2);
+        }
+
         [[nodiscard]] T &&start(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).start({ x, y, z }); }
 
@@ -654,15 +679,15 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct PointsEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_points_available_v<MarkerType>>>
         : PointsHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
         : ArrowPointsHelper<Marker> { };
@@ -685,16 +710,19 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct ColorsEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ColorsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_colors_available_v<MarkerType> && is_contained_v<option::Color::SEPARATE, Options...>>>
         : ColorsHelper<Marker> { };
 
     template<typename T>
     struct TextHelper {
+        TextHelper()
+        { static_cast<void>(std::move(*this).text("visualization_msgs::Marker::TEXT_VIEW_FACING")); }
+
         [[nodiscard]] T &&text(std::string text) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -704,10 +732,10 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct TextEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct TextEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
         : TextHelper<Marker> { };
@@ -731,10 +759,10 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct MeshResourceEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct MeshResourceEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_mesh_resource_marker_v<MarkerType>>>
         : MeshResourceHelper<Marker> { };
@@ -771,54 +799,11 @@ namespace marker {
         Marker(int32_t id, std::string ns = "") noexcept
         {
             auto& marker = msg();
-
             marker.id = id;
             marker.ns = std::move(ns);
             marker.type = MarkerType;
             marker.pose.orientation.w = 1.0;
-            marker.color.r = 1.0;
-            marker.color.g = 1.0;
-            marker.color.b = 1.0;
-            marker.color.a = 1.0;
-
-            if constexpr (internal::is_common_scale_available_v<MarkerType>) {
-                marker.scale.x = 1;
-                marker.scale.y = 1;
-                marker.scale.z = 1;
-            }
-
-            if constexpr (internal::is_points_marker_v<MarkerType>) {
-                marker.scale.x = 0.05;
-                marker.scale.y = 0.05;
-            }
-
-            if constexpr (internal::is_line_marker_v<MarkerType>) {
-                marker.scale.x = 0.05;
-            }
-
-            if constexpr (internal::is_arrow_marker_v<MarkerType>) {
-                if constexpr (internal::is_contained_v<option::Arrow::POSE, Options...>) {
-                    marker.scale.x = 1;
-                    marker.scale.y = 1;
-                    marker.scale.z = 1;
-                }
-                if constexpr (internal::is_contained_v<option::Arrow::VECTOR, Options...>) {
-                    marker.scale.x = .2;
-                    marker.scale.y = .4;
-                    marker.scale.z = .4;
-                }
-            }
-
-            if constexpr (
-                internal::is_arrow_marker_v<MarkerType>
-                && internal::is_contained_v<option::Arrow::VECTOR, Options...>) {
-                marker.points.resize(2);
-            }
-
-            if constexpr (internal::is_text_view_facing_marker_v<MarkerType>) {
-                marker.scale.z = 1;
-                marker.text = "visualization_msgs::Marker::TEXT_VIEW_FACING";
-            }
+            marker.color.r = marker.color.g = marker.color.b = marker.color.a = 1.0;
         }
     };
 
