@@ -231,56 +231,6 @@ namespace param {
         { return vector3; }
     };
 
-    class Scale {
-        geometry_msgs::Vector3 vector3;
-
-    public:
-        Scale(const double x, const double y, const double z) noexcept
-        {
-            vector3.x = x;
-            vector3.y = y;
-            vector3.z = z;
-        }
-
-        operator const geometry_msgs::Vector3 &() const noexcept
-        { return vector3; }
-    };
-
-    class PoseArrowScale : public Scale {
-    public:
-        PoseArrowScale(const double length, const double width, const double height) noexcept
-            : Scale(length, width, height)
-        { }
-    };
-
-    class VectorArrowScale : public Scale {
-    public:
-        VectorArrowScale(const double shaft_diameter, const double head_diameter, const double head_length) noexcept
-            : Scale(shaft_diameter, head_diameter, head_length)
-        { }
-    };
-
-    class PointScale : public Scale {
-    public:
-        PointScale(const double width, const double height) noexcept
-            : Scale(width, height, 0)
-        { }
-    };
-
-    class LineScale : public Scale {
-    public:
-        LineScale(const double width) noexcept
-            : Scale(width, 0, 0)
-        { }
-    };
-
-    class TextScale : public Scale {
-    public:
-        TextScale(const double height) noexcept
-            : Scale(0, 0, height)
-        { }
-    };
-
     class Quaternion {
         geometry_msgs::Quaternion quaternion;
 
@@ -435,87 +385,6 @@ namespace param {
         operator const std_msgs::ColorRGBA &() const noexcept
         { return color; }
     };
-
-    class PointVector {
-        std::vector<geometry_msgs::Point> points;
-
-    public:
-        PointVector() noexcept = default;
-
-        PointVector(std::vector<geometry_msgs::Point> arg) noexcept
-            : points(std::move(arg))
-        { }
-
-        template<typename T>
-        PointVector(const std::vector<T> &arg)
-        {
-            points.reserve(arg.size());
-            for (auto& e : arg) add_point(e);
-        }
-
-        template<typename T>
-        [[nodiscard]] static PointVector from_2d(const std::vector<T> &arg, double z = 0.0)
-        {
-            PointVector res;
-            res.points.reserve(arg.size());
-            for (auto& e : arg) res.add_point(param::Point::from_2d(e, z));
-            return res;
-        }
-
-        PointVector &add_point(const Point point)
-        {
-            points.push_back(point);
-            return *this;
-        }
-
-        operator const std::vector<geometry_msgs::Point> &() const noexcept
-        { return points; }
-    };
-
-    class LineVector {
-        std::vector<geometry_msgs::Point> points;
-
-    public:
-        LineVector &add_line(Point start, Point end)
-        {
-            points.push_back(start);
-            points.push_back(end);
-            return *this;
-        }
-
-        operator const std::vector<geometry_msgs::Point> &() const noexcept
-        { return points; }
-    };
-
-    class TriangleVector {
-        std::vector<geometry_msgs::Point> points;
-
-    public:
-        TriangleVector &add_triangle(Point a, Point b, Point c)
-        {
-            points.push_back(a);
-            points.push_back(b);
-            points.push_back(c);
-            return *this;
-        }
-
-        operator const std::vector<geometry_msgs::Point> &() const noexcept
-        { return points; }
-    };
-
-    class ColorVector {
-        std::vector<std_msgs::ColorRGBA> colors;
-
-    public:
-        ColorVector &add_color(Color color)
-        {
-            colors.push_back(color);
-            return *this;
-        }
-
-        operator const std::vector<std_msgs::ColorRGBA> &() const noexcept
-        { return colors; }
-    };
 } // namespace param
 
 namespace internal {
@@ -585,6 +454,9 @@ namespace internal {
 
     template<typename T>
     struct PositionHelper {
+        [[nodiscard]] T &&position(const double x, const double y, const double z = 0.0) && noexcept
+        { return std::move(*this).position({ x, y, z }); }
+
         [[nodiscard]] T &&position(const param::Point position) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -599,6 +471,9 @@ namespace internal {
 
     template<typename T>
     struct OrientationHelper {
+        [[nodiscard]] T &&orientation(const double x, const double y, const double z, const double w) && noexcept
+        { return orientation({ x, y, z, w }); }
+
         [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -611,15 +486,45 @@ namespace internal {
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct OrientationEnabler : OrientationHelper<Marker> { };
 
-    template<typename T, typename ScaleParamType = param::Scale>
+    template<typename T>
     struct ScaleHelper {
-        [[nodiscard]] T &&scale(const ScaleParamType scale) && noexcept
+        [[nodiscard]] T &&scale(const double x, const double y, const double z) && noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
-            marker.scale = scale;
+            marker.scale = param::Vector3(x, y, z);
             return std::move(self);
         }
+    };
+
+    template<typename T>
+    struct PoseArrowScaleHelper : ScaleHelper<T> {
+        [[nodiscard]] T &&scale(const double length, const double width, const double height) && noexcept
+        { return std::move(*this).ScaleHelper<T>::scale(length, width, height); }
+    };
+
+    template<typename T>
+    struct VectorArrowScaleHelper : ScaleHelper<T> {
+        [[nodiscard]] T &&scale(const double shaft_diameter, const double head_diameter, const double head_length) && noexcept
+        { return std::move(*this).ScaleHelper<T>::scale(shaft_diameter, head_diameter, head_length); }
+    };
+
+    template<typename T>
+    struct PointScaleHelper : ScaleHelper<T> {
+        [[nodiscard]] T &&scale(const double width, const double height) && noexcept
+        { return std::move(*this).ScaleHelper<T>::scale(width, height, 0); }
+    };
+
+    template<typename T>
+    struct LineScaleHelper : ScaleHelper<T> {
+        [[nodiscard]] T &&scale(const double width) && noexcept
+        { return std::move(*this).ScaleHelper<T>::scale(width, 0, 0); }
+    };
+
+    template<typename T>
+    struct TextScaleHelper : ScaleHelper<T> {
+        [[nodiscard]] T &&scale(const double height) && noexcept
+        { return std::move(*this).ScaleHelper<T>::scale(0, 0, height); }
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
@@ -633,30 +538,33 @@ namespace internal {
     template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>>>
-        : ScaleHelper<Marker, param::PoseArrowScale> { };
+        : PoseArrowScaleHelper<Marker> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
-        : ScaleHelper<Marker, param::VectorArrowScale> { };
+        : VectorArrowScaleHelper<Marker> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_points_marker_v<MarkerType>>>
-        : ScaleHelper<Marker, param::PointScale> { };
+        : PointScaleHelper<Marker> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_line_marker_v<MarkerType>>>
-        : ScaleHelper<Marker, param::LineScale> { };
+        : LineScaleHelper<Marker> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
-        : ScaleHelper<Marker, param::TextScale> { };
+        : TextScaleHelper<Marker> { };
 
     template<typename T>
     struct ColorHelper {
+        [[nodiscard]] T &&color(const float r, const float g, const float b, const float a = 1.0) && noexcept
+        { return std::move(*this).color({ r, g, b, a }); }
+
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
             T &self = static_cast<T &>(*this);
@@ -705,15 +613,30 @@ namespace internal {
             marker.points = std::move(points);
             return std::move(self);
         }
+
+        template<typename S>
+        [[nodiscard]] T &&points(std::vector<S> points) && noexcept
+        {
+            std::vector<geometry_msgs::Point> converted(points.size());
+            std::transform(std::begin(points), std::end(points), std::begin(converted),
+                [](auto &e) { return param::Point(e); });
+            return std::move(*this).points(std::move(converted));
+        }
     };
 
     template<typename T>
     struct ArrowPointsHelper {
+        [[nodiscard]] T &&start(const double x, const double y, const double z = 0.0) && noexcept
+        { return std::move(*this).start({ x, y, z }); }
+
         [[nodiscard]] T &&start(const param::Point point) && noexcept
         {
             T &self = static_cast<T &>(*this);
             return set_point(0, point);
         }
+
+        [[nodiscard]] T &&end(const double x, const double y, const double z = 0.0) && noexcept
+        { return std::move(*this).start({ x, y, z }); }
 
         [[nodiscard]] T &&end(const param::Point point) && noexcept
         {
