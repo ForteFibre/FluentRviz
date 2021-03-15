@@ -813,6 +813,7 @@ namespace marker {
             marker.id = id;
             marker.ns = std::move(ns);
             marker.type = MarkerType;
+            marker.action = visualization_msgs::Marker::ADD;
         }
     };
 
