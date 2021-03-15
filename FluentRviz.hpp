@@ -583,6 +583,9 @@ namespace internal {
 
     template<typename T>
     struct ColorHelper {
+        ColorHelper()
+        { static_cast<void>(std::move(*this).color(1, 1, 1)); }
+
         [[nodiscard]] T &&color(const float r, const float g, const float b, const float a = 1.0) && noexcept
         { return std::move(*this).color({ r, g, b, a }); }
 
@@ -597,6 +600,9 @@ namespace internal {
 
     template<typename T>
     struct ColorsHelper {
+        ColorsHelper()
+        { static_cast<void>(std::move(*this).color(1, 1, 1)); }
+
         [[nodiscard]] T &&color(const float r, const float g, const float b, const float a = 1.0) && noexcept
         { return std::move(*this).color({ r, g, b, a }); }
 
@@ -808,8 +814,6 @@ namespace marker {
             marker.id = id;
             marker.ns = std::move(ns);
             marker.type = MarkerType;
-            marker.pose.orientation.w = 1.0;
-            marker.color.r = marker.color.g = marker.color.b = marker.color.a = 1.0;
         }
     };
 
