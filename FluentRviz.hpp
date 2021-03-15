@@ -471,8 +471,11 @@ namespace internal {
 
     template<typename T>
     struct OrientationHelper {
+        OrientationHelper()
+        { static_cast<void>(std::move(*this).orientation(0, 0, 0, 1)); }
+
         [[nodiscard]] T &&orientation(const double x, const double y, const double z, const double w) && noexcept
-        { return orientation({ x, y, z, w }); }
+        { return std::move(*this).orientation({ x, y, z, w }); }
 
         [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
@@ -485,6 +488,9 @@ namespace internal {
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct OrientationEnabler : OrientationHelper<Marker> { };
+
+    template<typename Marker, size_t MarkerType, auto... Options>
+    struct OrientationEnabler<Marker, MarkerType, OptionPack<Options...>, std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>> { };
 
     template<typename T>
     struct ScaleHelper {
@@ -593,12 +599,11 @@ namespace internal {
     };
 
     template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
-    struct ColorEnabler { };
+    struct ColorEnabler : ColorHelper<Marker> { };
 
     template<typename Marker, size_t MarkerType, auto... Options>
     struct ColorEnabler<Marker, MarkerType, OptionPack<Options...>,
-        std::enable_if_t<!is_colors_available_v<MarkerType> || !is_contained_v<option::Color::SEPARATE, Options...>>>
-        : ColorHelper<Marker> { };
+        std::enable_if_t<is_colors_available_v<MarkerType> && is_contained_v<option::Color::SEPARATE, Options...>>> { };
 
     template<typename T>
     struct LifetimeHelper {
