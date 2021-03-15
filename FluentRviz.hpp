@@ -773,11 +773,14 @@ namespace internal {
 } // namespace internal
 
 namespace marker {
+    template<int32_t Action>
     class MarkerBase {
         visualization_msgs::Marker marker;
 
     public:
-        MarkerBase() = default;
+        MarkerBase()
+        { marker.action = Action }
+
         MarkerBase(const MarkerBase &) = delete;
         MarkerBase(MarkerBase &&) = default;
 
@@ -787,7 +790,7 @@ namespace marker {
 
     template<int32_t MarkerType, auto... Options>
     class Marker
-        : public MarkerBase
+        : public MarkerBase<visualization_msgs::Marker::ADD>
         , public internal::PositionEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
         , public internal::OrientationEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
         , public internal::ScaleEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
@@ -805,7 +808,6 @@ namespace marker {
             marker.id = id;
             marker.ns = std::move(ns);
             marker.type = MarkerType;
-            marker.action = visualization_msgs::Marker::ADD;
         }
     };
 
@@ -824,25 +826,17 @@ namespace marker {
     using MeshResource = Marker<visualization_msgs::Marker::MESH_RESOURCE>;
     using TriangleList = Marker<visualization_msgs::Marker::TRIANGLE_LIST>;
 
-    class Delete : public MarkerBase {
+    class Delete : public MarkerBase<visualization_msgs::Marker::DELETE> {
     public:
         Delete(int32_t id, std::string ns = "")
         {
             auto& marker = msg();
             marker.id = id;
             marker.ns = std::move(ns);
-            marker.action = visualization_msgs::Marker::DELETE;
         }
     };
 
-    class DeleteAll : public MarkerBase {
-    public:
-        DeleteAll()
-        {
-            auto& marker = msg();
-            marker.action = visualization_msgs::Marker::DELETEALL;
-        }
-    };
+    class DeleteAll : public MarkerBase<visualization_msgs::Marker::DELETEALL> { };
 } // namespace marker
 
 class Rviz {
