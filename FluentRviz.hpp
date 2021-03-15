@@ -106,9 +106,6 @@ namespace traits {
     template<typename T>
     inline constexpr bool is_std_get_defined_v = is_detected_v<std_get_t, T>;
 
-    template<typename T>
-    inline constexpr bool false_v = false;
-
     template<typename T, auto M, typename Enable = void>
     struct access;
 
