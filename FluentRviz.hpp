@@ -690,20 +690,21 @@ namespace internal {
         { return std::move(*this).start({ x, y, z }); }
 
         [[nodiscard]] T &&start(const param::Point point) && noexcept
-        { return set_point(0, point); }
+        { return set<0>(point); }
 
         [[nodiscard]] T &&end(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).end({ x, y, z }); }
 
         [[nodiscard]] T &&end(const param::Point point) && noexcept
-        { return set_point(1, point); }
+        { return set<1>(point); }
 
     private:
-        [[nodiscard]] T &&set_point(const size_t idx, const param::Point &point) noexcept
+        template<size_t Index>
+        [[nodiscard]] T &&set(const param::Point &point) noexcept
         {
             T &self = static_cast<T &>(*this);
             visualization_msgs::Marker &marker = self.msg();
-            marker.points[idx] = point;
+            marker.points[Index] = point;
             return std::move(self);
         }
     };
