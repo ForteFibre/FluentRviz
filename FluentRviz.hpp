@@ -779,7 +779,7 @@ namespace marker {
 
     public:
         MarkerBase()
-        { marker.action = Action }
+        { marker.action = Action; }
 
         MarkerBase(const MarkerBase &) = delete;
         MarkerBase(MarkerBase &&) = default;
