@@ -623,7 +623,6 @@ namespace internal {
             return std::move(self);
         }
 
-        template<typename S>
         [[nodiscard]] T &&color(std::vector<param::Color> colors) && noexcept
         {
             std::vector<geometry_msgs::Point> converted(std::begin(colors), std::end(colors));
