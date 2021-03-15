@@ -798,7 +798,6 @@ namespace marker {
         , public internal::LifetimeHelper<Marker<MarkerType, Options...>>
         , public internal::FrameLockedHelper<Marker<MarkerType, Options...>>
         , public internal::PointsEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
-        , public internal::ColorsEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
         , public internal::TextEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>>
         , public internal::MeshResourceEnabler<Marker<MarkerType, Options...>, MarkerType, internal::OptionPack<Options...>> {
 
