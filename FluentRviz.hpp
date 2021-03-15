@@ -696,7 +696,7 @@ namespace internal {
         { return set_point(0, point); }
 
         [[nodiscard]] T &&end(const double x, const double y, const double z = 0.0) && noexcept
-        { return std::move(*this).start({ x, y, z }); }
+        { return std::move(*this).end({ x, y, z }); }
 
         [[nodiscard]] T &&end(const param::Point point) && noexcept
         { return set_point(1, point); }
