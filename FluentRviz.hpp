@@ -693,19 +693,13 @@ namespace internal {
         { return std::move(*this).start({ x, y, z }); }
 
         [[nodiscard]] T &&start(const param::Point point) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            return set_point(0, point);
-        }
+        { return set_point(0, point); }
 
         [[nodiscard]] T &&end(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).start({ x, y, z }); }
 
         [[nodiscard]] T &&end(const param::Point point) && noexcept
-        {
-            T &self = static_cast<T &>(*this);
-            return set_point(1, point);
-        }
+        { return set_point(1, point); }
 
     private:
         [[nodiscard]] T &&set_point(const size_t idx, const param::Point &point) noexcept
