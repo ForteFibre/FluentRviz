@@ -428,8 +428,6 @@ namespace internal {
         [[nodiscard]] T &derived()
         { return static_cast<T &>(*this); }
 
-        friend T;
-
     private:
         CRTPHelper()
         { }
