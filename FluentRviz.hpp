@@ -736,7 +736,7 @@ namespace marker {
         { marker.action = Action; }
 
         MarkerBase(const MarkerBase &) = delete;
-        MarkerBase(MarkerBase &&) = default;
+        MarkerBase(MarkerBase &&) = delete;
 
         [[nodiscard]] visualization_msgs::Marker &msg() noexcept
         { return marker; }
