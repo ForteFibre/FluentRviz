@@ -11,7 +11,7 @@
 #define FLRV_SUPPRESS(X) static_cast<void>(X)
 #define FLRV_DERIVED(T) static_cast<T &>(*this)
 
-namespace flrviz {
+namespace flrv {
 
 namespace option {
     enum class Arrow {
