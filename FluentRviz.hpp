@@ -183,6 +183,9 @@ namespace traits {
 } // namespace internal
 
 namespace param {
+    using traits::get;
+    using traits::Member;
+
     class Vector3 {
         geometry_msgs::Vector3 value;
 
@@ -194,11 +197,7 @@ namespace param {
         { value.x = x, value.y = y, value.z = z; }
 
         template<typename T>
-        Vector3(const T &arg) noexcept
-            : Vector3(
-                traits::get<traits::Member::X>(arg),
-                traits::get<traits::Member::Y>(arg),
-                traits::get<traits::Member::Z>(arg))
+        Vector3(const T &arg) noexcept : Vector3(get<Member::X>(arg), get<Member::Y>(arg), get<Member::Z>(arg))
         { }
 
         [[nodiscard]] static inline Vector3 UnitX() noexcept
@@ -210,13 +209,7 @@ namespace param {
 
         template<typename T>
         [[nodiscard]] static Vector3 from_2d(const T &point, const double z = 0.0) noexcept
-        {
-            return {
-                traits::get<traits::Member::X>(point),
-                traits::get<traits::Member::Y>(point),
-                z
-            };
-        }
+        { return { get<Member::X>(point), get<Member::Y>(point), z }; }
 
         operator const geometry_msgs::Vector3 &() const noexcept
         { return value; }
@@ -234,22 +227,13 @@ namespace param {
 
         template<typename T>
         Quaternion(const T &arg) noexcept
-            : Quaternion(
-                traits::get<traits::Member::X>(arg),
-                traits::get<traits::Member::Y>(arg),
-                traits::get<traits::Member::Z>(arg),
-                traits::get<traits::Member::W>(arg))
+            : Quaternion(get<Member::X>(arg), get<Member::Y>(arg), get<Member::Z>(arg), get<Member::W>(arg))
         { }
 
         [[nodiscard]] static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UnitZ()) noexcept
         {
-            geometry_msgs::Vector3 vector3 = axis;
-            return {
-                vector3.x * std::sin(theta / 2),
-                vector3.y * std::sin(theta / 2),
-                vector3.z * std::sin(theta / 2),
-                std::cos(theta / 2),
-            };
+            auto &[ x, y, z ] = static_cast<const geometry_msgs::Vector3 &>(axis);
+            return { x * std::sin(theta / 2), y * std::sin(theta / 2), z * std::sin(theta / 2), std::cos(theta / 2) };
         }
 
         operator const geometry_msgs::Quaternion &() const noexcept
@@ -267,22 +251,12 @@ namespace param {
         { value.x = x, value.y = y, value.z = z; }
 
         template<typename T>
-        Point(const T &arg)
-            : Point(
-                traits::get<traits::Member::X>(arg),
-                traits::get<traits::Member::Y>(arg),
-                traits::get<traits::Member::Z>(arg))
+        Point(const T &arg) noexcept : Point(get<Member::X>(arg), get<Member::Y>(arg), get<Member::Z>(arg))
         { }
 
         template<typename T>
         [[nodiscard]] static Point from_2d(const T &point, const double z = 0.0) noexcept
-        {
-            return {
-                traits::get<traits::Member::X>(point),
-                traits::get<traits::Member::Y>(point),
-                z
-            };
-        }
+        { return { get<Member::X>(point), get<Member::Y>(point), z }; }
 
         operator const geometry_msgs::Point &() const noexcept
         { return value; }
@@ -299,13 +273,7 @@ namespace param {
         { value.r = r, value.g = g, value.b = b, value.a = a; }
 
         [[nodiscard]] static Color from_hex(const int32_t hex) noexcept
-        {
-            return {
-                ((hex >> 16) & 0xff) / 255.0f,
-                ((hex >> 8) & 0xff) / 255.0f,
-                (hex & 0xff) / 255.0f,
-            };
-        }
+        { return { ((hex >> 16) & 0xff) / 255.0f, ((hex >> 8) & 0xff) / 255.0f, (hex & 0xff) / 255.0f, }; }
 
         [[nodiscard]] Color &alpha(const float a) noexcept
         {
