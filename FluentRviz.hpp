@@ -811,4 +811,4 @@ public:
     }
 };
 
-} // namespace flrviz
+} // namespace flrv
