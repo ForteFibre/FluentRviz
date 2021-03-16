@@ -496,7 +496,7 @@ namespace internal {
     template<typename T>
     struct PointScaleHelper : ScaleHelper<T> {
         PointScaleHelper()
-        { FLRV_SUPPRESS(std::move(*this).scale(0.05, 0.05)); }
+        { FLRV_SUPPRESS(std::move(*this).scale(1, 1, 1)); }
 
         [[nodiscard]] T &&scale(const double width, const double height) && noexcept
         { return std::move(*this).ScaleHelper<T>::scale(width, height, 0); }
