@@ -591,7 +591,7 @@ namespace internal {
 
         [[nodiscard]] T &&color(std::vector<param::Color> colors) && noexcept
         {
-            std::vector<geometry_msgs::Point> converted(std::begin(colors), std::end(colors));
+            std::vector<std_msgs::ColorRGBA> converted(std::begin(colors), std::end(colors));
             return std::move(*this).points(std::move(converted));
         }
     };
