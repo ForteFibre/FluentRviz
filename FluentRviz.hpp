@@ -496,7 +496,7 @@ namespace internal {
     template<typename T>
     struct PointScaleHelper : ScaleHelper<T> {
         PointScaleHelper()
-        { FLRV_SUPPRESS(std::move(*this).scale(1, 1, 1)); }
+        { FLRV_SUPPRESS(std::move(*this).scale(0.05, 0.05)); }
 
         [[nodiscard]] T &&scale(const double width, const double height) && noexcept
         { return std::move(*this).ScaleHelper<T>::scale(width, height, 0); }
@@ -643,7 +643,10 @@ namespace internal {
     template<typename T>
     struct ArrowPointsHelper {
         ArrowPointsHelper()
-        { FLRV_DERIVED(T).msg().points.resize(2); }
+        {
+            FLRV_DERIVED(T).msg().points.resize(2);
+            std::move(*this).end(1, 0, 0);
+        }
 
         [[nodiscard]] T &&start(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).start({ x, y, z }); }
