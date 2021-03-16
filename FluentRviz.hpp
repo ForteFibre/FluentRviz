@@ -447,7 +447,7 @@ namespace internal {
         }
     };
 
-    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
     struct PositionEnabler : PositionHelper<Marker> { };
 
     template<typename T>
@@ -465,10 +465,10 @@ namespace internal {
         }
     };
 
-    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
     struct OrientationEnabler : OrientationHelper<Marker> { };
 
-    template<typename Marker, size_t MarkerType, typename Option>
+    template<typename Marker, int32_t MarkerType, typename Option>
     struct OrientationEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>> { };
 
@@ -529,35 +529,35 @@ namespace internal {
         { return std::move(*this).ScaleHelper<T>::scale(0, 0, height); }
     };
 
-    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
     struct ScaleEnabler { };
 
-    template<typename Marker, size_t MarkerType, typename Option>
+    template<typename Marker, int32_t MarkerType, typename Option>
     struct ScaleEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_common_scale_available_v<MarkerType>>>
         : ScaleHelper<Marker> { };
 
-    template<typename Marker, size_t MarkerType, auto... Options>
+    template<typename Marker, int32_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>>>
         : PoseArrowScaleHelper<Marker> { };
 
-    template<typename Marker, size_t MarkerType, auto... Options>
+    template<typename Marker, int32_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
         : VectorArrowScaleHelper<Marker> { };
 
-    template<typename Marker, size_t MarkerType, typename Option>
+    template<typename Marker, int32_t MarkerType, typename Option>
     struct ScaleEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_points_marker_v<MarkerType>>>
         : PointScaleHelper<Marker> { };
 
-    template<typename Marker, size_t MarkerType, typename Option>
+    template<typename Marker, int32_t MarkerType, typename Option>
     struct ScaleEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_line_marker_v<MarkerType>>>
         : LineScaleHelper<Marker> { };
 
-    template<typename Marker, size_t MarkerType, typename Option>
+    template<typename Marker, int32_t MarkerType, typename Option>
     struct ScaleEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
         : TextScaleHelper<Marker> { };
@@ -605,10 +605,10 @@ namespace internal {
         }
     };
 
-    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
     struct ColorEnabler : ColorHelper<Marker> { };
 
-    template<typename Marker, size_t MarkerType, typename Option>
+    template<typename Marker, int32_t MarkerType, typename Option>
     struct ColorEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_colors_available_v<MarkerType>>>
         : ColorsHelper<Marker> { };
@@ -675,15 +675,15 @@ namespace internal {
         }
     };
 
-    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
     struct PointsEnabler { };
 
-    template<typename Marker, size_t MarkerType, auto... Options>
+    template<typename Marker, int32_t MarkerType, auto... Options>
     struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_points_available_v<MarkerType>>>
         : PointsHelper<Marker> { };
 
-    template<typename Marker, size_t MarkerType, auto... Options>
+    template<typename Marker, int32_t MarkerType, auto... Options>
     struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
         : ArrowPointsHelper<Marker> { };
@@ -700,10 +700,10 @@ namespace internal {
         }
     };
 
-    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
     struct TextEnabler { };
 
-    template<typename Marker, size_t MarkerType, typename Option>
+    template<typename Marker, int32_t MarkerType, typename Option>
     struct TextEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
         : TextHelper<Marker> { };
@@ -723,10 +723,10 @@ namespace internal {
         }
     };
 
-    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
     struct MeshResourceEnabler { };
 
-    template<typename Marker, size_t MarkerType, auto... Options>
+    template<typename Marker, int32_t MarkerType, auto... Options>
     struct MeshResourceEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_mesh_resource_marker_v<MarkerType>>>
         : MeshResourceHelper<Marker> { };
