@@ -635,7 +635,7 @@ namespace internal {
         {
             std::vector<geometry_msgs::Point> converted(points.size());
             std::transform(std::begin(points), std::end(points), std::begin(converted),
-                [](auto &e) { return param::Point(e); });
+                [](auto &&e) { return param::Point(e); });
             return std::move(*this).points(std::move(converted));
         }
     };
