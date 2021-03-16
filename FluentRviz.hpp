@@ -423,25 +423,37 @@ namespace internal {
     template<auto... Options>
     struct OptionPack { };
 
+    template<typename T, template<typename> typename User = std::void_t>
+    struct CRTPHelper {
+        [[nodiscard]] T &derived()
+        { return static_cast<T &>(*this); }
+
+        friend T;
+
+    private:
+        CRTPHelper()
+        { }
+
+        friend User<T>;
+    };
+
     template<typename T>
-    struct PositionHelper {
+    struct PositionHelper : CRTPHelper<T, PositionHelper> {
         [[nodiscard]] T &&position(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).position({ x, y, z }); }
 
         [[nodiscard]] T &&position(const param::Point position) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.pose.position = position;
-            return std::move(self);
+            this->derived().msg().pose.position = position;
+            return std::move(this->derived());
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct PositionEnabler : PositionHelper<Marker> { };
 
     template<typename T>
-    struct OrientationHelper {
+    struct OrientationHelper : CRTPHelper<T, OrientationHelper> {
         OrientationHelper()
         { static_cast<void>(std::move(*this).orientation(0, 0, 0, 1)); }
 
@@ -450,31 +462,27 @@ namespace internal {
 
         [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.pose.orientation = orientation;
-            return std::move(self);
+            this->derived().msg().pose.orientation = orientation;
+            return std::move(this->derived());
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct OrientationEnabler : OrientationHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
+    template<typename Marker, size_t MarkerType, typename Option>
     struct OrientationEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>> { };
 
     template<typename T>
-    struct ScaleHelper {
+    struct ScaleHelper : CRTPHelper<T, ScaleHelper> {
         ScaleHelper()
         { static_cast<void>(std::move(*this).scale(1, 1, 1)); }
 
         [[nodiscard]] T &&scale(const double x, const double y, const double z) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.scale = param::Vector3(x, y, z);
-            return std::move(self);
+            this->derived().msg().scale = param::Vector3(x, y, z);
+            return std::move(this->derived());
         }
     };
 
@@ -523,41 +531,41 @@ namespace internal {
         { return std::move(*this).ScaleHelper<T>::scale(0, 0, height); }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct ScaleEnabler { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
+    template<typename Marker, size_t MarkerType, typename Option>
     struct ScaleEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_common_scale_available_v<MarkerType>>>
         : ScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>>>
         : PoseArrowScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
         : VectorArrowScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
+    template<typename Marker, size_t MarkerType, typename Option>
     struct ScaleEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_points_marker_v<MarkerType>>>
         : PointScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
+    template<typename Marker, size_t MarkerType, typename Option>
     struct ScaleEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_line_marker_v<MarkerType>>>
         : LineScaleHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
+    template<typename Marker, size_t MarkerType, typename Option>
     struct ScaleEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
         : TextScaleHelper<Marker> { };
 
     template<typename T>
-    struct ColorHelper {
+    struct ColorHelper : CRTPHelper<T, ColorHelper> {
         ColorHelper()
         { static_cast<void>(std::move(*this).color(1, 1, 1)); }
 
@@ -566,15 +574,13 @@ namespace internal {
 
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.color = color;
-            return std::move(self);
+            this->derived().msg().color = color;
+            return std::move(this->derived());
         }
     };
 
     template<typename T>
-    struct ColorsHelper {
+    struct ColorsHelper : CRTPHelper<T, ColorsHelper> {
         ColorsHelper()
         { static_cast<void>(std::move(*this).color(1, 1, 1)); }
 
@@ -583,19 +589,15 @@ namespace internal {
 
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.color = color;
-            marker.colors.clear();
-            return std::move(self);
+            this->derived().msg().color = color;
+            this->derived().msg().colors.clear();
+            return std::move(this->derived());
         }
 
         [[nodiscard]] T &&color(std::vector<std_msgs::ColorRGBA> colors) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.colors = std::move(colors);
-            return std::move(self);
+            this->derived().msg().colors = std::move(colors);
+            return std::move(this->derived());
         }
 
         [[nodiscard]] T &&color(std::vector<param::Color> colors) && noexcept
@@ -605,44 +607,38 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct ColorEnabler : ColorHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
+    template<typename Marker, size_t MarkerType, typename Option>
     struct ColorEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_colors_available_v<MarkerType>>>
         : ColorsHelper<Marker> { };
 
     template<typename T>
-    struct LifetimeHelper {
+    struct LifetimeHelper : CRTPHelper<T, LifetimeHelper> {
         [[nodiscard]] T &&lifetime(const double lifetime) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &Marker = self.msg();
-            Marker.lifetime = ros::Duration(lifetime);
-            return std::move(self);
+            this->derived().msg().lifetime = ros::Duration(lifetime);
+            return std::move(this->derived());
         }
     };
 
     template<typename T>
-    struct FrameLockedHelper {
+    struct FrameLockedHelper : CRTPHelper<T, FrameLockedHelper> {
         [[nodiscard]] T &&frame_locked(const bool frame_locked) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.frame_locked = frame_locked;
-            return std::move(self);
+            this->derived().msg().frame_locked = frame_locked;
+            return std::move(this->derived());
         }
     };
 
     template<typename T>
-    struct PointsHelper {
+    struct PointsHelper : CRTPHelper<T, PointsHelper> {
         [[nodiscard]] T &&points(std::vector<geometry_msgs::Point> points) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.points = std::move(points);
-            return std::move(self);
+            this->derived().msg().points = std::move(points);
+            return std::move(this->derived());
         }
 
         template<typename PointLike>
@@ -656,13 +652,9 @@ namespace internal {
     };
 
     template<typename T>
-    struct ArrowPointsHelper {
+    struct ArrowPointsHelper : CRTPHelper<T, ArrowPointsHelper> {
         ArrowPointsHelper()
-        {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.points.resize(2);
-        }
+        { this->derived().msg().points.resize(2); }
 
         [[nodiscard]] T &&start(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).start({ x, y, z }); }
@@ -680,71 +672,63 @@ namespace internal {
         template<size_t Index>
         [[nodiscard]] T &&set(const param::Point &point) noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.points[Index] = point;
-            return std::move(self);
+            this->derived().msg().points[Index] = point;
+            return std::move(this->derived());
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct PointsEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_points_available_v<MarkerType>>>
         : PointsHelper<Marker> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
         : ArrowPointsHelper<Marker> { };
 
     template<typename T>
-    struct TextHelper {
+    struct TextHelper : CRTPHelper<T, TextHelper> {
         TextHelper()
         { static_cast<void>(std::move(*this).text("visualization_msgs::Marker::TEXT_VIEW_FACING")); }
 
         [[nodiscard]] T &&text(std::string text) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.text = std::move(text);
-            return std::move(self);
+            this->derived().msg().text = std::move(text);
+            return std::move(this->derived());
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct TextEnabler { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
+    template<typename Marker, size_t MarkerType, typename Option>
     struct TextEnabler<Marker, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
         : TextHelper<Marker> { };
 
     template<typename T>
-    struct MeshResourceHelper {
+    struct MeshResourceHelper : CRTPHelper<T, MeshResourceHelper> {
         [[nodiscard]] T &&mesh_resource(std::string mesh_resource) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.mesh_resource = std::move(mesh_resource);
-            return std::move(self);
+            this->derived().msg().mesh_resource = std::move(mesh_resource);
+            return std::move(this->derived());
         }
 
         [[nodiscard]] T &&mesh_use_embedded_materials(const bool mesh_use_embedded_materials) && noexcept
         {
-            T &self = static_cast<T &>(*this);
-            visualization_msgs::Marker &marker = self.msg();
-            marker.mesh_use_embedded_materials = mesh_use_embedded_materials;
-            return std::move(self);
+            this->derived().msg().mesh_use_embedded_materials = mesh_use_embedded_materials;
+            return std::move(this->derived());
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Marker, size_t MarkerType, typename Option, typename Enable = void>
     struct MeshResourceEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
+    template<typename Marker, size_t MarkerType, auto... Options>
     struct MeshResourceEnabler<Marker, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_mesh_resource_marker_v<MarkerType>>>
         : MeshResourceHelper<Marker> { };
