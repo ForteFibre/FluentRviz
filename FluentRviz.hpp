@@ -181,26 +181,21 @@ namespace traits {
 
 namespace param {
     class Vector3 {
-        geometry_msgs::Vector3 vector3;
+        geometry_msgs::Vector3 value;
 
     public:
-        Vector3(const geometry_msgs::Vector3 arg) noexcept
-            : vector3(arg)
+        Vector3(const geometry_msgs::Vector3 arg) noexcept : value(arg)
         { }
 
         Vector3(const double x, const double y, const double z) noexcept
-        {
-            vector3.x = x;
-            vector3.y = y;
-            vector3.z = z;
-        }
+        { value.x = x, value.y = y, value.z = z; }
 
         template<typename T>
-        Vector3(const T &value) noexcept
+        Vector3(const T &arg) noexcept
             : Vector3(
-                traits::get<traits::Member::X>(value),
-                traits::get<traits::Member::Y>(value),
-                traits::get<traits::Member::Z>(value))
+                traits::get<traits::Member::X>(arg),
+                traits::get<traits::Member::Y>(arg),
+                traits::get<traits::Member::Z>(arg))
         { }
 
         [[nodiscard]] static inline Vector3 UnitX() noexcept
@@ -221,32 +216,26 @@ namespace param {
         }
 
         operator const geometry_msgs::Vector3 &() const noexcept
-        { return vector3; }
+        { return value; }
     };
 
     class Quaternion {
-        geometry_msgs::Quaternion quaternion;
+        geometry_msgs::Quaternion value;
 
     public:
-        Quaternion(const geometry_msgs::Quaternion arg) noexcept
-            : quaternion(arg)
+        Quaternion(const geometry_msgs::Quaternion arg) noexcept : value(arg)
         { }
 
         Quaternion(const double x, const double y, const double z, const double w) noexcept
-        {
-            quaternion.x = x;
-            quaternion.y = y;
-            quaternion.z = z;
-            quaternion.w = w;
-        }
+        { value.x = x, value.y = y, value.z = z, value.w = w; }
 
         template<typename T>
-        Quaternion(const T &value) noexcept
+        Quaternion(const T &arg) noexcept
             : Quaternion(
-                traits::get<traits::Member::X>(value),
-                traits::get<traits::Member::Y>(value),
-                traits::get<traits::Member::Z>(value),
-                traits::get<traits::Member::W>(value))
+                traits::get<traits::Member::X>(arg),
+                traits::get<traits::Member::Y>(arg),
+                traits::get<traits::Member::Z>(arg),
+                traits::get<traits::Member::W>(arg))
         { }
 
         [[nodiscard]] static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UnitZ()) noexcept
@@ -261,30 +250,25 @@ namespace param {
         }
 
         operator const geometry_msgs::Quaternion &() const noexcept
-        { return quaternion; }
+        { return value; }
     };
 
     class Point {
-        geometry_msgs::Point point;
+        geometry_msgs::Point value;
 
     public:
-        Point(const geometry_msgs::Point arg) noexcept
-            : point(arg)
+        Point(const geometry_msgs::Point arg) noexcept : value(arg)
         { }
 
         Point(const double x, const double y, const double z = 0.0) noexcept
-        {
-            point.x = x;
-            point.y = y;
-            point.z = z;
-        }
+        { value.x = x, value.y = y, value.z = z; }
 
         template<typename T>
-        Point(const T &value)
+        Point(const T &arg)
             : Point(
-                traits::get<traits::Member::X>(value),
-                traits::get<traits::Member::Y>(value),
-                traits::get<traits::Member::Z>(value))
+                traits::get<traits::Member::X>(arg),
+                traits::get<traits::Member::Y>(arg),
+                traits::get<traits::Member::Z>(arg))
         { }
 
         template<typename T>
@@ -298,24 +282,18 @@ namespace param {
         }
 
         operator const geometry_msgs::Point &() const noexcept
-        { return point; }
+        { return value; }
     };
 
     class Color {
-        std_msgs::ColorRGBA color;
+        std_msgs::ColorRGBA value;
 
     public:
-        Color(const std_msgs::ColorRGBA arg) noexcept
-            : color(arg)
+        Color(const std_msgs::ColorRGBA arg) noexcept : value(arg)
         { }
 
         Color(const float r, const float g, const float b, const float a = 1.0) noexcept
-        {
-            color.r = r;
-            color.g = g;
-            color.b = b;
-            color.a = a;
-        }
+        { value.r = r, value.g = g, value.b = b, value.a = a; }
 
         [[nodiscard]] static Color from_hex(const int32_t hex) noexcept
         {
@@ -328,7 +306,7 @@ namespace param {
 
         [[nodiscard]] Color &alpha(const float a) noexcept
         {
-            color.a = a;
+            value.a = a;
             return *this;
         }
 
@@ -376,7 +354,7 @@ namespace param {
         { return from_hex(color::BLACK); }
 
         operator const std_msgs::ColorRGBA &() const noexcept
-        { return color; }
+        { return value; }
     };
 } // namespace param
 
