@@ -781,12 +781,7 @@ namespace marker {
 
     public:
         Marker(int32_t id, std::string ns = "") noexcept
-        {
-            auto& marker = msg();
-            marker.id = id;
-            marker.ns = std::move(ns);
-            marker.type = MarkerType;
-        }
+        { msg().id = id, msg().ns = std::move(ns), msg().type = MarkerType; }
     };
 
     using PoseArrow = Marker<visualization_msgs::Marker::ARROW, option::Arrow::POSE>;
@@ -807,11 +802,7 @@ namespace marker {
     class Delete : public MarkerBase<visualization_msgs::Marker::DELETE> {
     public:
         Delete(int32_t id, std::string ns = "")
-        {
-            auto& marker = msg();
-            marker.id = id;
-            marker.ns = std::move(ns);
-        }
+        { msg().id = id, msg().ns = std::move(ns); }
     };
 
     class DeleteAll : public MarkerBase<visualization_msgs::Marker::DELETEALL> { };
