@@ -186,6 +186,12 @@ namespace param {
     using traits::get;
     using traits::Member;
 
+    template<typename Source>
+    using iterator_t = std::conditional_t<
+        std::is_const_v<Source>,
+        typename std::remove_reference_t<Source>::const_iterator,
+        typename std::remove_reference_t<Source>::iterator>;
+
     struct Vector3 {
         geometry_msgs::Vector3 value;
 
@@ -260,6 +266,9 @@ namespace param {
 
         Vector3 cross(const Vector3 rhs) const noexcept
         { return { y() * rhs.z() - z() * rhs.y(), z() * rhs.x() - x() * rhs.z(), x() * rhs.y() - y() * rhs.x() }; }
+
+        Vector3 hadamard_prod(const Vector3 rhs) const noexcept
+        { return { x() * rhs.x(), y() * rhs.y(), z() * rhs.z() }; }
     };
 
     struct Quaternion {
@@ -425,6 +434,57 @@ namespace param {
 
         operator std_msgs::ColorRGBA() const noexcept
         { return value; }
+    };
+
+    template<typename Source>
+    class PointsFragment {
+        Source &source;
+        Quaternion rotation;
+        Vector3 offset;
+        Vector3 scale;
+
+        class cursol {
+            PointsFragment *parent;
+            iterator_t<Source> itr;
+
+        public:
+            cursol(PointsFragment *p, iterator_t<Source> i): parent(p), itr(i)
+            { }
+
+            Vector3 operator*()
+            { return parent->rotation.rotate_vector(Vector3(*itr).hadamard_prod(scale)) + parent->offset; }
+
+            cursol &operator++()
+            { ++itr; return *this; }
+
+            bool operator!=(const cursol &rhs)
+            { itr != rhs.itr; }
+        };
+
+    public:
+        PointsFragment(Source &s): source(s), rotation(0, 0, 0, 1), scale(1, 1, 1)
+        { }
+
+        PointsFragment &&orientaion(const Quaternion orientaion) && noexcept
+        { rotation = orientaion; return std::move(*this); }
+
+        PointsFragment &&orientaion(double x, double y, double z, double w) && noexcept
+        { return std::move(*this).orientaion({ x, y, z, w }); }
+
+        PointsFragment &&position(const Vector3 position) && noexcept
+        { offset = position; return std::move(*this); }
+
+        PointsFragment &&position(double x, double y, double z) && noexcept
+        { return std::move(*this).position({ x, y, z }); }
+
+        PointsFragment &&scale(double x, double y, double z) && noexcept
+        { scale = { x, y, z }; return *this; }
+
+        auto begin()
+        { return cursol(this, std::begin(source)); }
+
+        auto end()
+        { return cursol(this, std::end(source)); }
     };
 } // namespace param
 
