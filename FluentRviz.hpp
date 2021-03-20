@@ -462,6 +462,9 @@ namespace param {
         };
 
     public:
+        using iterator = cursol;
+        using const_iterator = cursol;
+
         PointsFragment(Source &s): source(s), rotation(0, 0, 0, 1), scale(1, 1, 1)
         { }
 
