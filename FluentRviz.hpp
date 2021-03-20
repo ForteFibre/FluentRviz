@@ -213,7 +213,7 @@ namespace param {
         [[nodiscard]] static Vector3 from_2d(const T &point, const double z = 0.0) noexcept
         { return { get<Member::X>(point), get<Member::Y>(point), z }; }
 
-        operator const geometry_msgs::Vector3 &() const noexcept
+        operator geometry_msgs::Vector3() const noexcept
         { return value; }
     };
 
@@ -240,7 +240,7 @@ namespace param {
             return { x * std::sin(theta / 2), y * std::sin(theta / 2), z * std::sin(theta / 2), std::cos(theta / 2) };
         }
 
-        operator const geometry_msgs::Quaternion &() const noexcept
+        operator geometry_msgs::Quaternion() const noexcept
         { return value; }
     };
 
@@ -264,7 +264,7 @@ namespace param {
         [[nodiscard]] static Point from_2d(const T &point, const double z = 0.0) noexcept
         { return { get<Member::X>(point), get<Member::Y>(point), z }; }
 
-        operator const geometry_msgs::Point &() const noexcept
+        operator geometry_msgs::Point() const noexcept
         { return value; }
     };
 
@@ -332,7 +332,7 @@ namespace param {
         [[nodiscard]] static inline Color Black() noexcept
         { return from_hex(color::BLACK); }
 
-        operator const std_msgs::ColorRGBA &() const noexcept
+        operator std_msgs::ColorRGBA() const noexcept
         { return value; }
     };
 } // namespace param
