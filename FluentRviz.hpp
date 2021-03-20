@@ -190,6 +190,8 @@ namespace param {
         geometry_msgs::Vector3 value;
 
     public:
+        Vector3() = default;
+
         Vector3(const geometry_msgs::Vector3 arg) noexcept : value(arg)
         { }
 
@@ -219,6 +221,8 @@ namespace param {
         geometry_msgs::Quaternion value;
 
     public:
+        Quaternion() = default;
+
         Quaternion(const geometry_msgs::Quaternion arg) noexcept : value(arg)
         { }
 
@@ -244,6 +248,8 @@ namespace param {
         geometry_msgs::Point value;
 
     public:
+        Point() = default;
+
         Point(const geometry_msgs::Point arg) noexcept : value(arg)
         { }
 
@@ -266,6 +272,8 @@ namespace param {
         std_msgs::ColorRGBA value;
 
     public:
+        Color() = default;
+
         Color(const std_msgs::ColorRGBA arg) noexcept : value(arg)
         { }
 
