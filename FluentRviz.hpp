@@ -598,11 +598,11 @@ namespace internal {
             return std::move(FLRV_DERIVED(T));
         }
 
-        template<typename PointLike>
-        [[nodiscard]] T &&points(std::vector<PointLike> points) && noexcept
+        template<typename Points>
+        [[nodiscard]] T &&points(Points &&points) && noexcept
         {
-            std::vector<geometry_msgs::Point> converted(points.size());
-            std::transform(std::begin(points), std::end(points), std::begin(converted),
+            std::vector<geometry_msgs::Point> converted;
+            std::transform(std::begin(points), std::end(points), std::back_inserter(converted),
                 [](auto &&e) { return param::Point(e); });
             return std::move(*this).points(std::move(converted));
         }
