@@ -215,6 +215,13 @@ namespace param {
 
         operator geometry_msgs::Vector3() const noexcept
         { return value; }
+
+        operator geometry_msgs::Point() const noexcept
+        {
+            geometry_msgs::Point res;
+            res.x = value.x, res.y = value.y, res.z = value.z;
+            return res;
+        }
     };
 
     class Quaternion {
@@ -241,30 +248,6 @@ namespace param {
         }
 
         operator geometry_msgs::Quaternion() const noexcept
-        { return value; }
-    };
-
-    class Point {
-        geometry_msgs::Point value;
-
-    public:
-        Point() = default;
-
-        Point(const geometry_msgs::Point arg) noexcept : value(arg)
-        { }
-
-        Point(const double x, const double y, const double z = 0.0) noexcept
-        { value.x = x, value.y = y, value.z = z; }
-
-        template<typename T>
-        Point(const T &arg) noexcept : Point(get<Member::X>(arg), get<Member::Y>(arg), get<Member::Z>(arg))
-        { }
-
-        template<typename T>
-        [[nodiscard]] static Point from_2d(const T &point, const double z = 0.0) noexcept
-        { return { get<Member::X>(point), get<Member::Y>(point), z }; }
-
-        operator geometry_msgs::Point() const noexcept
         { return value; }
     };
 
@@ -407,7 +390,7 @@ namespace internal {
         [[nodiscard]] T &&position(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).position({ x, y, z }); }
 
-        [[nodiscard]] T &&position(const param::Point position) && noexcept
+        [[nodiscard]] T &&position(const param::Vector3 position) && noexcept
         {
             FLRV_DERIVED(T).msg().pose.position = position;
             return std::move(FLRV_DERIVED(T));
@@ -611,7 +594,7 @@ namespace internal {
         {
             std::vector<geometry_msgs::Point> converted;
             std::transform(std::begin(points), std::end(points), std::back_inserter(converted),
-                [](auto &&e) { return param::Point(e); });
+                [](auto &&e) { return param::Vector3(e); });
             return std::move(*this).points(std::move(converted));
         }
     };
@@ -627,18 +610,18 @@ namespace internal {
         [[nodiscard]] T &&start(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).start({ x, y, z }); }
 
-        [[nodiscard]] T &&start(const param::Point point) && noexcept
+        [[nodiscard]] T &&start(const param::Vector3 point) && noexcept
         { return set<0>(point); }
 
         [[nodiscard]] T &&end(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).end({ x, y, z }); }
 
-        [[nodiscard]] T &&end(const param::Point point) && noexcept
+        [[nodiscard]] T &&end(const param::Vector3 point) && noexcept
         { return set<1>(point); }
 
     private:
         template<size_t Index>
-        [[nodiscard]] T &&set(const param::Point &point) noexcept
+        [[nodiscard]] T &&set(const param::Vector3 &point) noexcept
         {
             FLRV_DERIVED(T).msg().points[Index] = point;
             return std::move(FLRV_DERIVED(T));
