@@ -441,43 +441,43 @@ namespace traits {
     template<typename T>
     struct access<T, Member::X, std::enable_if_t<is_var_accessible_v<T, Member::X>>> {
         [[nodiscard]] static inline auto get(const T &value) noexcept
-        { return x(); }
+        { return value.x; }
     };
     template<typename T>
     struct access<T, Member::Y, std::enable_if_t<is_var_accessible_v<T, Member::Y>>> {
         [[nodiscard]] static inline auto get(const T &value) noexcept
-        { return y(); }
+        { return value.y; }
     };
     template<typename T>
     struct access<T, Member::Z, std::enable_if_t<is_var_accessible_v<T, Member::Z>>> {
         [[nodiscard]] static inline auto get(const T &value) noexcept
-        { return z(); }
+        { return value.z; }
     };
     template<typename T>
     struct access<T, Member::W, std::enable_if_t<is_var_accessible_v<T, Member::W>>> {
         [[nodiscard]] static inline auto get(const T &value) noexcept
-        { return w(); }
+        { return value.w; }
     };
 
     template<typename T>
     struct access<T, Member::X, std::enable_if_t<is_func_accessible_v<T, Member::X>>> {
         [[nodiscard]] static inline auto get(const T &value)
-        { return x()(); }
+        { return value.x(); }
     };
     template<typename T>
     struct access<T, Member::Y, std::enable_if_t<is_func_accessible_v<T, Member::Y>>> {
         [[nodiscard]] static inline auto get(const T &value)
-        { return y()(); }
+        { return value.y(); }
     };
     template<typename T>
     struct access<T, Member::Z, std::enable_if_t<is_func_accessible_v<T, Member::Z>>> {
         [[nodiscard]] static inline auto get(const T &value)
-        { return z()(); }
+        { return value.z(); }
     };
     template<typename T>
     struct access<T, Member::W, std::enable_if_t<is_func_accessible_v<T, Member::W>>> {
         [[nodiscard]] static inline auto get(const T &value)
-        { return w()(); }
+        { return value.w(); }
     };
 
     template<typename T, auto M>
@@ -526,7 +526,7 @@ namespace param {
         Vector3(const geometry_msgs::Vector3 arg) noexcept : value(arg)
         { }
 
-        Vector3(const double x, const double y, const double z) noexcept
+        Vector3(const double x, const double y, const double z = 0.0) noexcept
         { value.x = x, value.y = y, value.z = z; }
 
         template<typename T>
@@ -544,10 +544,10 @@ namespace param {
         [[nodiscard]] static Vector3 from_2d(const T &point, const double z = 0.0) noexcept
         { return { get<Member::X>(point), get<Member::Y>(point), z }; }
 
-        operator geometry_msgs::Vector3() const noexcept
+        const geometry_msgs::Vector3 &to_vector3_msg() const noexcept
         { return value; }
 
-        operator geometry_msgs::Point() const noexcept
+        geometry_msgs::Point to_point_msg() const noexcept
         {
             geometry_msgs::Point res;
             res.x = x(), res.y = y(), res.z = z();
@@ -617,7 +617,7 @@ namespace param {
         [[nodiscard]] static Quaternion from_vector_scalar(const Vector3 vector, const double scalar) noexcept
         { return { vector.x(), vector.y(), vector.z(), scalar }; }
 
-        operator geometry_msgs::Quaternion() const noexcept
+        const geometry_msgs::Quaternion &to_quaternion_msg() const noexcept
         { return value; }
 
         double &x()
@@ -758,7 +758,7 @@ namespace param {
         [[nodiscard]] static inline Color Black() noexcept
         { return from_hex(color::BLACK); }
 
-        operator std_msgs::ColorRGBA() const noexcept
+        const std_msgs::ColorRGBA &to_color_msg() const noexcept
         { return value; }
     };
 
@@ -767,7 +767,7 @@ namespace param {
         Source &source;
         Quaternion rotation;
         Vector3 offset;
-        Vector3 scale;
+        Vector3 extent;
 
         class cursol {
             PointsFragment *parent;
@@ -778,20 +778,20 @@ namespace param {
             { }
 
             Vector3 operator*()
-            { return parent->rotation.rotate_vector(Vector3(*itr).hadamard_prod(scale)) + parent->offset; }
+            { return parent->rotation.rotate_vector(Vector3(*itr).hadamard_prod(extent)) + parent->offset; }
 
             cursol &operator++()
             { ++itr; return *this; }
 
             bool operator!=(const cursol &rhs)
-            { itr != rhs.itr; }
+            { return itr != rhs.itr; }
         };
 
     public:
         using iterator = cursol;
         using const_iterator = cursol;
 
-        PointsFragment(Source &s): source(s), rotation(0, 0, 0, 1), scale(1, 1, 1)
+        PointsFragment(Source &s): source(s), rotation(0, 0, 0, 1), extent(1, 1, 1)
         { }
 
         PointsFragment &&orientaion(const Quaternion orientaion) && noexcept
@@ -807,7 +807,7 @@ namespace param {
         { return std::move(*this).position({ x, y, z }); }
 
         PointsFragment &&scale(double x, double y, double z) && noexcept
-        { scale = { x, y, z }; return *this; }
+        { extent = { x, y, z }; return *this; }
 
         auto begin()
         { return cursol(this, std::begin(source)); }
@@ -889,7 +889,7 @@ namespace internal {
 
         [[nodiscard]] T &&position(const param::Vector3 position) && noexcept
         {
-            FLRV_DERIVED(T).msg().pose.position = position;
+            FLRV_DERIVED(T).msg().pose.position = position.to_point_msg();
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -907,7 +907,7 @@ namespace internal {
 
         [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
-            FLRV_DERIVED(T).msg().pose.orientation = orientation;
+            FLRV_DERIVED(T).msg().pose.orientation = orientation.to_quaternion_msg();
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -926,7 +926,7 @@ namespace internal {
 
         [[nodiscard]] T &&scale(const double x, const double y, const double z) && noexcept
         {
-            FLRV_DERIVED(T).msg().scale = param::Vector3(x, y, z);
+            FLRV_DERIVED(T).msg().scale = param::Vector3(x, y, z).to_vector3_msg();
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1019,7 +1019,7 @@ namespace internal {
 
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
-            FLRV_DERIVED(T).msg().color = color;
+            FLRV_DERIVED(T).msg().color = color.to_color_msg();
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1034,7 +1034,7 @@ namespace internal {
 
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
-            FLRV_DERIVED(T).msg().color = color;
+            FLRV_DERIVED(T).msg().color = color.to_color_msg();
             FLRV_DERIVED(T).msg().colors.clear();
             return std::move(FLRV_DERIVED(T));
         }
@@ -1047,8 +1047,7 @@ namespace internal {
 
         [[nodiscard]] T &&color(std::vector<param::Color> colors) && noexcept
         {
-            std::vector<std_msgs::ColorRGBA> converted(std::begin(colors), std::end(colors));
-            return std::move(*this).points(std::move(converted));
+            return std::move(*this).color(colors | stream::map([](auto &e) { return e.to_color_msg(); }) | stream::to_vector());
         }
     };
 
@@ -1086,13 +1085,12 @@ namespace internal {
             return std::move(FLRV_DERIVED(T));
         }
 
-        template<typename Points>
-        [[nodiscard]] T &&points(Points &&points) && noexcept
+        template<typename PointsLike>
+        [[nodiscard]] T &&points(PointsLike points) && noexcept
         {
-            std::vector<geometry_msgs::Point> converted;
-            std::transform(std::begin(points), std::end(points), std::back_inserter(converted),
-                [](auto &&e) { return param::Vector3(e); });
-            return std::move(*this).points(std::move(converted));
+            return std::move(*this).points(points
+                | stream::map([](auto &&e) { return param::Vector3(e).to_point_msg(); })
+                | stream::to_vector());
         }
     };
 
@@ -1120,7 +1118,7 @@ namespace internal {
         template<size_t Index>
         [[nodiscard]] T &&set(const param::Vector3 &point) noexcept
         {
-            FLRV_DERIVED(T).msg().points[Index] = point;
+            FLRV_DERIVED(T).msg().points[Index] = point.to_point_msg();
             return std::move(FLRV_DERIVED(T));
         }
     };
