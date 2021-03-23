@@ -512,12 +512,6 @@ namespace param {
     using traits::get;
     using traits::Member;
 
-    template<typename Source>
-    using iterator_t = std::conditional_t<
-        std::is_const_v<Source>,
-        typename std::remove_reference_t<Source>::const_iterator,
-        typename std::remove_reference_t<Source>::iterator>;
-
     struct Vector3 {
         geometry_msgs::Vector3 value;
 
@@ -771,7 +765,7 @@ namespace param {
 
         class cursol {
             PointsFragment *parent;
-            iterator_t<Source> itr;
+            stream::iterator_t<Source> itr;
 
         public:
             cursol(PointsFragment *p, iterator_t<Source> i): parent(p), itr(i)
@@ -788,9 +782,6 @@ namespace param {
         };
 
     public:
-        using iterator = cursol;
-        using const_iterator = cursol;
-
         PointsFragment(Source &s): source(s), rotation(0, 0, 0, 1), extent(1, 1, 1)
         { }
 
