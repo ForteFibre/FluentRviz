@@ -13,6 +13,332 @@
 
 namespace flrv {
 
+namespace stream {
+
+    template<typename Source>
+    using iterator_t = decltype(std::begin(std::declval<Source &>()));
+
+    template<typename Source>
+    using element_t = decltype(*std::declval<iterator_t<Source>>());
+
+    namespace internal {
+
+        template<typename Source>
+        struct ReferenceStream {
+            Source *source;
+
+            ReferenceStream() noexcept = default;
+            ReferenceStream(Source &s) noexcept : source(std::addressof(s))
+            { }
+
+            auto begin()
+            { return std::begin(*source); }
+
+            auto end()
+            { return std::end(*source); }
+        };
+
+        template<typename T>
+        constexpr auto wrap(T && t)
+        {
+            if constexpr (std::is_lvalue_reference_v<T &&>) {
+                return ReferenceStream(t);
+            } else {
+                return std::move(t);
+            }
+        }
+
+        template<typename Iterator>
+        struct IteratorStream {
+            Iterator begin_;
+            Iterator end_;
+
+        public:
+            IteratorStream() = default;
+
+            IteratorStream(Iterator begin, Iterator end): begin_(begin), end_(end)
+            { }
+
+            Iterator begin() const noexcept
+            { return begin_; }
+
+            Iterator end() const noexcept
+            { return end_; }
+        };
+
+        template<typename Source, typename Func>
+        struct MapStream {
+            Source source;
+            Func func;
+
+            struct cursol {
+                MapStream *parent;
+                iterator_t<Source> itr;
+
+                cursol() = default;
+
+                cursol(MapStream *p, iterator_t<Source> i): parent(p), itr(i)
+                { }
+
+                decltype(auto) operator*()
+                { return parent->func(*itr); }
+
+                cursol &operator++()
+                { ++itr; return *this; }
+
+                bool operator!=(const cursol &rhs)
+                { return itr != rhs.itr; }
+            };
+
+            MapStream(Source s, Func f): source(s), func(std::move(f))
+            { }
+
+            auto begin()
+            { return cursol(this, std::begin(source)); }
+
+            auto end()
+            { return cursol(this, std::end(source)); }
+        };
+
+        template<typename Source, typename Pred>
+        struct FilterStream {
+            Source source;
+            Pred pred;
+
+            struct cursol {
+                FilterStream *parent;
+                iterator_t<Source> itr;
+
+                void satisfy()
+                { for (auto end = std::end(parent->source); itr != end && !parent->pred(*itr); ++itr); }
+
+                cursol() = default;
+
+                cursol(FilterStream *fs, iterator_t<Source> i): parent(fs), itr(i)
+                { satisfy(); }
+
+                decltype(auto) operator*()
+                { return *itr; }
+
+                cursol &operator++()
+                { ++itr, satisfy(); return *this; }
+
+                bool operator!=(const cursol &rhs)
+                { return itr != rhs.itr; }
+            };
+
+            FilterStream(Source s, Pred p): source(std::move(s)), pred(std::move(p))
+            { }
+
+            auto begin()
+            { return cursol(this, std::begin(source)); }
+
+            auto end()
+            { return cursol(this, std::end(source)); }
+        };
+
+        template<typename Payload>
+        struct StoreInternal {
+            Payload payload;
+
+            Payload &update(Payload &&new_payload)
+            { return payload = std::move(new_payload); }
+
+            template<typename Ignore>
+            Payload &get(Ignore)
+            { return payload; }
+        };
+
+        struct PassThroughInternal {
+            template<typename Payload>
+            Payload &update(Payload &&new_payload)
+            { return new_payload; }
+
+            template<typename Iterator>
+            decltype(auto) get(Iterator itr)
+            { return *itr; }
+        };
+
+        template<typename Source>
+        struct FlattenStream : std::conditional_t<std::is_reference_v<element_t<Source>>, PassThroughInternal, StoreInternal<element_t<Source>>> {
+            Source source;
+
+            struct cursol {
+                FlattenStream *parent;
+                iterator_t<Source> parent_itr;
+                iterator_t<element_t<Source>> child_itr;
+
+                void satisfy()
+                {
+                    for(auto end = std::end(parent->source); parent_itr != end; ++parent_itr) {
+                        auto &child = parent->update(*parent_itr);
+                        child_itr = std::begin(child);
+                        if(child_itr != std::end(child)) return;
+                    }
+                }
+
+                cursol() = default;
+
+                cursol(FlattenStream *par, iterator_t<Source> edge)
+                    : parent(par), parent_itr(edge)
+                { satisfy(); }
+
+                decltype(auto) operator*()
+                { return *child_itr; }
+
+                cursol &operator++()
+                {
+                    if (!(++child_itr != std::end(parent->get(parent_itr)))) ++parent_itr, satisfy();
+                    return *this;
+                }
+
+                bool operator!=(const cursol &rhs)
+                { return parent_itr != rhs.parent_itr; }
+            };
+
+            FlattenStream(Source s): source(std::move(s))
+            { }
+
+            auto begin()
+            { return cursol(this, std::begin(source)); }
+
+            auto end()
+            { return cursol(this, std::end(source)); }
+        };
+
+        template<typename Source>
+        struct GroupedStream {
+            Source source;
+            size_t size;
+
+            struct cursol {
+                GroupedStream *parent;
+                iterator_t<Source> left, right;
+                size_t size;
+
+                iterator_t<Source> skip(iterator_t<Source> itr, size_t x)
+                {
+                    iterator_t<Source> res = itr;
+                    for (size_t i = x; i > 0 && res != std::end(parent->source); --i) ++res;
+                    return res;
+                }
+
+                cursol() = default;
+
+                cursol(GroupedStream *p, iterator_t<Source> i, size_t n): parent(p), left(i), right(skip(left, n)), size(n)
+                { }
+
+                decltype(auto) operator*()
+                { return IteratorStream(left, right); }
+
+                cursol &operator++()
+                { left = skip(right, 1), right = skip(left, size); return *this; }
+
+                bool operator!=(const cursol &rhs)
+                { return left != rhs.left; }
+            };
+
+            GroupedStream(Source s, size_t n): source(std::move(s)), size(n)
+            { }
+
+            auto begin()
+            { return cursol(this, std::begin(source), size); }
+
+            auto end()
+            { return cursol(this, std::end(source), size); }
+        };
+
+        struct IndicesStream {
+            int64_t begin_, end_;
+
+            struct cursol {
+                int64_t value;
+
+                cursol() = default;
+
+                cursol(int64_t v): value(v)
+                { }
+
+                int64_t operator*()
+                { return value; }
+
+                cursol operator++()
+                { ++value; return *this; }
+
+                bool operator!=(const cursol &rhs)
+                { return value != rhs.value; }
+            };
+
+            IndicesStream(int64_t begin, int64_t end): begin_(begin), end_(end)
+            { }
+
+            IndicesStream(int64_t end): IndicesStream(0, end)
+            { }
+
+            auto begin()
+            { return cursol(begin_); }
+
+            auto end()
+            { return cursol(end_); }
+        };
+    }
+
+    template<typename Func>
+    struct map {
+        Func func;
+
+        map(Func &&f): func(f)
+        { }
+
+        template<typename Source>
+        friend auto operator|(Source &&s, map<Func> &&m)
+        { return internal::MapStream(internal::wrap(std::forward<Source>(s)), m.func); }
+    };
+
+    template<typename Pred>
+    struct filter {
+        Pred pred;
+
+        filter(Pred p): pred(p)
+        { }
+
+        template<typename Source>
+        friend auto operator|(Source &&s, filter<Pred> &&f)
+        { return internal::FilterStream(internal::wrap(std::forward<Source>(s)), f.pred); }
+    };
+
+    struct flatten {
+        template<typename Source>
+        friend auto operator|(Source &&s, flatten)
+        { return internal::FlattenStream(internal::wrap(std::forward<Source>(s))); }
+    };
+
+    struct grouped {
+        size_t size;
+
+        grouped(size_t n): size(n)
+        { }
+
+        template<typename Source>
+        friend auto operator|(Source &&s, grouped &&g)
+        { return internal::GroupedStream(internal::wrap(std::forward<Source>(s)), g.size); }
+    };
+
+    struct indices : public internal::IndicesStream {
+        using IndicesStream::IndicesStream;
+    };
+
+    struct to_vector {
+        template<typename Source>
+        friend auto operator|(Source &&s, to_vector)
+        {
+            std::vector<element_t<Source>> res;
+            for (auto &&e : s) res.push_back(e);
+            return res;
+        }
+    };
+}
+
 namespace option {
     enum class Arrow {
         POSE, VECTOR,
