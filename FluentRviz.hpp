@@ -14,7 +14,6 @@
 namespace flrv {
 
 namespace stream {
-
     template<typename Source>
     using iterator_t = decltype(std::begin(std::declval<Source &>()));
 
@@ -22,7 +21,6 @@ namespace stream {
     using element_t = decltype(*std::declval<iterator_t<Source>>());
 
     namespace internal {
-
         template<typename Source>
         struct ReferenceStream {
             Source *source;
@@ -170,7 +168,7 @@ namespace stream {
 
                 void satisfy()
                 {
-                    for(auto end = std::end(parent->source); parent_itr != end; ++parent_itr) {
+                    for (auto end = std::end(parent->source); parent_itr != end; ++parent_itr) {
                         auto &child = parent->update(*parent_itr);
                         child_itr = std::begin(child);
                         if(child_itr != std::end(child)) return;
@@ -178,8 +176,7 @@ namespace stream {
                 }
 
                 cursol() = default;
-                cursol(FlattenStream *par, iterator_t<Source> edge)
-                    : parent(par), parent_itr(edge)
+                cursol(FlattenStream *par, iterator_t<Source> edge): parent(par), parent_itr(edge)
                 { satisfy(); }
 
                 decltype(auto) operator*()
