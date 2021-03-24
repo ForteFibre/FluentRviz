@@ -55,7 +55,6 @@ namespace stream {
 
         public:
             IteratorStream() = default;
-
             IteratorStream(Iterator begin, Iterator end): begin_(begin), end_(end)
             { }
 
@@ -90,6 +89,7 @@ namespace stream {
                 { return itr != rhs.itr; }
             };
 
+            MapStream() = default;
             MapStream(Source s, Func f): source(s), func(std::move(f))
             { }
 
@@ -127,6 +127,7 @@ namespace stream {
                 { return itr != rhs.itr; }
             };
 
+            FilterStream() = default;
             FilterStream(Source s, Pred p): source(std::move(s)), pred(std::move(p))
             { }
 
@@ -196,6 +197,7 @@ namespace stream {
                 { return parent_itr != rhs.parent_itr; }
             };
 
+            FlattenStream() = default;
             FlattenStream(Source s): source(std::move(s))
             { }
 
@@ -238,6 +240,7 @@ namespace stream {
                 { return left != rhs.left; }
             };
 
+            GroupedStream() = default;
             GroupedStream(Source s, size_t n): source(std::move(s)), size(n)
             { }
 
@@ -312,9 +315,9 @@ namespace stream {
                 { return value != rhs.value; }
             };
 
+            IndicesStream() = default;
             IndicesStream(int64_t begin, int64_t end): begin_(begin), end_(end)
             { }
-
             IndicesStream(int64_t end): IndicesStream(0, end)
             { }
 
