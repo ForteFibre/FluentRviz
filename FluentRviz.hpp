@@ -248,6 +248,49 @@ namespace stream {
             { return cursol(this, std::end(source), size); }
         };
 
+        template<typename Source>
+        struct SlidingStream {
+            Source source;
+            size_t size;
+
+            struct cursol {
+                SlidingStream *parent;
+                iterator_t<Source> left, right;
+                size_t size;
+
+                iterator_t<Source> skip(iterator_t<Source> itr, size_t x)
+                {
+                    iterator_t<Source> res = itr;
+                    for (size_t i = x; i > 0 && res != std::end(parent->source); --i) ++res;
+                    return res;
+                }
+
+                cursol() = default;
+
+                cursol(SlidingStream *p, iterator_t<Source> i, size_t n): parent(p), left(i), right(skip(left, n)), size(n)
+                { }
+
+                decltype(auto) operator*()
+                { return IteratorStream(left, right); }
+
+                cursol &operator++()
+                { left = skip(left, 1), right = skip(right, 1); return *this; }
+
+                bool operator!=(const cursol &rhs)
+                { return left != rhs.left; }
+            };
+
+            SlidingStream() = default;
+            SlidingStream(Source s, size_t n): source(std::move(s)), size(n)
+            { }
+
+            auto begin()
+            { return cursol(this, std::begin(source), size); }
+
+            auto end()
+            { return cursol(this, std::end(source), size); }
+        };
+
         struct IndicesStream {
             int64_t begin_, end_;
 
@@ -322,6 +365,17 @@ namespace stream {
         template<typename Source>
         friend auto operator|(Source &&s, grouped &&g)
         { return internal::GroupedStream(internal::wrap(std::forward<Source>(s)), g.size); }
+    };
+
+    struct sliding {
+        size_t size;
+
+        sliding(size_t n): size(n)
+        { }
+
+        template<typename Source>
+        friend auto operator|(Source &&s, sliding &&g)
+        { return internal::SlidingStream(internal::wrap(std::forward<Source>(s)), g.size); }
     };
 
     struct indices : public internal::IndicesStream {
