@@ -600,7 +600,7 @@ namespace param {
         { }
 
         Quaternion(const double x, const double y, const double z, const double w) noexcept
-        { value.x = x, value.y = y, value.z = z, value.z = w; }
+        { value.x = x, value.y = y, value.z = z, value.w = w; }
 
         template<typename T>
         Quaternion(const T &arg) noexcept : Quaternion(get<Member::X>(arg), get<Member::Y>(arg), get<Member::Z>(arg), get<Member::W>(arg)) { }
