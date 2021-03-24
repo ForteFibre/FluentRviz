@@ -274,7 +274,14 @@ namespace stream {
                 { return IteratorStream(left, right); }
 
                 cursol &operator++()
-                { left = skip(left, 1), right = skip(right, 1); return *this; }
+                {
+                    if (auto end = std::end(parent->source); right != end) {
+                        left = skip(left, 1), right = skip(right, 1);
+                    } else {
+                        left = end;
+                    }
+                    return *this;
+                }
 
                 bool operator!=(const cursol &rhs)
                 { return left != rhs.left; }
