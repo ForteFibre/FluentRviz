@@ -75,7 +75,6 @@ namespace stream {
                 iterator_t<Source> itr;
 
                 cursol() = default;
-
                 cursol(MapStream *p, iterator_t<Source> i): parent(p), itr(i)
                 { }
 
@@ -179,7 +178,6 @@ namespace stream {
                 }
 
                 cursol() = default;
-
                 cursol(FlattenStream *par, iterator_t<Source> edge)
                     : parent(par), parent_itr(edge)
                 { satisfy(); }
@@ -269,7 +267,6 @@ namespace stream {
                 }
 
                 cursol() = default;
-
                 cursol(SlidingStream *p, iterator_t<Source> i, size_t n): parent(p), left(i), right(skip(left, n)), size(n)
                 { }
 
@@ -301,7 +298,6 @@ namespace stream {
                 int64_t value;
 
                 cursol() = default;
-
                 cursol(int64_t v): value(v)
                 { }
 
@@ -825,11 +821,12 @@ namespace param {
             stream::iterator_t<Source> itr;
 
         public:
-            cursol(PointsFragment *p, iterator_t<Source> i): parent(p), itr(i)
+            cursol() = default;
+            cursol(PointsFragment *p, stream::iterator_t<Source> i): parent(p), itr(i)
             { }
 
             Vector3 operator*()
-            { return parent->rotation.rotate_vector(Vector3(*itr).hadamard_prod(extent)) + parent->offset; }
+            { return parent->rotation.rotate_vector(Vector3(*itr).hadamard_prod(parent->extent)) + parent->offset; }
 
             cursol &operator++()
             { ++itr; return *this; }
@@ -839,6 +836,7 @@ namespace param {
         };
 
     public:
+        PointsFragment() = default;
         PointsFragment(Source &s): source(std::addressof(s)), rotation(0, 0, 0, 1), extent(1, 1, 1)
         { }
 
