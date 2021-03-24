@@ -758,7 +758,7 @@ namespace param {
 
     template<typename Source>
     class PointsFragment {
-        Source &source;
+        Source *source;
         Quaternion rotation;
         Vector3 offset;
         Vector3 extent;
@@ -782,7 +782,7 @@ namespace param {
         };
 
     public:
-        PointsFragment(Source &s): source(s), rotation(0, 0, 0, 1), extent(1, 1, 1)
+        PointsFragment(Source &s): source(std::addressof(s)), rotation(0, 0, 0, 1), extent(1, 1, 1)
         { }
 
         PointsFragment &&orientaion(const Quaternion orientaion) && noexcept
@@ -801,10 +801,10 @@ namespace param {
         { extent = { x, y, z }; return *this; }
 
         auto begin()
-        { return cursol(this, std::begin(source)); }
+        { return cursol(this, std::begin(*source)); }
 
         auto end()
-        { return cursol(this, std::end(source)); }
+        { return cursol(this, std::end(*source)); }
     };
 } // namespace param
 
