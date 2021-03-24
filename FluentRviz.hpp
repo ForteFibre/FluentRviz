@@ -857,7 +857,7 @@ namespace param {
         { return std::move(*this).position({ x, y, z }); }
 
         PointsFragment &&scale(double x, double y, double z) && noexcept
-        { extent = { x, y, z }; return *this; }
+        { extent = { x, y, z }; return std::move(*this); }
 
         auto begin()
         { return cursol(this, std::begin(*source)); }
