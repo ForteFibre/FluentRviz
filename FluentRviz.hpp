@@ -570,15 +570,12 @@ namespace param {
     using traits::Member;
 
     struct Vector3 {
-        geometry_msgs::Vector3 value;
+        double x, y, z;
 
         Vector3() = default;
 
-        Vector3(const geometry_msgs::Vector3 arg) noexcept : value(arg)
+        Vector3(const double x, const double y, const double z = 0.0) noexcept : x(x), y(y), z(z)
         { }
-
-        Vector3(const double x, const double y, const double z = 0.0) noexcept
-        { value.x = x, value.y = y, value.z = z; }
 
         template<typename T>
         Vector3(const T &arg) noexcept : Vector3(get<Member::X>(arg), get<Member::Y>(arg), get<Member::Z>(arg))
@@ -595,107 +592,77 @@ namespace param {
         [[nodiscard]] static Vector3 from_2d(const T &point, const double z = 0.0) noexcept
         { return { get<Member::X>(point), get<Member::Y>(point), z }; }
 
-        const geometry_msgs::Vector3 &to_vector3_msg() const noexcept
-        { return value; }
-
-        geometry_msgs::Point to_point_msg() const noexcept
+        operator geometry_msgs::Vector3() const noexcept
         {
-            geometry_msgs::Point res;
-            res.x = x(), res.y = y(), res.z = z();
+            geometry_msgs::Vector3 res;
+            res.x = x; res.y = y; res.z = z;
             return res;
         }
 
-        double &x()
-        { return value.x; }
-        const double &x() const
-        { return value.x; }
-
-        double &y()
-        { return value.y; }
-        const double &y() const
-        { return value.y; }
-
-        double &z()
-        { return value.z; }
-        const double &z() const
-        { return value.z; }
+        operator geometry_msgs::Point() const noexcept
+        {
+            geometry_msgs::Point res;
+            res.x = x; res.y = y; res.z = z;
+            return res;
+        }
 
         Vector3 operator+(const Vector3 rhs) const noexcept
-        { return { x() + rhs.x(), y() + rhs.y(), z() + rhs.z() }; }
+        { return { x + rhs.x, y + rhs.y, z + rhs.z }; }
 
         Vector3 operator-() const noexcept
-        { return { -x(), -y(), -z() }; }
+        { return { -x, -y, -z }; }
 
         Vector3 operator-(const Vector3 rhs) const noexcept
-        { return { x() - rhs.x(), y() - rhs.y(), z() - rhs.z() }; }
+        { return { x - rhs.x, y - rhs.y, z - rhs.z }; }
 
         Vector3 operator*(const double rhs) const noexcept
-        { return { rhs * x(), rhs * y(), rhs * z() }; }
+        { return { rhs * x, rhs * y, rhs * z }; }
 
         friend Vector3 operator*(const double lhs, const Vector3 rhs) noexcept
         { return rhs * lhs; }
 
         Vector3 operator/(const double rhs) const noexcept
-        { return { x() / rhs, y() / rhs, z() / rhs }; }
+        { return { x / rhs, y / rhs, z / rhs }; }
 
         double dot(const Vector3 rhs) const noexcept
-        { return x() * rhs.x() + y() * rhs.y() + z() * rhs.z(); }
+        { return x * rhs.x + y * rhs.y + z * rhs.z; }
 
         Vector3 cross(const Vector3 rhs) const noexcept
-        { return { y() * rhs.z() - z() * rhs.y(), z() * rhs.x() - x() * rhs.z(), x() * rhs.y() - y() * rhs.x() }; }
+        { return { y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x }; }
 
         Vector3 hadamard_prod(const Vector3 rhs) const noexcept
-        { return { x() * rhs.x(), y() * rhs.y(), z() * rhs.z() }; }
+        { return { x * rhs.x, y * rhs.y, z * rhs.z }; }
     };
 
     struct Quaternion {
-        geometry_msgs::Quaternion value;
+        double w, x, y, z;
 
         Quaternion() = default;
 
-        Quaternion(const geometry_msgs::Quaternion arg) noexcept : value(arg)
+        Quaternion(const double w, const double x, const double y, const double z) noexcept : w(w), x(x), y(y), z(z)
         { }
 
-        Quaternion(const double x, const double y, const double z, const double w) noexcept
-        { value.x = x, value.y = y, value.z = z, value.w = w; }
-
         template<typename T>
-        Quaternion(const T &arg) noexcept : Quaternion(get<Member::X>(arg), get<Member::Y>(arg), get<Member::Z>(arg), get<Member::W>(arg)) { }
+        Quaternion(const T &arg) noexcept : Quaternion(get<Member::W>(arg), get<Member::X>(arg), get<Member::Y>(arg), get<Member::Z>(arg)) { }
 
-        [[nodiscard]] static Quaternion from_angle_axis(const double theta, const Vector3 axis = Vector3::UnitZ()) noexcept
-        { return { axis.x() * std::sin(theta / 2), axis.y() * std::sin(theta / 2), axis.z() * std::sin(theta / 2), std::cos(theta / 2) }; }
+        [[nodiscard]] static Quaternion from_angle_axis(const double angle, const Vector3 axis = Vector3::UnitZ()) noexcept
+        { return { std::cos(angle / 2), axis.x * std::sin(angle / 2), axis.y * std::sin(angle / 2), axis.z * std::sin(angle / 2) }; }
 
-        [[nodiscard]] static Quaternion from_vector_scalar(const Vector3 vector, const double scalar) noexcept
-        { return { vector.x(), vector.y(), vector.z(), scalar }; }
+        [[nodiscard]] static Quaternion from_scalar_vector(const double scalar, const Vector3 vector) noexcept
+        { return { scalar, vector.x, vector.y, vector.z }; }
 
-        const geometry_msgs::Quaternion &to_quaternion_msg() const noexcept
-        { return value; }
-
-        double &x()
-        { return value.x; }
-        const double &x() const
-        { return value.x; }
-
-        double &y()
-        { return value.y; }
-        const double &y() const
-        { return value.y; }
-
-        double &z()
-        { return value.z; }
-        const double &z() const
-        { return value.z; }
-
-        double &w()
-        { return value.w; }
-        const double &w() const
-        { return value.w; }
+        operator geometry_msgs::Quaternion() const noexcept
+        {
+            geometry_msgs::Quaternion res;
+            res.w = w, res.x = x, res.y = y, res.z = z;
+            return res;
+        }
 
         Vector3 vector() const noexcept
-        { return { x(), y(), z() }; }
+        { return { x, y, z }; }
 
         double scalar() const noexcept
-        { return w(); }
+        { return w; }
 
         double theta() const noexcept
         { return std::acos(scalar()) * 2; }
@@ -704,10 +671,10 @@ namespace param {
         { return vector() / std::sin(theta() / 2); }
 
         Quaternion conjugate() const noexcept
-        { return { -x(), -y(), -z(), w() }; }
+        { return { w, -x, -y, -z }; }
 
         double norm() const noexcept
-        { return std::sqrt(x() * x() + y() * y() + z() * z() + w() * w()); }
+        { return std::sqrt(w * w + x * x + y * y + z * z); }
 
         Quaternion inverse() const noexcept
         { return conjugate() / (norm() * norm()); }
@@ -716,53 +683,50 @@ namespace param {
         { return ((*this) * vector * (*this).inverse()).vector(); }
 
         Quaternion operator+(const Quaternion rhs) const noexcept
-        { return { x() + rhs.x(), y() + rhs.y(), z() + rhs.z(), w() + rhs.w() }; }
+        { return { w + rhs.w, x + rhs.x, y + rhs.y, z + rhs.z }; }
 
         Quaternion operator-() const noexcept
-        { return { -x(), -y(), -z(), -w() }; }
+        { return { -w, -x, -y, -z }; }
 
         Quaternion operator-(const Quaternion rhs) const noexcept
-        { return { x() - rhs.x(), y() - rhs.y(), z() - rhs.z(), w() - rhs.w() }; }
+        { return { w - rhs.w, x - rhs.x, y - rhs.y, z - rhs.z }; }
 
         Quaternion operator*(const Quaternion rhs) const noexcept
         {
             Vector3 vec = scalar() * rhs.vector() + rhs.scalar() * vector() + vector().cross(rhs.vector());
-            return { vec.x(), vec.y(), vec.z(), scalar() * rhs.scalar() - vector().dot(rhs.vector()) };
+            return { scalar() * rhs.scalar() - vector().dot(rhs.vector()), vec.x, vec.y, vec.z };
         }
 
         Quaternion operator*(const Vector3 rhs) const noexcept
-        { return *this * Quaternion::from_vector_scalar(rhs, 0); }
+        { return *this * Quaternion::from_scalar_vector(0, rhs); }
 
         friend Quaternion operator*(const Vector3 lhs, const Quaternion rhs) noexcept
         { return rhs * lhs; }
 
         Quaternion operator*(const double rhs) const noexcept
-        { return { rhs * x(), rhs * y(), rhs * z(), rhs * w() }; }
+        { return { rhs * w, rhs * x, rhs * y, rhs * z }; }
 
         friend Quaternion operator*(const double lhs, const Quaternion rhs) noexcept
         { return rhs * lhs; }
 
         Quaternion operator/(const double rhs) const noexcept
-        { return { x() / rhs, y() / rhs, z() / rhs, w() / rhs }; }
+        { return { w / rhs, x / rhs, y / rhs, z / rhs }; }
     };
 
     struct Color {
-        std_msgs::ColorRGBA value;
+        float r, g, b, a;
 
         Color() = default;
 
-        Color(const std_msgs::ColorRGBA arg) noexcept : value(arg)
+        Color(const float r, const float g, const float b, const float a = 1.0) noexcept : r(r), g(g), b(b), a(a)
         { }
-
-        Color(const float r, const float g, const float b, const float a = 1.0) noexcept
-        { value.r = r, value.g = g, value.b = b, value.a = a; }
 
         [[nodiscard]] static Color from_hex(const int32_t hex) noexcept
         { return { ((hex >> 16) & 0xff) / 255.0f, ((hex >> 8) & 0xff) / 255.0f, (hex & 0xff) / 255.0f, }; }
 
         [[nodiscard]] Color &alpha(const float a) noexcept
         {
-            value.a = a;
+            this->a = a;
             return *this;
         }
 
@@ -809,8 +773,12 @@ namespace param {
         [[nodiscard]] static inline Color Black() noexcept
         { return from_hex(color::BLACK); }
 
-        const std_msgs::ColorRGBA &to_color_msg() const noexcept
-        { return value; }
+        operator std_msgs::ColorRGBA() const noexcept
+        {
+            std_msgs::ColorRGBA res;
+            res.r = r, res.g = g, res.b = b, res.a = a;
+            return res;
+        }
     };
 } // namespace param
 
@@ -886,7 +854,7 @@ namespace internal {
 
         [[nodiscard]] T &&position(const param::Vector3 position) && noexcept
         {
-            FLRV_DERIVED(T).msg().pose.position = position.to_point_msg();
+            FLRV_DERIVED(T).msg().pose.position = position;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -897,14 +865,14 @@ namespace internal {
     template<typename T>
     struct OrientationHelper {
         OrientationHelper()
-        { FLRV_SUPPRESS(std::move(*this).orientation(0, 0, 0, 1)); }
+        { FLRV_SUPPRESS(std::move(*this).orientation(1, 0, 0, 0)); }
 
-        [[nodiscard]] T &&orientation(const double x, const double y, const double z, const double w) && noexcept
-        { return std::move(*this).orientation({ x, y, z, w }); }
+        [[nodiscard]] T &&orientation(const double w, const double x, const double y, const double z) && noexcept
+        { return std::move(*this).orientation({ w, x, y, z }); }
 
         [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
-            FLRV_DERIVED(T).msg().pose.orientation = orientation.to_quaternion_msg();
+            FLRV_DERIVED(T).msg().pose.orientation = orientation;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -923,7 +891,7 @@ namespace internal {
 
         [[nodiscard]] T &&scale(const double x, const double y, const double z) && noexcept
         {
-            FLRV_DERIVED(T).msg().scale = param::Vector3(x, y, z).to_vector3_msg();
+            FLRV_DERIVED(T).msg().scale = param::Vector3(x, y, z);
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1016,7 +984,7 @@ namespace internal {
 
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
-            FLRV_DERIVED(T).msg().color = color.to_color_msg();
+            FLRV_DERIVED(T).msg().color = color;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1031,7 +999,7 @@ namespace internal {
 
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
-            FLRV_DERIVED(T).msg().color = color.to_color_msg();
+            FLRV_DERIVED(T).msg().color = color;
             FLRV_DERIVED(T).msg().colors.clear();
             return std::move(FLRV_DERIVED(T));
         }
@@ -1044,7 +1012,9 @@ namespace internal {
 
         [[nodiscard]] T &&color(std::vector<param::Color> colors) && noexcept
         {
-            return std::move(*this).color(colors | stream::map([](auto &e) { return e.to_color_msg(); }) | stream::to_vector());
+            return std::move(*this).color(colors
+                | stream::map([](auto &&e) { return static_cast<std_msgs::ColorRGBA>(e); })
+                | stream::to_vector());
         }
     };
 
@@ -1086,7 +1056,7 @@ namespace internal {
         [[nodiscard]] T &&points(PointsLike points) && noexcept
         {
             return std::move(*this).points(points
-                | stream::map([](auto &&e) { return param::Vector3(e).to_point_msg(); })
+                | stream::map([](auto &&e) { return static_cast<geometry_msgs::Point>(param::Vector3(e)); })
                 | stream::to_vector());
         }
     };
@@ -1115,7 +1085,7 @@ namespace internal {
         template<size_t Index>
         [[nodiscard]] T &&set(const param::Vector3 &point) noexcept
         {
-            FLRV_DERIVED(T).msg().points[Index] = point.to_point_msg();
+            FLRV_DERIVED(T).msg().points[Index] = point;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1186,7 +1156,7 @@ namespace param {
 
         Source *source;
 
-        struct {
+        struct Param {
             geometry_msgs::Pose pose;
             geometry_msgs::Vector3 scale;
         } param;
@@ -1228,7 +1198,7 @@ namespace param {
         auto end()
         { return cursol(this, std::end(*source)); }
 
-        decltype(param) &msg()
+        Param &msg()
         { return param; }
     };
 } // namespace param
