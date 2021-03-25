@@ -812,59 +812,6 @@ namespace param {
         const std_msgs::ColorRGBA &to_color_msg() const noexcept
         { return value; }
     };
-
-    template<typename Source>
-    class PointsFragment {
-        Source *source;
-        Quaternion rotation;
-        Vector3 offset;
-        Vector3 extent;
-
-        class cursol {
-            PointsFragment *parent;
-            stream::iterator_t<Source> itr;
-
-        public:
-            cursol() = default;
-            cursol(PointsFragment *p, stream::iterator_t<Source> i): parent(p), itr(i)
-            { }
-
-            Vector3 operator*()
-            { return parent->rotation.rotate_vector(Vector3(*itr).hadamard_prod(parent->extent)) + parent->offset; }
-
-            cursol &operator++()
-            { ++itr; return *this; }
-
-            bool operator!=(const cursol &rhs)
-            { return itr != rhs.itr; }
-        };
-
-    public:
-        PointsFragment() = default;
-        PointsFragment(Source &s): source(std::addressof(s)), rotation(0, 0, 0, 1), extent(1, 1, 1)
-        { }
-
-        PointsFragment &&orientaion(const Quaternion orientaion) && noexcept
-        { rotation = orientaion; return std::move(*this); }
-
-        PointsFragment &&orientaion(double x, double y, double z, double w) && noexcept
-        { return std::move(*this).orientaion({ x, y, z, w }); }
-
-        PointsFragment &&position(const Vector3 position) && noexcept
-        { offset = position; return std::move(*this); }
-
-        PointsFragment &&position(double x, double y, double z) && noexcept
-        { return std::move(*this).position({ x, y, z }); }
-
-        PointsFragment &&scale(double x, double y, double z) && noexcept
-        { extent = { x, y, z }; return std::move(*this); }
-
-        auto begin()
-        { return cursol(this, std::begin(*source)); }
-
-        auto end()
-        { return cursol(this, std::end(*source)); }
-    };
 } // namespace param
 
 namespace internal {
@@ -1229,6 +1176,62 @@ namespace internal {
         std::enable_if_t<is_mesh_resource_marker_v<MarkerType>>>
         : MeshResourceHelper<Marker> { };
 } // namespace internal
+
+namespace param {
+    template<typename Source>
+    class PointsFragment
+        : public internal::PositionHelper<PointsFragment<Source>>
+        , public internal::OrientationHelper<PointsFragment<Source>>
+        , public internal::ScaleHelper<PointsFragment<Source>> {
+
+        Source *source;
+
+        struct {
+            geometry_msgs::Pose pose;
+            geometry_msgs::Vector3 scale;
+        } param;
+
+        class cursol {
+            PointsFragment *parent;
+            stream::iterator_t<Source> itr;
+
+        public:
+            cursol() = default;
+            cursol(PointsFragment *p, stream::iterator_t<Source> i): parent(p), itr(i)
+            { }
+
+            Vector3 operator*()
+            {
+                Quaternion orientation(parent->param.pose.orientation);
+                Vector3 position(parent->param.pose.position);
+                Vector3 scale(parent->param.scale);
+                Vector3 point(*itr);
+
+                return orientation.rotate_vector(point.hadamard_prod(scale)) + position;
+            }
+
+            cursol &operator++()
+            { ++itr; return *this; }
+
+            bool operator!=(const cursol &rhs)
+            { return itr != rhs.itr; }
+        };
+
+    public:
+        PointsFragment() = default;
+        PointsFragment(Source &s): source(std::addressof(s))
+        { }
+
+        auto begin()
+        { return cursol(this, std::begin(*source)); }
+
+        auto end()
+        { return cursol(this, std::end(*source)); }
+
+        auto &msg()
+        { return param; }
+    };
+} // namespace param
 
 namespace marker {
     template<int32_t Action>
