@@ -1228,7 +1228,7 @@ namespace param {
         auto end()
         { return cursol(this, std::end(*source)); }
 
-        auto &msg()
+        decltype(param) &msg()
         { return param; }
     };
 } // namespace param
