@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <type_traits>
+#include <complex>
 
 #include <ros/ros.h>
 #include <geometry_msgs/Point.h>
@@ -1154,28 +1155,28 @@ namespace internal {
         : MeshResourceHelper<Derived> { };
 } // namespace internal
 
-namespace param {
-    struct PointsFragmentParam {
+namespace param::points {
+    struct FragmentParam {
         geometry_msgs::Pose pose;
         geometry_msgs::Vector3 scale;
     };
 
     template<typename Source>
-    class PointsFragment
-        : public internal::Inner<PointsFragmentParam>
-        , public internal::PositionHelper<PointsFragment<Source>>
-        , public internal::OrientationHelper<PointsFragment<Source>>
-        , public internal::ScaleHelper<PointsFragment<Source>> {
+    class Fragment
+        : public internal::Inner<FragmentParam>
+        , public internal::PositionHelper<Fragment<Source>>
+        , public internal::OrientationHelper<Fragment<Source>>
+        , public internal::ScaleHelper<Fragment<Source>> {
 
         Source *source;
 
         class cursol {
-            PointsFragment *parent;
+            Fragment *parent;
             stream::iterator_t<Source> itr;
 
         public:
             cursol() = default;
-            cursol(PointsFragment *p, stream::iterator_t<Source> i): parent(p), itr(i)
+            cursol(Fragment *p, stream::iterator_t<Source> i): parent(p), itr(i)
             { }
 
             Point operator*()
@@ -1196,8 +1197,8 @@ namespace param {
         };
 
     public:
-        PointsFragment() = default;
-        PointsFragment(Source &s): source(std::addressof(s))
+        Fragment() = default;
+        Fragment(Source &s): source(std::addressof(s))
         { }
 
         auto begin()
@@ -1207,7 +1208,53 @@ namespace param {
         { return cursol(this, std::end(*source)); }
 
     };
-} // namespace param
+
+    template<size_t Vertex>
+    auto &PolygonLineStrip()
+    {
+        static_assert(Vertex >= 3);
+
+        static std::vector<Point> frame;
+
+        if (frame.empty()) {
+            frame.resize(Vertex + 1);
+            double pi = 3.1415926535;
+            double d = 2 * pi / Vertex;
+            double ang = -pi / 2 + d / 2;
+            double len = 0.5 / std::sin(d / 2);
+
+            for (size_t i = 0; i <= Vertex; i++) {
+                auto v = std::polar(len, ang + i * d);
+                frame[i] = Point::from_2d(v);
+            }
+        }
+
+        return frame;
+    }
+
+    template<size_t Vertex>
+    auto &PolygonLineList()
+    {
+        static_assert(Vertex >= 3);
+
+        static std::vector<Point> frame;
+
+        if (frame.empty()) {
+            frame.resize(2 * Vertex);
+            double pi = 3.1415926535;
+            double d = 2 * pi / Vertex;
+            double ang = -pi / 2 + d / 2;
+            double len = 0.5 / std::sin(d / 2);
+
+            for (size_t i = 0; i < Vertex; i++) {
+                frame[2 * i] = Point::from_2d(std::polar(len, ang + i * d));
+                frame[2 * i + 1] = Point::from_2d(std::polar(len, ang + (i + 1) * d));
+            }
+        }
+
+        return frame;
+    }
+} // namespace param::points
 
 namespace marker {
     template<int32_t Action>
