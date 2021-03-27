@@ -1155,14 +1155,14 @@ namespace internal {
 } // namespace internal
 
 namespace param {
-    struct Param {
+    struct PointsFragmentParam {
         geometry_msgs::Pose pose;
         geometry_msgs::Vector3 scale;
     };
 
     template<typename Source>
     class PointsFragment
-        : public internal::Inner<Param>
+        : public internal::Inner<PointsFragmentParam>
         , public internal::PositionHelper<PointsFragment<Source>>
         , public internal::OrientationHelper<PointsFragment<Source>>
         , public internal::ScaleHelper<PointsFragment<Source>> {
