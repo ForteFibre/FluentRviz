@@ -852,170 +852,170 @@ namespace internal {
     template<auto... Options>
     struct OptionPack { };
 
-    template<typename T>
+    template<typename Derived>
     struct PositionHelper {
-        [[nodiscard]] T &&position(const double x, const double y, const double z = 0.0) && noexcept
+        [[nodiscard]] Derived &&position(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).position({ x, y, z }); }
 
-        [[nodiscard]] T &&position(const param::Vector3 position) && noexcept
+        [[nodiscard]] Derived &&position(const param::Vector3 position) && noexcept
         {
-            FLRV_DERIVED(T).inner.pose.position = position;
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.pose.position = position;
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
-    struct PositionEnabler : PositionHelper<Marker> { };
+    template<typename Derived, int32_t MarkerType, typename Option, typename Enable = void>
+    struct PositionEnabler : PositionHelper<Derived> { };
 
-    template<typename T>
+    template<typename Derived>
     struct OrientationHelper {
         OrientationHelper()
         { FLRV_SUPPRESS(std::move(*this).orientation(1, 0, 0, 0)); }
 
-        [[nodiscard]] T &&orientation(const double w, const double x, const double y, const double z) && noexcept
+        [[nodiscard]] Derived &&orientation(const double w, const double x, const double y, const double z) && noexcept
         { return std::move(*this).orientation({ w, x, y, z }); }
 
-        [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
+        [[nodiscard]] Derived &&orientation(const param::Quaternion orientation) && noexcept
         {
-            FLRV_DERIVED(T).inner.pose.orientation = orientation;
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.pose.orientation = orientation;
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
-    struct OrientationEnabler : OrientationHelper<Marker> { };
+    template<typename Derived, int32_t MarkerType, typename Option, typename Enable = void>
+    struct OrientationEnabler : OrientationHelper<Derived> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
-    struct OrientationEnabler<Marker, MarkerType, Option,
+    template<typename Derived, int32_t MarkerType, typename Option>
+    struct OrientationEnabler<Derived, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>> { };
 
-    template<typename T>
+    template<typename Derived>
     struct ScaleHelper {
         ScaleHelper()
         { FLRV_SUPPRESS(std::move(*this).scale(1, 1, 1)); }
 
-        [[nodiscard]] T &&scale(const double x, const double y, const double z) && noexcept
+        [[nodiscard]] Derived &&scale(const double x, const double y, const double z) && noexcept
         {
-            FLRV_DERIVED(T).inner.scale = param::Vector3(x, y, z);
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.scale = param::Vector3(x, y, z);
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename T>
-    struct PoseArrowScaleHelper : ScaleHelper<T> {
+    template<typename Derived>
+    struct PoseArrowScaleHelper : ScaleHelper<Derived> {
         PoseArrowScaleHelper()
         { FLRV_SUPPRESS(std::move(*this).scale(0.05, 0.05)); }
 
-        [[nodiscard]] T &&scale(const double length, const double width, const double height) && noexcept
-        { return std::move(*this).ScaleHelper<T>::scale(length, width, height); }
+        [[nodiscard]] Derived &&scale(const double length, const double width, const double height) && noexcept
+        { return std::move(*this).ScaleHelper<Derived>::scale(length, width, height); }
     };
 
-    template<typename T>
-    struct VectorArrowScaleHelper : ScaleHelper<T> {
+    template<typename Derived>
+    struct VectorArrowScaleHelper : ScaleHelper<Derived> {
         VectorArrowScaleHelper()
         { FLRV_SUPPRESS(std::move(*this).scale(0.2, 0.4, 0.4)); }
 
-        [[nodiscard]] T &&scale(const double shaft_diameter, const double head_diameter, const double head_length) && noexcept
-        { return std::move(*this).ScaleHelper<T>::scale(shaft_diameter, head_diameter, head_length); }
+        [[nodiscard]] Derived &&scale(const double shaft_diameter, const double head_diameter, const double head_length) && noexcept
+        { return std::move(*this).ScaleHelper<Derived>::scale(shaft_diameter, head_diameter, head_length); }
     };
 
-    template<typename T>
-    struct PointScaleHelper : ScaleHelper<T> {
+    template<typename Derived>
+    struct PointScaleHelper : ScaleHelper<Derived> {
         PointScaleHelper()
         { FLRV_SUPPRESS(std::move(*this).scale(0.05, 0.05)); }
 
-        [[nodiscard]] T &&scale(const double width, const double height) && noexcept
-        { return std::move(*this).ScaleHelper<T>::scale(width, height, 0); }
+        [[nodiscard]] Derived &&scale(const double width, const double height) && noexcept
+        { return std::move(*this).ScaleHelper<Derived>::scale(width, height, 0); }
     };
 
-    template<typename T>
-    struct LineScaleHelper : ScaleHelper<T> {
+    template<typename Derived>
+    struct LineScaleHelper : ScaleHelper<Derived> {
         LineScaleHelper()
         { FLRV_SUPPRESS(std::move(*this).scale(0.05)); }
 
-        [[nodiscard]] T &&scale(const double width) && noexcept
-        { return std::move(*this).ScaleHelper<T>::scale(width, 0, 0); }
+        [[nodiscard]] Derived &&scale(const double width) && noexcept
+        { return std::move(*this).ScaleHelper<Derived>::scale(width, 0, 0); }
     };
 
-    template<typename T>
-    struct TextScaleHelper : ScaleHelper<T> {
+    template<typename Derived>
+    struct TextScaleHelper : ScaleHelper<Derived> {
         TextScaleHelper()
         { FLRV_SUPPRESS(std::move(*this).scale(1)); }
 
-        [[nodiscard]] T &&scale(const double height) && noexcept
-        { return std::move(*this).ScaleHelper<T>::scale(0, 0, height); }
+        [[nodiscard]] Derived &&scale(const double height) && noexcept
+        { return std::move(*this).ScaleHelper<Derived>::scale(0, 0, height); }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Derived, int32_t MarkerType, typename Option, typename Enable = void>
     struct ScaleEnabler { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
-    struct ScaleEnabler<Marker, MarkerType, Option,
+    template<typename Derived, int32_t MarkerType, typename Option>
+    struct ScaleEnabler<Derived, MarkerType, Option,
         std::enable_if_t<is_common_scale_available_v<MarkerType>>>
-        : ScaleHelper<Marker> { };
+        : ScaleHelper<Derived> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
-    struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
+    template<typename Derived, int32_t MarkerType, auto... Options>
+    struct ScaleEnabler<Derived, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::POSE, Options...>>>
-        : PoseArrowScaleHelper<Marker> { };
+        : PoseArrowScaleHelper<Derived> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
-    struct ScaleEnabler<Marker, MarkerType, OptionPack<Options...>,
+    template<typename Derived, int32_t MarkerType, auto... Options>
+    struct ScaleEnabler<Derived, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
-        : VectorArrowScaleHelper<Marker> { };
+        : VectorArrowScaleHelper<Derived> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
-    struct ScaleEnabler<Marker, MarkerType, Option,
+    template<typename Derived, int32_t MarkerType, typename Option>
+    struct ScaleEnabler<Derived, MarkerType, Option,
         std::enable_if_t<is_points_marker_v<MarkerType>>>
-        : PointScaleHelper<Marker> { };
+        : PointScaleHelper<Derived> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
-    struct ScaleEnabler<Marker, MarkerType, Option,
+    template<typename Derived, int32_t MarkerType, typename Option>
+    struct ScaleEnabler<Derived, MarkerType, Option,
         std::enable_if_t<is_line_marker_v<MarkerType>>>
-        : LineScaleHelper<Marker> { };
+        : LineScaleHelper<Derived> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
-    struct ScaleEnabler<Marker, MarkerType, Option,
+    template<typename Derived, int32_t MarkerType, typename Option>
+    struct ScaleEnabler<Derived, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
-        : TextScaleHelper<Marker> { };
+        : TextScaleHelper<Derived> { };
 
-    template<typename T>
+    template<typename Derived>
     struct ColorHelper {
         ColorHelper()
         { FLRV_SUPPRESS(std::move(*this).color(1, 1, 1)); }
 
-        [[nodiscard]] T &&color(const float r, const float g, const float b, const float a = 1.0) && noexcept
+        [[nodiscard]] Derived &&color(const float r, const float g, const float b, const float a = 1.0) && noexcept
         { return std::move(*this).color({ r, g, b, a }); }
 
-        [[nodiscard]] T &&color(const param::Color color) && noexcept
+        [[nodiscard]] Derived &&color(const param::Color color) && noexcept
         {
-            FLRV_DERIVED(T).inner.color = color;
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.color = color;
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename T>
+    template<typename Derived>
     struct ColorsHelper {
         ColorsHelper()
         { FLRV_SUPPRESS(std::move(*this).color(1, 1, 1)); }
 
-        [[nodiscard]] T &&color(const float r, const float g, const float b, const float a = 1.0) && noexcept
+        [[nodiscard]] Derived &&color(const float r, const float g, const float b, const float a = 1.0) && noexcept
         { return std::move(*this).color({ r, g, b, a }); }
 
-        [[nodiscard]] T &&color(const param::Color color) && noexcept
+        [[nodiscard]] Derived &&color(const param::Color color) && noexcept
         {
-            FLRV_DERIVED(T).inner.color = color;
-            FLRV_DERIVED(T).inner.colors.clear();
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.color = color;
+            FLRV_DERIVED(Derived).inner.colors.clear();
+            return std::move(FLRV_DERIVED(Derived));
         }
 
-        [[nodiscard]] T &&color(std::vector<std_msgs::ColorRGBA> colors) && noexcept
+        [[nodiscard]] Derived &&color(std::vector<std_msgs::ColorRGBA> colors) && noexcept
         {
-            FLRV_DERIVED(T).inner.colors = std::move(colors);
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.colors = std::move(colors);
+            return std::move(FLRV_DERIVED(Derived));
         }
 
-        [[nodiscard]] T &&color(std::vector<param::Color> colors) && noexcept
+        [[nodiscard]] Derived &&color(std::vector<param::Color> colors) && noexcept
         {
             return std::move(*this).color(colors
                 | stream::map([](auto &&e) { return static_cast<std_msgs::ColorRGBA>(e); })
@@ -1023,42 +1023,42 @@ namespace internal {
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
-    struct ColorEnabler : ColorHelper<Marker> { };
+    template<typename Derived, int32_t MarkerType, typename Option, typename Enable = void>
+    struct ColorEnabler : ColorHelper<Derived> { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
-    struct ColorEnabler<Marker, MarkerType, Option,
+    template<typename Derived, int32_t MarkerType, typename Option>
+    struct ColorEnabler<Derived, MarkerType, Option,
         std::enable_if_t<is_colors_available_v<MarkerType>>>
-        : ColorsHelper<Marker> { };
+        : ColorsHelper<Derived> { };
 
-    template<typename T>
+    template<typename Derived>
     struct LifetimeHelper {
-        [[nodiscard]] T &&lifetime(const double lifetime) && noexcept
+        [[nodiscard]] Derived &&lifetime(const double lifetime) && noexcept
         {
-            FLRV_DERIVED(T).inner.lifetime = ros::Duration(lifetime);
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.lifetime = ros::Duration(lifetime);
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename T>
+    template<typename Derived>
     struct FrameLockedHelper {
-        [[nodiscard]] T &&frame_locked(const bool frame_locked) && noexcept
+        [[nodiscard]] Derived &&frame_locked(const bool frame_locked) && noexcept
         {
-            FLRV_DERIVED(T).inner.frame_locked = frame_locked;
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.frame_locked = frame_locked;
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename T>
+    template<typename Derived>
     struct PointsHelper {
-        [[nodiscard]] T &&points(std::vector<geometry_msgs::Point> points) && noexcept
+        [[nodiscard]] Derived &&points(std::vector<geometry_msgs::Point> points) && noexcept
         {
-            FLRV_DERIVED(T).inner.points = std::move(points);
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.points = std::move(points);
+            return std::move(FLRV_DERIVED(Derived));
         }
 
         template<typename PointsLike>
-        [[nodiscard]] T &&points(PointsLike points) && noexcept
+        [[nodiscard]] Derived &&points(PointsLike points) && noexcept
         {
             return std::move(*this).points(points
                 | stream::map([](auto &&e) { return static_cast<geometry_msgs::Point>(param::Vector3(e)); })
@@ -1066,90 +1066,90 @@ namespace internal {
         }
     };
 
-    template<typename T>
+    template<typename Derived>
     struct ArrowPointsHelper {
         ArrowPointsHelper()
         {
-            FLRV_DERIVED(T).inner.points.resize(2);
+            FLRV_DERIVED(Derived).inner.points.resize(2);
             std::move(*this).end(1, 0, 0);
         }
 
-        [[nodiscard]] T &&start(const double x, const double y, const double z = 0.0) && noexcept
+        [[nodiscard]] Derived &&start(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).start({ x, y, z }); }
 
-        [[nodiscard]] T &&start(const param::Vector3 point) && noexcept
+        [[nodiscard]] Derived &&start(const param::Vector3 point) && noexcept
         { return set<0>(point); }
 
-        [[nodiscard]] T &&end(const double x, const double y, const double z = 0.0) && noexcept
+        [[nodiscard]] Derived &&end(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).end({ x, y, z }); }
 
-        [[nodiscard]] T &&end(const param::Vector3 point) && noexcept
+        [[nodiscard]] Derived &&end(const param::Vector3 point) && noexcept
         { return set<1>(point); }
 
     private:
         template<size_t Index>
-        [[nodiscard]] T &&set(const param::Vector3 &point) noexcept
+        [[nodiscard]] Derived &&set(const param::Vector3 &point) noexcept
         {
-            FLRV_DERIVED(T).inner.points[Index] = point;
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.points[Index] = point;
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Derived, int32_t MarkerType, typename Option, typename Enable = void>
     struct PointsEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
-    struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
+    template<typename Derived, int32_t MarkerType, auto... Options>
+    struct PointsEnabler<Derived, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_points_available_v<MarkerType>>>
-        : PointsHelper<Marker> { };
+        : PointsHelper<Derived> { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
-    struct PointsEnabler<Marker, MarkerType, OptionPack<Options...>,
+    template<typename Derived, int32_t MarkerType, auto... Options>
+    struct PointsEnabler<Derived, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_arrow_marker_v<MarkerType> && is_contained_v<option::Arrow::VECTOR, Options...>>>
-        : ArrowPointsHelper<Marker> { };
+        : ArrowPointsHelper<Derived> { };
 
-    template<typename T>
+    template<typename Derived>
     struct TextHelper {
         TextHelper()
         { FLRV_SUPPRESS(std::move(*this).text("visualization_msgs::Marker::TEXT_VIEW_FACING")); }
 
-        [[nodiscard]] T &&text(std::string text) && noexcept
+        [[nodiscard]] Derived &&text(std::string text) && noexcept
         {
-            FLRV_DERIVED(T).inner.text = std::move(text);
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.text = std::move(text);
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Derived, int32_t MarkerType, typename Option, typename Enable = void>
     struct TextEnabler { };
 
-    template<typename Marker, int32_t MarkerType, typename Option>
-    struct TextEnabler<Marker, MarkerType, Option,
+    template<typename Derived, int32_t MarkerType, typename Option>
+    struct TextEnabler<Derived, MarkerType, Option,
         std::enable_if_t<is_text_view_facing_marker_v<MarkerType>>>
-        : TextHelper<Marker> { };
+        : TextHelper<Derived> { };
 
-    template<typename T>
+    template<typename Derived>
     struct MeshResourceHelper {
-        [[nodiscard]] T &&mesh_resource(std::string mesh_resource) && noexcept
+        [[nodiscard]] Derived &&mesh_resource(std::string mesh_resource) && noexcept
         {
-            FLRV_DERIVED(T).inner.mesh_resource = std::move(mesh_resource);
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.mesh_resource = std::move(mesh_resource);
+            return std::move(FLRV_DERIVED(Derived));
         }
 
-        [[nodiscard]] T &&mesh_use_embedded_materials(const bool mesh_use_embedded_materials) && noexcept
+        [[nodiscard]] Derived &&mesh_use_embedded_materials(const bool mesh_use_embedded_materials) && noexcept
         {
-            FLRV_DERIVED(T).inner.mesh_use_embedded_materials = mesh_use_embedded_materials;
-            return std::move(FLRV_DERIVED(T));
+            FLRV_DERIVED(Derived).inner.mesh_use_embedded_materials = mesh_use_embedded_materials;
+            return std::move(FLRV_DERIVED(Derived));
         }
     };
 
-    template<typename Marker, int32_t MarkerType, typename Option, typename Enable = void>
+    template<typename Derived, int32_t MarkerType, typename Option, typename Enable = void>
     struct MeshResourceEnabler { };
 
-    template<typename Marker, int32_t MarkerType, auto... Options>
-    struct MeshResourceEnabler<Marker, MarkerType, OptionPack<Options...>,
+    template<typename Derived, int32_t MarkerType, auto... Options>
+    struct MeshResourceEnabler<Derived, MarkerType, OptionPack<Options...>,
         std::enable_if_t<is_mesh_resource_marker_v<MarkerType>>>
-        : MeshResourceHelper<Marker> { };
+        : MeshResourceHelper<Derived> { };
 } // namespace internal
 
 namespace param {
