@@ -634,6 +634,8 @@ namespace param {
         { return { x * rhs.x, y * rhs.y, z * rhs.z }; }
     };
 
+    using Point = Vector3;
+
     struct Quaternion {
         double w, x, y, z;
 
@@ -857,7 +859,7 @@ namespace internal {
         [[nodiscard]] Derived &&position(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).position({ x, y, z }); }
 
-        [[nodiscard]] Derived &&position(const param::Vector3 position) && noexcept
+        [[nodiscard]] Derived &&position(const param::Point position) && noexcept
         {
             FLRV_DERIVED(Derived).inner.pose.position = position;
             return std::move(FLRV_DERIVED(Derived));
@@ -1061,7 +1063,7 @@ namespace internal {
         [[nodiscard]] Derived &&points(PointsLike points) && noexcept
         {
             return std::move(*this).points(points
-                | stream::map([](auto &&e) { return static_cast<geometry_msgs::Point>(param::Vector3(e)); })
+                | stream::map([](auto &&e) { return static_cast<geometry_msgs::Point>(param::Point(e)); })
                 | stream::to_vector());
         }
     };
@@ -1077,18 +1079,18 @@ namespace internal {
         [[nodiscard]] Derived &&start(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).start({ x, y, z }); }
 
-        [[nodiscard]] Derived &&start(const param::Vector3 point) && noexcept
+        [[nodiscard]] Derived &&start(const param::Point point) && noexcept
         { return set<0>(point); }
 
         [[nodiscard]] Derived &&end(const double x, const double y, const double z = 0.0) && noexcept
         { return std::move(*this).end({ x, y, z }); }
 
-        [[nodiscard]] Derived &&end(const param::Vector3 point) && noexcept
+        [[nodiscard]] Derived &&end(const param::Point point) && noexcept
         { return set<1>(point); }
 
     private:
         template<size_t Index>
-        [[nodiscard]] Derived &&set(const param::Vector3 &point) noexcept
+        [[nodiscard]] Derived &&set(const param::Point &point) noexcept
         {
             FLRV_DERIVED(Derived).inner.points[Index] = point;
             return std::move(FLRV_DERIVED(Derived));
@@ -1176,7 +1178,7 @@ namespace param {
             cursol(PointsFragment *p, stream::iterator_t<Source> i): parent(p), itr(i)
             { }
 
-            Vector3 operator*()
+            Point operator*()
             {
                 Quaternion orientation(parent->inner.pose.orientation);
                 Vector3 position(parent->inner.pose.position);
@@ -1194,7 +1196,6 @@ namespace param {
         };
 
     public:
-
         PointsFragment() = default;
         PointsFragment(Source &s): source(std::addressof(s))
         { }
