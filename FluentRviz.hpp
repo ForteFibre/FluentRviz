@@ -563,7 +563,7 @@ namespace traits {
     template<auto M, typename T>
     [[nodiscard]] inline auto get(const T &value)
     { return access<T, M>::get(value); }
-} // namespace internal
+} // namespace traits
 
 namespace param {
     using traits::get;
@@ -783,6 +783,11 @@ namespace param {
 } // namespace param
 
 namespace internal {
+    template<typename Type>
+    struct Inner {
+        Type inner;
+    };
+
     template<auto Val1, auto Val2>
     inline constexpr bool equals_v = false;
 
@@ -854,7 +859,7 @@ namespace internal {
 
         [[nodiscard]] T &&position(const param::Vector3 position) && noexcept
         {
-            FLRV_DERIVED(T).msg().pose.position = position;
+            FLRV_DERIVED(T).inner.pose.position = position;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -872,7 +877,7 @@ namespace internal {
 
         [[nodiscard]] T &&orientation(const param::Quaternion orientation) && noexcept
         {
-            FLRV_DERIVED(T).msg().pose.orientation = orientation;
+            FLRV_DERIVED(T).inner.pose.orientation = orientation;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -891,7 +896,7 @@ namespace internal {
 
         [[nodiscard]] T &&scale(const double x, const double y, const double z) && noexcept
         {
-            FLRV_DERIVED(T).msg().scale = param::Vector3(x, y, z);
+            FLRV_DERIVED(T).inner.scale = param::Vector3(x, y, z);
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -984,7 +989,7 @@ namespace internal {
 
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
-            FLRV_DERIVED(T).msg().color = color;
+            FLRV_DERIVED(T).inner.color = color;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -999,14 +1004,14 @@ namespace internal {
 
         [[nodiscard]] T &&color(const param::Color color) && noexcept
         {
-            FLRV_DERIVED(T).msg().color = color;
-            FLRV_DERIVED(T).msg().colors.clear();
+            FLRV_DERIVED(T).inner.color = color;
+            FLRV_DERIVED(T).inner.colors.clear();
             return std::move(FLRV_DERIVED(T));
         }
 
         [[nodiscard]] T &&color(std::vector<std_msgs::ColorRGBA> colors) && noexcept
         {
-            FLRV_DERIVED(T).msg().colors = std::move(colors);
+            FLRV_DERIVED(T).inner.colors = std::move(colors);
             return std::move(FLRV_DERIVED(T));
         }
 
@@ -1030,7 +1035,7 @@ namespace internal {
     struct LifetimeHelper {
         [[nodiscard]] T &&lifetime(const double lifetime) && noexcept
         {
-            FLRV_DERIVED(T).msg().lifetime = ros::Duration(lifetime);
+            FLRV_DERIVED(T).inner.lifetime = ros::Duration(lifetime);
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1039,7 +1044,7 @@ namespace internal {
     struct FrameLockedHelper {
         [[nodiscard]] T &&frame_locked(const bool frame_locked) && noexcept
         {
-            FLRV_DERIVED(T).msg().frame_locked = frame_locked;
+            FLRV_DERIVED(T).inner.frame_locked = frame_locked;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1048,7 +1053,7 @@ namespace internal {
     struct PointsHelper {
         [[nodiscard]] T &&points(std::vector<geometry_msgs::Point> points) && noexcept
         {
-            FLRV_DERIVED(T).msg().points = std::move(points);
+            FLRV_DERIVED(T).inner.points = std::move(points);
             return std::move(FLRV_DERIVED(T));
         }
 
@@ -1065,7 +1070,7 @@ namespace internal {
     struct ArrowPointsHelper {
         ArrowPointsHelper()
         {
-            FLRV_DERIVED(T).msg().points.resize(2);
+            FLRV_DERIVED(T).inner.points.resize(2);
             std::move(*this).end(1, 0, 0);
         }
 
@@ -1085,7 +1090,7 @@ namespace internal {
         template<size_t Index>
         [[nodiscard]] T &&set(const param::Vector3 &point) noexcept
         {
-            FLRV_DERIVED(T).msg().points[Index] = point;
+            FLRV_DERIVED(T).inner.points[Index] = point;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1110,7 +1115,7 @@ namespace internal {
 
         [[nodiscard]] T &&text(std::string text) && noexcept
         {
-            FLRV_DERIVED(T).msg().text = std::move(text);
+            FLRV_DERIVED(T).inner.text = std::move(text);
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1127,13 +1132,13 @@ namespace internal {
     struct MeshResourceHelper {
         [[nodiscard]] T &&mesh_resource(std::string mesh_resource) && noexcept
         {
-            FLRV_DERIVED(T).msg().mesh_resource = std::move(mesh_resource);
+            FLRV_DERIVED(T).inner.mesh_resource = std::move(mesh_resource);
             return std::move(FLRV_DERIVED(T));
         }
 
         [[nodiscard]] T &&mesh_use_embedded_materials(const bool mesh_use_embedded_materials) && noexcept
         {
-            FLRV_DERIVED(T).msg().mesh_use_embedded_materials = mesh_use_embedded_materials;
+            FLRV_DERIVED(T).inner.mesh_use_embedded_materials = mesh_use_embedded_materials;
             return std::move(FLRV_DERIVED(T));
         }
     };
@@ -1148,18 +1153,19 @@ namespace internal {
 } // namespace internal
 
 namespace param {
+    struct Param {
+        geometry_msgs::Pose pose;
+        geometry_msgs::Vector3 scale;
+    };
+
     template<typename Source>
     class PointsFragment
-        : public internal::PositionHelper<PointsFragment<Source>>
+        : public internal::Inner<Param>
+        , public internal::PositionHelper<PointsFragment<Source>>
         , public internal::OrientationHelper<PointsFragment<Source>>
         , public internal::ScaleHelper<PointsFragment<Source>> {
 
         Source *source;
-
-        struct Param {
-            geometry_msgs::Pose pose;
-            geometry_msgs::Vector3 scale;
-        } param;
 
         class cursol {
             PointsFragment *parent;
@@ -1172,9 +1178,9 @@ namespace param {
 
             Vector3 operator*()
             {
-                Quaternion orientation(parent->param.pose.orientation);
-                Vector3 position(parent->param.pose.position);
-                Vector3 scale(parent->param.scale);
+                Quaternion orientation(parent->inner.pose.orientation);
+                Vector3 position(parent->inner.pose.position);
+                Vector3 scale(parent->inner.scale);
                 Vector3 point(*itr);
 
                 return orientation.rotate_vector(point.hadamard_prod(scale)) + position;
@@ -1188,6 +1194,7 @@ namespace param {
         };
 
     public:
+
         PointsFragment() = default;
         PointsFragment(Source &s): source(std::addressof(s))
         { }
@@ -1198,25 +1205,18 @@ namespace param {
         auto end()
         { return cursol(this, std::end(*source)); }
 
-        Param &msg()
-        { return param; }
     };
 } // namespace param
 
 namespace marker {
     template<int32_t Action>
-    class MarkerBase {
-        visualization_msgs::Marker marker;
-
+    class MarkerBase : public internal::Inner<visualization_msgs::Marker> {
     public:
         MarkerBase()
-        { marker.action = Action; }
+        { inner.action = Action; }
 
         MarkerBase(const MarkerBase &) = delete;
         MarkerBase(MarkerBase &&) = delete;
-
-        [[nodiscard]] visualization_msgs::Marker &msg() noexcept
-        { return marker; }
     };
 
     template<int32_t MarkerType, auto... Options>
@@ -1234,7 +1234,7 @@ namespace marker {
 
     public:
         Marker(int32_t id, std::string ns = "") noexcept
-        { msg().id = id, msg().ns = std::move(ns), msg().type = MarkerType; }
+        { inner.id = id, inner.ns = std::move(ns), inner.type = MarkerType; }
     };
 
     using PoseArrow = Marker<visualization_msgs::Marker::ARROW, option::Arrow::POSE>;
@@ -1255,7 +1255,7 @@ namespace marker {
     class Delete : public MarkerBase<visualization_msgs::Marker::DELETE> {
     public:
         Delete(int32_t id, std::string ns = "")
-        { msg().id = id, msg().ns = std::move(ns); }
+        { inner.id = id, inner.ns = std::move(ns); }
     };
 
     class DeleteAll : public MarkerBase<visualization_msgs::Marker::DELETEALL> { };
@@ -1276,7 +1276,7 @@ public:
     template<typename T>
     const Rviz &operator<<(T &&marker) const
     {
-        publish(marker.msg());
+        publish(marker.inner);
         return *this;
     }
 
