@@ -1185,7 +1185,6 @@ namespace param::points {
                 Vector3 position(parent->inner.pose.position);
                 Vector3 scale(parent->inner.scale);
                 Vector3 point(*itr);
-
                 return orientation.rotate_vector(point.hadamard_prod(scale)) + position;
             }
 
@@ -1260,11 +1259,10 @@ namespace marker {
     template<int32_t Action>
     class MarkerBase : public internal::Inner<visualization_msgs::Marker> {
     public:
-        MarkerBase()
-        { inner.action = Action; }
-
         MarkerBase(const MarkerBase &) = delete;
         MarkerBase(MarkerBase &&) = delete;
+        MarkerBase()
+        { inner.action = Action; }
     };
 
     template<int32_t MarkerType, auto... Options>
