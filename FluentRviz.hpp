@@ -1223,8 +1223,7 @@ namespace param::points {
             double len = 0.5 / std::sin(d / 2);
 
             for (size_t i = 0; i <= Vertex; i++) {
-                auto v = std::polar(len, ang + i * d);
-                frame[i] = Point::from_2d(v);
+                frame[i] = Point::from_2d(std::polar(len, ang + i * d));
             }
         }
 
