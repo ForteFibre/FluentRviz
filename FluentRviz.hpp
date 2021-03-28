@@ -1209,29 +1209,7 @@ namespace param::points {
     };
 
     template<size_t Vertex>
-    auto &PolygonLineStrip()
-    {
-        static_assert(Vertex >= 3);
-
-        static std::vector<Point> frame;
-
-        if (frame.empty()) {
-            frame.resize(Vertex + 1);
-            double pi = 3.1415926535;
-            double d = 2 * pi / Vertex;
-            double ang = -pi / 2 + d / 2;
-            double len = 0.5 / std::sin(d / 2);
-
-            for (size_t i = 0; i <= Vertex; i++) {
-                frame[i] = Point::from_2d(std::polar(len, ang + i * d));
-            }
-        }
-
-        return frame;
-    }
-
-    template<size_t Vertex>
-    auto &PolygonLineList()
+    auto &PolygonLines()
     {
         static_assert(Vertex >= 3);
 
@@ -1252,6 +1230,11 @@ namespace param::points {
 
         return frame;
     }
+
+    auto &TriangleLines()
+    { return PolygonLines<3>(); }
+    auto &SquareLines()
+    { return PolygonLines<4>(); }
 } // namespace param::points
 
 namespace marker {
