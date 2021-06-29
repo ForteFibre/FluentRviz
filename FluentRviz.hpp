@@ -220,11 +220,9 @@ struct ArrowPoints : Base {
 private:
     Derived &set(size_t index, const double x, const double y, const double z) noexcept
     {
-        geometry_msgs::Point point;
-        point.x = x;
-        point.y = y;
-        point.z = z;
-        this->message.points[index] = point;
+        this->message.points[index].x = x;
+        this->message.points[index].y = y;
+        this->message.points[index].z = z;
         return this->derived();
     }
 };
