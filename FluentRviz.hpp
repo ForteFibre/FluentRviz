@@ -282,7 +282,9 @@ template<
     typename Derived,
     typename Base,
     template<typename, typename> typename ...Decorators>
-struct Decorate;
+struct Decorate {
+    using Type = Base;
+};
 
 template<
     typename Derived,
