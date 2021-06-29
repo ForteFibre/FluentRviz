@@ -11,219 +11,294 @@
 
 namespace flrv {
 
-struct Marker {
-protected:
-    visualization_msgs::Marker marker;
-};
-
-template<int32_t ActionType>
-struct Action {
-    template<typename T>
-    struct Bind : T {
-        Bind()
+template<int32_t TYPE>
+struct ActionType {
+    template<typename Derived, typename Base>
+    struct Decorator : Base {
+        Decorator()
         {
-            this->marker.action = ActionType;
+            this->message.action = TYPE;
         }
     };
 };
 
-template<int32_t MarkerType>
-struct Type {
-    template<typename T>
-    struct Bind : T {
-        Bind()
+template<int32_t TYPE>
+struct MarkerType {
+    template<typename Derived, typename Base>
+    struct Decorator : Base {
+        Decorator()
         {
-            this->marker.type = MarkerType;
+            this->message.type = TYPE;
         }
     };
 };
 
-template<typename T>
-struct Position : T {
-    [[nodiscard]]
-    Position &position(const double x, const double y, const double z) noexcept
+template<typename Derived, typename Base>
+struct Position : Base {
+    Derived &position(const double x, const double y, const double z) noexcept
     {
-        this->marker.x = x;
-        this->marker.y = y;
-        this->marker.z = z;
-        return *this;
+        this->message.pose.position.x = x;
+        this->message.pose.position.y = y;
+        this->message.pose.position.z = z;
+        return this->derived();
     }
 };
 
-template<typename T>
-struct Orientation : T {
+template<typename Derived, typename Base>
+struct Orientation : Base {
     Orientation()
     {
         orientation(1, 0, 0, 0);
     }
 
-    [[nodiscard]]
-    Orientation &orientation(const double w, const double x, const double y, const double z) noexcept
+    Derived &orientation(const double w, const double x, const double y, const double z) noexcept
     {
-        this->marker.w = w;
-        this->marker.x = x;
-        this->marker.y = y;
-        this->marker.z = z;
-        return *this;
+        this->message.pose.orientation.w = w;
+        this->message.pose.orientation.x = x;
+        this->message.pose.orientation.y = y;
+        this->message.pose.orientation.z = z;
+        return this->derived();
     }
 };
 
-template<typename T>
-struct Scale : T {
+template<typename Derived, typename Base>
+struct Scale : Base {
     Scale()
     {
         scale(1, 1, 1);
     }
 
-    [[nodiscard]]
-    Scale &scale(const double x, const double y, const double z) noexcept
+    Derived &scale(const double x, const double y, const double z) noexcept
     {
-        this->marker.x = x;
-        this->marker.y = y;
-        this->marker.z = z;
-        return *this;
+        this->message.scale.x = x;
+        this->message.scale.y = y;
+        this->message.scale.z = z;
+        return this->derived();
     }
 };
 
-template<typename T>
-struct Color : T {
+template<typename Derived, typename Base>
+struct Color : Base {
     Color()
     {
         color(1, 1, 1);
     }
 
-    [[nodiscard]]
-    Color &color(const double r, const double g, const double b) noexcept
+    Derived &color(const double r, const double g, const double b) noexcept
     {
-        this->marker.r = r;
-        this->marker.g = g;
-        this->marker.b = b;
-        return *this;
+        this->message.color.r = r;
+        this->message.color.g = g;
+        this->message.color.b = b;
+        return this->derived();
     }
 };
 
-template<typename T>
-struct Colors : T {
+template<typename Derived, typename Base>
+struct Colors : Base {
     Colors()
     {
         color(1, 1, 1);
     }
 
-    [[nodiscard]]
-    Colors &color(const double r, const double g, const double b) noexcept
+    Derived &color(const double r, const double g, const double b) noexcept
     {
-        this->marker.r = r;
-        this->marker.g = g;
-        this->marker.b = b;
-        this->marker.colors.clear();
-        return *this;
+        this->message.color.r = r;
+        this->message.color.g = g;
+        this->message.color.b = b;
+        this->message.colors.clear();
+        return this->derived();
     }
 
-    [[nodiscard]]
-    Colors &color(const std::vector<std_msgs::ColorRGBA> &colors) noexcept
+    Derived &color(const std::vector<std_msgs::ColorRGBA> &colors) noexcept
     {
-        this->marker.colors = colors;
-        return *this;
+        this->message.colors = colors;
+        return this->derived();
     }
 };
 
-template<typename T>
-struct Lifetime : T {
-    [[nodiscard]]
-    Lifetime &lifetime(const double lifetime) noexcept
+template<typename Derived, typename Base>
+struct Points : Base {
+    Derived &points(const std::vector<geometry_msgs::Point> &points) noexcept
     {
-        this->marker.lifetime = lifetime;
-        return *this;
+        this->message.points = points;
+        return this->derived();
     }
 };
 
-template<typename T>
-struct FrameLocked : T {
-    [[nodiscard]]
-    FrameLocked &frame_locked(const uint8_t frame_locked) noexcept
-    {
-        this->marker.frame_locked = frame_locked;
-        return *this;
-    }
-};
-
-template<typename T>
-struct Points : T {
-    [[nodiscard]]
-    Points &points(const std::vector<geometry_msgs::Point> &points) noexcept
-    {
-        this->marker.points = points;
-        return *this;
-    }
-};
-
-template<typename T>
-struct Text : T {
+template<typename Derived, typename Base>
+struct Text : Base {
     Text()
     {
         text("visualization_msgs::Marker");
     }
 
-    [[nodiscard]]
-    Text &text(const std::string &text) noexcept
+    Derived &text(const std::string &text) noexcept
     {
-        this->marker.text = text;
-        return *this;
+        this->message.text = text;
+        return this->derived();
+    }
+};
+
+template<typename Derived, typename Base>
+struct MeshResource : Base {
+    Derived &mesh_resource(const std::string &mesh_resource) noexcept
+    {
+        this->message.mesh_resouce = mesh_resource;
+        return this->derived();
+    }
+
+    Derived &mesh_use_embedded_materials(const uint8_t mesh_use_embedded_materials) noexcept
+    {
+        this->message.mesh_use_embedded_materials = mesh_use_embedded_materials;
+        return this->derived();
+    }
+};
+
+template<typename Derived, typename Base>
+struct CRTP : Base {
+    Derived &derived()
+    {
+        return static_cast<Derived &>(*this);
     }
 };
 
 template<typename T>
-struct MeshResource : T {
-    [[nodiscard]]
-    MeshResource &mesh_resource(const std::string &mesh_resource) noexcept
-    {
-        this->marker.mesh_resouce = mesh_resource;
-        return *this;
-    }
-
-    [[nodiscard]]
-    MeshResource &mesh_use_embedded_materials(const uint8_t mesh_use_embedded_materials) noexcept
-    {
-        this->marker.mesh_use_embedded_materials = mesh_use_embedded_materials;
-        return *this;
-    }
-};
-
-template<typename T>
-struct Identified : T {
-    Identified(const int32_t id, const std::string &ns = "") noexcept
-    {
-        this->marker.id = id;
-        this->marker.ns = ns;
-    }
-};
-
-template<typename Element, template<typename> typename ...Decorators>
-struct ApplyImpl {
-private:
-    template<
-        typename InnerElement,
-        template<typename> typename InnerDecorator,
-        template<typename> typename ...InnerDecorators>
-    struct ApplyExpand {
-        using Type = typename ApplyImpl<InnerDecorator<InnerElement>, InnerDecorators...>::Type;
-    };
+struct MessageBase {
+protected:
+    T message;
 
 public:
-    using Type = typename ApplyExpand<Element, Decorators...>::Type;
+    operator const T &() const noexcept
+    {
+        return message;
+    }
 };
 
-template<typename Element>
-struct ApplyImpl<Element> {
-    using Type = Element;
+template<
+    typename Derived,
+    typename Base,
+    template<typename, typename> typename ...Decorators>
+struct Decorate;
+
+template<
+    typename Derived,
+    typename Base,
+    template<typename, typename> typename Decorator>
+struct Decorate<Derived, Base, Decorator> {
+    using Type = Decorator<Derived, Base>;
 };
 
-template<typename Element, template<typename> typename ...Decorators>
-using Apply = typename ApplyImpl<Element, Decorators...>::Type;
+template<
+    typename Derived,
+    typename Base,
+    template<typename, typename> typename Decorator,
+    template<typename, typename> typename ...Decorators>
+struct Decorate<Derived, Base, Decorator, Decorators...> {
+    using Type = Decorator<Derived, typename Decorate<Derived, Base, Decorators...>::Type>;
+};
 
-using Cube = Apply<Marker,
-    Action<visualization_msgs::Marker::ADD>::Bind,
-    Type<visualization_msgs::Marker::CUBE>::Bind,
-    Position, Orientation, Scale, Color, Identified>;
+struct DeleteAll
+    : Decorate<
+        DeleteAll,
+        MessageBase<visualization_msgs::Marker>,
+        ActionType<visualization_msgs::Marker::DELETEALL>::Decorator
+    >::Type { };
 
+struct Delete
+    : Decorate<
+        Delete,
+        MessageBase<visualization_msgs::Marker>,
+        ActionType<visualization_msgs::Marker::DELETE>::Decorator
+    >::Type {
+
+    Delete(const int32_t id, const std::string &ns = "")
+    {
+        this->message.id = id;
+        this->message.ns = ns;
+    }
+};
+
+template<
+    int32_t MARKER_TYPE,
+    template<typename, typename> typename ...Decorators>
+struct Add
+    : Decorate<
+        Add<MARKER_TYPE, Decorators...>,
+        MessageBase<visualization_msgs::Marker>,
+        ActionType<visualization_msgs::Marker::ADD>::Decorator,
+        MarkerType<MARKER_TYPE>::template Decorator,
+        Decorators...,
+        CRTP
+    >::Type {
+
+    Add(const int32_t id, const std::string &ns = "")
+    {
+        this->message.id = id;
+        this->message.ns = ns;
+    }
+
+    Add &lifetime(const double lifetime) noexcept
+    {
+        this->message.lifetime = lifetime;
+        return *this;
+    }
+
+    Add &frame_locked(const uint8_t frame_locked) noexcept
+    {
+        this->message.frame_locked = frame_locked;
+        return *this;
+    }
+};
+
+using PoseArrowMarker = Add<
+    visualization_msgs::Marker::ARROW,
+    Position, Orientation, Scale, Color>;
+
+using VectorArrowMarker = Add<
+    visualization_msgs::Marker::ARROW,
+    Scale, Color, Points>;
+
+using CubeMarker = Add<
+    visualization_msgs::Marker::CUBE,
+    Position, Orientation, Scale, Color>;
+
+using SphereMarker = Add<
+    visualization_msgs::Marker::SPHERE,
+    Position, Orientation, Scale, Color>;
+
+using CylinderMarker = Add<
+    visualization_msgs::Marker::CYLINDER,
+    Position, Orientation, Scale, Color>;
+
+using LineStripMarker = Add<
+    visualization_msgs::Marker::LINE_STRIP,
+    Position, Orientation, Scale, Color, Points>;
+
+using LineListMarker = Add<
+    visualization_msgs::Marker::LINE_LIST,
+    Position, Orientation, Scale, Color, Points>;
+
+using CubeListMarker = Add<
+    visualization_msgs::Marker::CUBE_LIST,
+    Position, Orientation, Scale, Color, Points>;
+
+using SphereListMarker = Add<
+    visualization_msgs::Marker::SPHERE_LIST,
+    Position, Orientation, Scale, Color, Points>;
+
+using PointsMarker = Add<
+    visualization_msgs::Marker::POINTS,
+    Position, Orientation, Scale, Color, Points>;
+
+using TextViewFacingMarker = Add<
+    visualization_msgs::Marker::TEXT_VIEW_FACING,
+    Position, Scale, Color, Text>;
+
+using MeshResourceMarker = Add<
+    visualization_msgs::Marker::MESH_RESOURCE,
+    Position, Orientation, Scale, Color, MeshResource>;
+
+using TriangleListMarker = Add<
+    visualization_msgs::Marker::TRIANGLE_LIST,
+    Position, Orientation, Scale, Color, Points>;
 }

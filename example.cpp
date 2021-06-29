@@ -2,6 +2,9 @@
 
 int main()
 {
-    auto cube = flrv::Cube(0).position(0, 0, 0);
+    auto cube = flrv::CubeMarker(0)
+        .position(0, 0, 0)
+        .orientation(0, 0, 0, 0)
+        .color(0, 0, 0);
     return 0;
 }
