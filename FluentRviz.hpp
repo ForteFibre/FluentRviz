@@ -205,6 +205,7 @@ struct ArrowPoints : Base {
     ArrowPoints() noexcept
     {
         this->message.points.resize(2);
+        end(1, 0, 0);
     }
 
     Derived &start(const double x, const double y, const double z) noexcept
