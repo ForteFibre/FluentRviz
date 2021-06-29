@@ -360,7 +360,7 @@ using PoseArrowMarker = Add<
 
 using VectorArrowMarker = Add<
     visualization_msgs::Marker::ARROW,
-    Scale, Color, VectorArrowScale, ArrowPoints>;
+    VectorArrowScale, Color, ArrowPoints>;
 
 using CubeMarker = Add<
     visualization_msgs::Marker::CUBE,
