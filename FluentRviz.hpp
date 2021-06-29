@@ -405,4 +405,31 @@ using MeshResourceMarker = Add<
 using TriangleListMarker = Add<
     visualization_msgs::Marker::TRIANGLE_LIST,
     Position, Orientation, Scale, Colors, Points>;
+
+class Rviz {
+    ros::NodeHandle _node_handler;
+    ros::Publisher _publisher;
+
+    std::string _frame_id;
+
+public:
+    Rviz(const std::string &frame_id = "map", const std::string &topic = "visualization_marker")
+        : _publisher(_node_handler.advertise<visualization_msgs::Marker>(topic, 1))
+        , _frame_id(frame_id)
+    { }
+
+    const Rviz &operator<<(const visualization_msgs::Marker &marker) const
+    {
+        publish(marker);
+        return *this;
+    }
+
+    void publish(visualization_msgs::Marker marker) const
+    {
+        marker.header.frame_id = _frame_id;
+        marker.header.stamp = ros::Time::now();
+        _publisher.publish(marker);
+    }
+};
+
 }
