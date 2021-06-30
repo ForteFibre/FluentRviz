@@ -254,7 +254,7 @@ namespace detail {
     template<>
     struct converter<geometry_msgs::Quaternion, Quaternion> {
         static inline Quaternion convert(const geometry_msgs::Quaternion &quaternion)
-        { return { quaternion.x, quaternion.y, quaternion.z }; }
+        { return { quaternion.x, quaternion.y, quaternion.z, quaternion.w }; }
     };
 }
 
