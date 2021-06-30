@@ -69,24 +69,24 @@ template<size_t DIM, typename Derived>
 struct VectorBase : CRTPDecorator<Derived, Storage<std::array<double, DIM>>> {
 private:
     template<typename Op>
-    Derived &piecewise(const Derived &rhs, const Op &op = Op()) noexcept
+    Derived &apply(const Derived &rhs, const Op &op = Op()) noexcept
     {
         for (size_t i = 0; i < DIM; i++) this->storage[i] = op(this->storage[i], rhs.storage[i]);
         return this->derived();
     }
 
     template<typename Op>
-    Derived &piecewise(const double &rhs, const Op &op = Op()) noexcept
+    Derived &apply(const double &rhs, const Op &op = Op()) noexcept
     {
         for (size_t i = 0; i < DIM; i++) this->storage[i] = op(this->storage[i], rhs);
         return this->derived();
     }
 
 public:
-    Derived &operator+=(const Derived &rhs) noexcept { return piecewise(rhs, std::plus<double>()); };
-    Derived &operator-=(const Derived &rhs) noexcept { return piecewise(rhs, std::minus<double>()); };
-    Derived &operator*=(const double &rhs) noexcept { return piecewise(rhs, std::multiplies<double>()); };
-    Derived &operator/=(const double &rhs) noexcept { return piecewise(rhs, std::divides<double>()); };
+    Derived &operator+=(const Derived &rhs) noexcept { return apply(rhs, std::plus<double>()); };
+    Derived &operator-=(const Derived &rhs) noexcept { return apply(rhs, std::minus<double>()); };
+    Derived &operator*=(const double &rhs) noexcept { return apply(rhs, std::multiplies<double>()); };
+    Derived &operator/=(const double &rhs) noexcept { return apply(rhs, std::divides<double>()); };
 
     Derived operator+(const Derived &rhs) const noexcept { return Derived(*this) += rhs; }
     Derived operator-(const Derived &rhs) const noexcept { return Derived(*this) -= rhs; }
@@ -104,7 +104,7 @@ public:
     double dot(const Derived &rhs) const noexcept
     {
         Derived result = *this;
-        result.piecewise(rhs, std::multiplies<double>());
+        result.apply(rhs, std::multiplies<double>());
         return std::reduce(result.storage.begin(), result.storage.end());
     }
 
