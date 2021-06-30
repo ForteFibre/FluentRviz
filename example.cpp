@@ -12,5 +12,9 @@ int main(int argc, char **argv)
     flrv::Vector3 v = { 1, 2, 3 };
     flrv::Quaternion q = { 1, 0, 0, 0 };
 
+    geometry_msgs::Vector3 vector = v;
+    geometry_msgs::Point point = v;
+    geometry_msgs::Quaternion quaternion = q;
+
     return 0;
 }

@@ -38,10 +38,26 @@ struct Decorate<Derived, Base, Decorator, Decorators...> {
     using Type = typename Decorate<Derived, Decorator<Derived, Base>, Decorators...>::Type;
 };
 
+namespace detail {
+    template<typename From, typename To>
+    struct converter {
+        static inline To convert(const From &from) = delete;
+    };
+
+    template<typename Type>
+    struct converter<Type, Type> {
+        static inline Type convert(const Type &value) { return value; };
+    };
+}
+
+template<typename To, typename From>
+To convert(const From &from) { return detail::converter<From, To>::convert(from); }
+
 template<typename Derived, typename Base>
 struct CRTPDecorator : Base {
 protected:
     Derived &derived() noexcept { return static_cast<Derived &>(*this); }
+    const Derived &derived() const noexcept { return static_cast<const Derived &>(*this); }
 };
 
 template<typename T>
@@ -56,6 +72,10 @@ struct Vector : Decorate<
         CRTPDecorator,
         Features...
     >::Type {
+
+    template<typename From>
+    static Vector from(const From &from) { convert<Vector>(from); }
+
 private:
     template<typename Op>
     Vector &piecewise(const Vector &rhs, const Op &op = Op()) const noexcept
@@ -102,6 +122,9 @@ public:
 
     double norm() const noexcept { return std::sqrt(dot(*this)); }
     Vector normalize() const noexcept { return *this / norm(); }
+
+    template<typename To>
+    operator To() const noexcept { return convert<To>(*this); }
 };
 
 template<typename Derived, typename Base>
@@ -122,7 +145,7 @@ struct Vector3Feature : Base {
     {
         return {
             y() * rhs.z() - z() * rhs.y(),
-            z() * rhs.x() - x() * rhs.x(),
+            z() * rhs.x() - x() * rhs.z(),
             x() * rhs.y() - y() * rhs.x()
         };
     }
@@ -177,6 +200,63 @@ struct QuaternionFeature : Base {
 };
 
 using Quaternion = Vector<4, QuaternionFeature>;
+
+namespace detail {
+    template<>
+    struct converter<Vector3, geometry_msgs::Vector3> {
+        static inline geometry_msgs::Vector3 convert(const Vector3 &vector)
+        {
+            geometry_msgs::Vector3 ret;
+            ret.x = vector.x();
+            ret.y = vector.y();
+            ret.z = vector.z();
+            return ret;
+        }
+    };
+
+    template<>
+    struct converter<geometry_msgs::Vector3, Vector3> {
+        static inline Vector3 convert(const geometry_msgs::Vector3 &vector)
+        { return { vector.x, vector.y, vector.z }; }
+    };
+
+    template<>
+    struct converter<Vector3, geometry_msgs::Point> {
+        static inline geometry_msgs::Point convert(const Vector3 &vector)
+        {
+            geometry_msgs::Point ret;
+            ret.x = vector.x();
+            ret.y = vector.y();
+            ret.z = vector.z();
+            return ret;
+        }
+    };
+
+    template<>
+    struct converter<geometry_msgs::Point, Vector3> {
+        static inline Vector3 convert(const geometry_msgs::Point &point)
+        { return { point.x, point.y, point.z }; }
+    };
+
+    template<>
+    struct converter<Quaternion, geometry_msgs::Quaternion> {
+        static inline geometry_msgs::Quaternion convert(const Quaternion &quaternion)
+        {
+            geometry_msgs::Quaternion ret;
+            ret.x = quaternion.x();
+            ret.y = quaternion.y();
+            ret.z = quaternion.z();
+            ret.w = quaternion.w();
+            return ret;
+        }
+    };
+
+    template<>
+    struct converter<geometry_msgs::Quaternion, Quaternion> {
+        static inline Quaternion convert(const geometry_msgs::Quaternion &quaternion)
+        { return { quaternion.x, quaternion.y, quaternion.z }; }
+    };
+}
 
 template<int32_t TYPE>
 struct ActionType {
