@@ -8,5 +8,9 @@ int main(int argc, char **argv)
         .position(0, 0, 0)
         .orientation(0, 0, 0, 0)
         .color(0, 0, 0);
+
+    flrv::Vector3 v = { 1, 2, 3 };
+    flrv::Quaternion q = { 1, 0, 0, 0 };
+
     return 0;
 }

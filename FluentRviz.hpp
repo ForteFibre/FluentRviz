@@ -13,28 +13,61 @@
 
 namespace flrv {
 
-template<typename Derived, typename User = Derived>
-struct CRTP {
+template<
+    typename Derived,
+    typename Base,
+    template<typename, typename> typename ...Decorators>
+struct Decorate {
+    using Type = Base;
+};
+
+template<
+    typename Derived,
+    typename Base,
+    template<typename, typename> typename Decorator>
+struct Decorate<Derived, Base, Decorator> {
+    using Type = Decorator<Derived, Base>;
+};
+
+template<
+    typename Derived,
+    typename Base,
+    template<typename, typename> typename Decorator,
+    template<typename, typename> typename ...Decorators>
+struct Decorate<Derived, Base, Decorator, Decorators...> {
+    using Type = typename Decorate<Derived, Decorator<Derived, Base>, Decorators...>::Type;
+};
+
+template<typename Derived, typename Base>
+struct CRTPDecorator : Base {
 protected:
     Derived &derived() noexcept { return static_cast<Derived &>(*this); }
 };
 
-template<size_t DIM, template<typename> typename ...Features>
-struct Vector : public Features<Vector<DIM, Features...>>... {
-    std::array<double, DIM> storage;
+template<typename T>
+struct Storage {
+    T storage;
+};
 
+template<size_t DIM, template<typename, typename> typename ...Features>
+struct Vector : Decorate<
+        Vector<DIM, Features...>,
+        Storage<std::array<double, DIM>>,
+        CRTPDecorator,
+        Features...
+    >::Type {
 private:
     template<typename Op>
     Vector &piecewise(const Vector &rhs, const Op &op = Op()) const noexcept
     {
-        for (size_t i = 0; i < DIM; i++) storage[i] = op(storage[i], rhs.storage[i]);
+        for (size_t i = 0; i < DIM; i++) this->storage[i] = op(this->storage[i], rhs.storage[i]);
         return *this;
     }
 
     template<typename Op>
     Vector &piecewise(const double &rhs, const Op &op = Op()) const noexcept
     {
-        for (size_t i = 0; i < DIM; i++) storage[i] = op(storage[i], rhs);
+        for (size_t i = 0; i < DIM; i++) this->storage[i] = op(this->storage[i], rhs);
         return *this;
     }
 
@@ -57,8 +90,8 @@ public:
     Vector operator+() const noexcept { return *this; }
     Vector operator-() const noexcept { return *this * -1; }
 
-    double &operator[](const size_t i) noexcept { return storage[i]; }
-    const double &operator[](const size_t i) const noexcept { return storage[i]; }
+    double &operator[](const size_t i) noexcept { return this->storage[i]; }
+    const double &operator[](const size_t i) const noexcept { return this->storage[i]; }
 
     double dot(const Vector &rhs) const noexcept
     {
@@ -71,8 +104,8 @@ public:
     Vector normalize() const noexcept { return *this / norm(); }
 };
 
-template<typename Derived>
-struct Vector3Feature : public CRTP<Derived> {
+template<typename Derived, typename Base>
+struct Vector3Feature : Base {
     double &x() noexcept { return this->derived()[0]; }
     double &y() noexcept { return this->derived()[1]; }
     double &z() noexcept { return this->derived()[2]; }
@@ -97,8 +130,8 @@ struct Vector3Feature : public CRTP<Derived> {
 
 using Vector3 = Vector<3, Vector3Feature>;
 
-template<typename Derived>
-struct QuaternionFeature : CRTP<Derived> {
+template<typename Derived, typename Base>
+struct QuaternionFeature : Base {
     double &x() noexcept { return this->derived()[0]; }
     double &y() noexcept { return this->derived()[1]; }
     double &z() noexcept { return this->derived()[2]; }
@@ -144,9 +177,6 @@ struct QuaternionFeature : CRTP<Derived> {
 };
 
 using Quaternion = Vector<4, QuaternionFeature>;
-
-template<typename Derived, typename Base>
-struct CRTPDecorator : CRTP<Derived>, Base { };
 
 template<int32_t TYPE>
 struct ActionType {
@@ -407,31 +437,6 @@ public:
     {
         return message;
     }
-};
-
-template<
-    typename Derived,
-    typename Base,
-    template<typename, typename> typename ...Decorators>
-struct Decorate {
-    using Type = Base;
-};
-
-template<
-    typename Derived,
-    typename Base,
-    template<typename, typename> typename Decorator>
-struct Decorate<Derived, Base, Decorator> {
-    using Type = Decorator<Derived, Base>;
-};
-
-template<
-    typename Derived,
-    typename Base,
-    template<typename, typename> typename Decorator,
-    template<typename, typename> typename ...Decorators>
-struct Decorate<Derived, Base, Decorator, Decorators...> {
-    using Type = typename Decorate<Derived, Decorator<Derived, Base>, Decorators...>::Type;
 };
 
 struct DeleteAll
