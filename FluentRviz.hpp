@@ -299,7 +299,7 @@ template<
     template<typename, typename> typename Decorator,
     template<typename, typename> typename ...Decorators>
 struct Decorate<Derived, Base, Decorator, Decorators...> {
-    using Type = Decorator<Derived, typename Decorate<Derived, Base, Decorators...>::Type>;
+    using Type = typename Decorate<Derived, Decorator<Derived, Base>, Decorators...>::Type;
 };
 
 struct DeleteAll
@@ -330,10 +330,10 @@ struct Add
     : Decorate<
         Add<MARKER_TYPE, Decorators...>,
         MessageBase<visualization_msgs::Marker>,
+        CRTP,
         ActionType<visualization_msgs::Marker::ADD>::Decorator,
         MarkerType<MARKER_TYPE>::template Decorator,
-        Decorators...,
-        CRTP
+        Decorators...
     >::Type {
 
     Add(const int32_t id, const std::string &ns = "")
