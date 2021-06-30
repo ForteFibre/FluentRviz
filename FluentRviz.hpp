@@ -156,14 +156,15 @@ template<typename Derived, typename Base>
 struct Color : Base {
     Color() noexcept
     {
-        color(1, 1, 1);
+        color(1, 1, 1, 1);
     }
 
-    Derived &color(const double r, const double g, const double b) noexcept
+    Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
     {
         this->message.color.r = r;
         this->message.color.g = g;
         this->message.color.b = b;
+        this->message.color.a = a;
         return this->derived();
     }
 };
@@ -172,14 +173,15 @@ template<typename Derived, typename Base>
 struct Colors : Base {
     Colors() noexcept
     {
-        color(1, 1, 1);
+        color(1, 1, 1, 1);
     }
 
-    Derived &color(const double r, const double g, const double b) noexcept
+    Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
     {
         this->message.color.r = r;
         this->message.color.g = g;
         this->message.color.b = b;
+        this->message.color.a = a;
         this->message.colors.clear();
         return this->derived();
     }
