@@ -157,16 +157,14 @@ struct Quaternion : VectorBase<4, Quaternion> {
     const double &z() const noexcept { return (*this)[2]; }
     const double &w() const noexcept { return (*this)[3]; }
 
-    static Quaternion from_angle_axis(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
-    {
-        double sin = std::sin(angle / 2), cos = std::cos(angle / 2);
-        Vector3 naxis = axis.normalize();
-        return { naxis.x() * sin, naxis.y() * sin, naxis.z() * sin, cos };
-    }
-
     static Quaternion from_scalar_vector(const double scalar, const Vector3 &vector) noexcept
     {
         return (Quaternion { vector.x(), vector.y(), vector.z(), scalar }).normalize();
+    }
+
+    static Quaternion from_angle_axis(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
+    {
+        return from_scalar_vector(std::cos(angle / 2), axis.normalize() * std::sin(angle / 2));
     }
 
     Vector3 vector() const noexcept { return { x(), y(), z() }; }
