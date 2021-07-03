@@ -184,11 +184,11 @@ struct Quaternion : VectorBase<4, Quaternion> {
         : Quaternion(vector.x(), vector.y(), vector.z(), scalar)
     { }
 
-    Vector3 vector() const noexcept { return { x(), y(), z() }; }
     double scalar() const noexcept { return w(); }
+    Vector3 vector() const noexcept { return { x(), y(), z() }; }
 
-    Quaternion conjugation() const noexcept { return Quaternion(scalar(), -vector()); }
-    Quaternion inverse() const noexcept { return conjugation() / dot(*this); }
+    Quaternion conjugate() const noexcept { return Quaternion(scalar(), -vector()); }
+    Quaternion inverse() const noexcept { return conjugate() / dot(*this); }
 
     Quaternion operator*(const Quaternion &rhs) const noexcept
     {
@@ -215,14 +215,6 @@ public:
     Vector3 rotate(const Vector3 &rhs) const noexcept { return (quaternion * rhs * quaternion.inverse()).vector(); }
 
     operator Quaternion() const noexcept { return quaternion; }
-};
-
-struct RGBA {
-
-};
-
-struct HSLA {
-
 };
 
 namespace detail {
