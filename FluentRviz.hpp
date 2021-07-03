@@ -60,25 +60,72 @@ protected:
     const Derived &derived() const noexcept { return static_cast<const Derived &>(*this); }
 };
 
-template<typename T>
-struct Storage {
-    T storage;
+template<size_t dimension>
+struct VectorValues {
+    std::array<double, dimension> storage;
 };
 
-template<size_t DIM, typename Derived>
-struct VectorBase : CRTPDecorator<Derived, Storage<std::array<double, DIM>>> {
+template<size_t dimension, typename Base>
+struct VectorAccessImpl : Base {
+    double &operator[](ssize_t i) noexcept { return this->storage[i]; }
+    const double &operator[](ssize_t i) const noexcept { return this->storage[i]; }
+};
+
+template<typename Base>
+struct VectorAccessImpl<1, Base> : VectorAccessImpl<0, Base> {
+    double &x() noexcept { return (*this)[0]; }
+    const double &x() const noexcept { return (*this)[0]; }
+};
+
+template<typename Base>
+struct VectorAccessImpl<2, Base> : VectorAccessImpl<1, Base> {
+    double &y() noexcept { return (*this)[1]; }
+    const double &y() const noexcept { return (*this)[1]; }
+};
+
+template<typename Base>
+struct VectorAccessImpl<3, Base> : VectorAccessImpl<2, Base> {
+    double &z() noexcept { return (*this)[2]; }
+    const double &z() const noexcept { return (*this)[2]; }
+};
+
+template<typename Base>
+struct VectorAccessImpl<4, Base> : VectorAccessImpl<3, Base> {
+    double &w() noexcept { return (*this)[3]; }
+    const double &w() const noexcept { return (*this)[3]; }
+};
+
+template<size_t dimension>
+struct VectorAccess {
+    template<typename Derived, typename Base>
+    using Decorator = VectorAccessImpl<dimension, Base>;
+};
+
+template<size_t dimension, typename Derived>
+struct VectorBase
+    : Decorate<
+        Derived,
+        VectorValues<dimension>,
+        CRTPDecorator,
+        VectorAccess<dimension>::template Decorator
+    >::Type {
+
 private:
     template<typename Op>
     Derived &apply(const Derived &rhs, const Op &op = Op()) noexcept
     {
-        for (size_t i = 0; i < DIM; i++) this->storage[i] = op(this->storage[i], rhs.storage[i]);
+        for (size_t i = 0; i < this->storage.size(); i++) {
+            this->storage[i] = op(this->storage[i], rhs.storage[i]);
+        }
         return this->derived();
     }
 
     template<typename Op>
     Derived &apply(const double &rhs, const Op &op = Op()) noexcept
     {
-        for (size_t i = 0; i < DIM; i++) this->storage[i] = op(this->storage[i], rhs);
+        for (size_t i = 0; i < this->storage.size(); i++) {
+            this->storage[i] = op(this->storage[i], rhs);
+        }
         return this->derived();
     }
 
@@ -98,14 +145,9 @@ public:
     Derived operator+() const noexcept { return *this; }
     Derived operator-() const noexcept { return *this * -1; }
 
-    double &operator[](const size_t i) noexcept { return this->storage[i]; }
-    const double &operator[](const size_t i) const noexcept { return this->storage[i]; }
-
     double dot(const Derived &rhs) const noexcept
     {
-        Derived result = *this;
-        result.apply(rhs, std::multiplies<double>());
-        return std::reduce(result.storage.begin(), result.storage.end());
+        return std::inner_product(this->storage.begin(), this->storage.end(), rhs.storage.begin(), 0.0);
     }
 
     double norm() const noexcept { return std::sqrt(dot(*this)); }
@@ -119,14 +161,6 @@ struct Vector3 : VectorBase<3, Vector3> {
     Vector3(const double x, const double y, const double z)
         : VectorBase<3, Vector3> { x, y, z }
     { }
-
-    double &x() noexcept { return (*this)[0]; }
-    double &y() noexcept { return (*this)[1]; }
-    double &z() noexcept { return (*this)[2]; }
-
-    const double &x() const noexcept { return (*this)[0]; }
-    const double &y() const noexcept { return (*this)[1]; }
-    const double &z() const noexcept { return (*this)[2]; }
 
     static inline Vector3 UnitX() noexcept { return { 1, 0, 0 }; }
     static inline Vector3 UnitY() noexcept { return { 0, 1, 0 }; }
@@ -143,50 +177,45 @@ struct Vector3 : VectorBase<3, Vector3> {
 };
 
 struct Quaternion : VectorBase<4, Quaternion> {
-    Quaternion(const double x, const double y, const double z, const double w)
+    Quaternion(const double x, const double y, const double z, const double w) noexcept
         : VectorBase<4, Quaternion> { x, y, z, w }
     { }
 
-    double &x() noexcept { return (*this)[0]; }
-    double &y() noexcept { return (*this)[1]; }
-    double &z() noexcept { return (*this)[2]; }
-    double &w() noexcept { return (*this)[3]; }
-
-    const double &x() const noexcept { return (*this)[0]; }
-    const double &y() const noexcept { return (*this)[1]; }
-    const double &z() const noexcept { return (*this)[2]; }
-    const double &w() const noexcept { return (*this)[3]; }
-
-    static Quaternion from_scalar_vector(const double scalar, const Vector3 &vector) noexcept
-    {
-        return Quaternion { vector.x(), vector.y(), vector.z(), scalar };
-    }
-
-    static Quaternion from_angle_axis(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
-    {
-        return from_scalar_vector(std::cos(angle / 2), axis.normalize() * std::sin(angle / 2));
-    }
+    Quaternion(const double scalar, const Vector3 &vector) noexcept
+        : Quaternion(vector.x(), vector.y(), vector.z(), scalar)
+    { }
 
     Vector3 vector() const noexcept { return { x(), y(), z() }; }
     double scalar() const noexcept { return w(); }
 
-    Vector3 axis() const noexcept { return vector() / std::sin(angle() / 2); }
-    double angle() const noexcept { return std::acos(scalar()) * 2; }
-
-    Quaternion conjugation() const noexcept { return from_scalar_vector(scalar(), -vector()); }
-    Quaternion inverse() const noexcept { return conjugation() / (this->norm() * this->norm()); }
+    Quaternion conjugation() const noexcept { return Quaternion(scalar(), -vector()); }
+    Quaternion inverse() const noexcept { return conjugation() / (norm() * norm()); }
 
     Quaternion operator*(const Quaternion &rhs) const noexcept
     {
         double lsc = scalar(), rsc = rhs.scalar();
         Vector3 lvec = vector(), rvec = rhs.vector();
-        return from_scalar_vector(lsc * rsc - lvec.dot(rvec), lsc * rvec + rsc * lvec + lvec.cross(rvec));
+        return Quaternion(lsc * rsc - lvec.dot(rvec), lsc * rvec + rsc * lvec + lvec.cross(rvec));
     }
 
-    friend Quaternion operator*(const Quaternion &lhs, const Vector3 &rhs) noexcept { return lhs * from_scalar_vector(0, rhs); }
-    friend Quaternion operator*(const Vector3 &lhs, const Quaternion &rhs) noexcept { return from_scalar_vector(0, lhs) * rhs; }
+    friend Quaternion operator*(const Quaternion &lhs, const Vector3 &rhs) noexcept { return lhs * Quaternion(0, rhs); }
+    friend Quaternion operator*(const Vector3 &lhs, const Quaternion &rhs) noexcept { return Quaternion(0, lhs) * rhs; }
+};
 
-    Vector3 rotate(const Vector3 &rhs) const noexcept { return ((*this) * rhs * (*this).inverse()).vector(); }
+class Rotation {
+    Quaternion quaternion;
+
+public:
+    Rotation(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
+        : quaternion(std::cos(angle / 2), axis.normalize() * std::sin(angle / 2))
+    { }
+
+    Vector3 axis() const noexcept { return quaternion.vector() / std::sin(angle() / 2); }
+    double angle() const noexcept { return std::acos(quaternion.scalar()) * 2; }
+
+    Vector3 rotate(const Vector3 &rhs) const noexcept { return (quaternion * rhs * quaternion.inverse()).vector(); }
+
+    operator Quaternion() const noexcept { return quaternion; }
 };
 
 namespace detail {
