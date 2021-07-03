@@ -159,7 +159,7 @@ struct Quaternion : VectorBase<4, Quaternion> {
 
     static Quaternion from_scalar_vector(const double scalar, const Vector3 &vector) noexcept
     {
-        return (Quaternion { vector.x(), vector.y(), vector.z(), scalar }).normalize();
+        return Quaternion { vector.x(), vector.y(), vector.z(), scalar };
     }
 
     static Quaternion from_angle_axis(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
