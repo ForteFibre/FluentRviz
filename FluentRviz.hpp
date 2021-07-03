@@ -39,7 +39,7 @@ struct Decorate<Derived, Base, Decorator, Decorators...> {
 };
 
 namespace detail {
-    template<typename From, typename To>
+    template<typename From, typename To, typename Enabler = void>
     struct converter {
         static inline To convert(const From &from) = delete;
     };
