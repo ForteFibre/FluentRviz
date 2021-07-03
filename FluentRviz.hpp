@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <type_traits>
-#include <initializer_list>
 
 #include <ros/ros.h>
 #include <geometry_msgs/Point.h>
