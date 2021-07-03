@@ -113,18 +113,14 @@ private:
     template<typename Op>
     Derived &apply(const Derived &rhs, const Op &op = Op()) noexcept
     {
-        for (size_t i = 0; i < this->storage.size(); i++) {
-            this->storage[i] = op(this->storage[i], rhs.storage[i]);
-        }
+        for (size_t i = 0; i < dimension; i++) (*this)[i] = op((*this)[i], rhs[i]);
         return this->derived();
     }
 
     template<typename Op>
     Derived &apply(const double &rhs, const Op &op = Op()) noexcept
     {
-        for (size_t i = 0; i < this->storage.size(); i++) {
-            this->storage[i] = op(this->storage[i], rhs);
-        }
+        for (size_t i = 0; i < dimension; i++) (*this)[i] = op((*this)[i], rhs);
         return this->derived();
     }
 
