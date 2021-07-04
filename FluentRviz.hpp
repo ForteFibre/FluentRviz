@@ -22,7 +22,8 @@ template<
     typename Derived,
     typename Base,
     template<typename, typename> typename Decorator>
-struct Decorate<Derived, Base, Decorator> : Decorator<Derived, Base> { };
+struct Decorate<Derived, Base, Decorator>
+    : Decorator<Derived, Base> { };
 
 template<
     typename Derived,
@@ -136,19 +137,14 @@ struct VectorAccessW : Base {
     Derived &w(double value) noexcept { w() = value; return this->derived(); }
 };
 
-struct Vector3 : Decorate<
-        Vector3,
-        VectorValues<3>,
-        CRTPDecorator,
-        VectorBase,
-        VectorAccessX,
-        VectorAccessY,
-        VectorAccessZ
+struct Vector3
+    : Decorate<
+        Vector3, VectorValues<3>,
+        CRTPDecorator, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ
     > {
 
     Vector3(const double x, const double y, const double z)
-        : Decorate { x, y, z }
-    { }
+        : Decorate { x, y, z } { }
 
     static inline Vector3 UnitX() noexcept { return { 1, 0, 0 }; }
     static inline Vector3 UnitY() noexcept { return { 0, 1, 0 }; }
@@ -164,24 +160,17 @@ struct Vector3 : Decorate<
     }
 };
 
-struct Quaternion : Decorate<
-        Quaternion,
-        VectorValues<4>,
-        CRTPDecorator,
-        VectorBase,
-        VectorAccessX,
-        VectorAccessY,
-        VectorAccessZ,
-        VectorAccessW
+struct Quaternion
+    : Decorate<
+        Quaternion, VectorValues<4>,
+        CRTPDecorator, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ, VectorAccessW
     > {
 
     Quaternion(const double x, const double y, const double z, const double w) noexcept
-        : Decorate { x, y, z, w }
-    { }
+        : Decorate { x, y, z, w } { }
 
     Quaternion(const double scalar, const Vector3 &vector) noexcept
-        : Quaternion(vector.x(), vector.y(), vector.z(), scalar)
-    { }
+        : Quaternion(vector.x(), vector.y(), vector.z(), scalar) { }
 
     double scalar() const noexcept { return w(); }
     Vector3 vector() const noexcept { return { x(), y(), z() }; }
@@ -205,8 +194,7 @@ class Rotation {
 
 public:
     Rotation(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
-        : quaternion(std::cos(angle / 2), axis.normalize() * std::sin(angle / 2))
-    { }
+        : quaternion(std::cos(angle / 2), axis.normalize() * std::sin(angle / 2)) { }
 
     Vector3 axis() const noexcept { return quaternion.vector() / std::sin(angle() / 2); }
     double angle() const noexcept { return std::acos(quaternion.scalar()) * 2; }
@@ -222,9 +210,7 @@ namespace detail {
         static inline geometry_msgs::Vector3 convert(const Vector3 &vector)
         {
             geometry_msgs::Vector3 ret;
-            ret.x = vector.x();
-            ret.y = vector.y();
-            ret.z = vector.z();
+            ret.x = vector.x(), ret.y = vector.y(), ret.z = vector.z();
             return ret;
         }
     };
@@ -232,7 +218,9 @@ namespace detail {
     template<>
     struct converter<geometry_msgs::Vector3, Vector3> {
         static inline Vector3 convert(const geometry_msgs::Vector3 &vector)
-        { return { vector.x, vector.y, vector.z }; }
+        {
+            return { vector.x, vector.y, vector.z };
+        }
     };
 
     template<>
@@ -240,9 +228,7 @@ namespace detail {
         static inline geometry_msgs::Point convert(const Vector3 &vector)
         {
             geometry_msgs::Point ret;
-            ret.x = vector.x();
-            ret.y = vector.y();
-            ret.z = vector.z();
+            ret.x = vector.x(), ret.y = vector.y(), ret.z = vector.z();
             return ret;
         }
     };
@@ -250,7 +236,9 @@ namespace detail {
     template<>
     struct converter<geometry_msgs::Point, Vector3> {
         static inline Vector3 convert(const geometry_msgs::Point &point)
-        { return { point.x, point.y, point.z }; }
+        {
+            return { point.x, point.y, point.z };
+        }
     };
 
     template<>
@@ -258,10 +246,7 @@ namespace detail {
         static inline geometry_msgs::Quaternion convert(const Quaternion &quaternion)
         {
             geometry_msgs::Quaternion ret;
-            ret.x = quaternion.x();
-            ret.y = quaternion.y();
-            ret.z = quaternion.z();
-            ret.w = quaternion.w();
+            ret.x = quaternion.x(), ret.y = quaternion.y(), ret.z = quaternion.z(), ret.w = quaternion.w();
             return ret;
         }
     };
@@ -269,7 +254,9 @@ namespace detail {
     template<>
     struct converter<geometry_msgs::Quaternion, Quaternion> {
         static inline Quaternion convert(const geometry_msgs::Quaternion &quaternion)
-        { return { quaternion.x, quaternion.y, quaternion.z, quaternion.w }; }
+        {
+            return { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
+        }
     };
 }
 
@@ -277,10 +264,7 @@ template<int32_t TYPE>
 struct ActionType {
     template<typename Derived, typename Base>
     struct Decorator : Base {
-        Decorator() noexcept
-        {
-            this->message.action = TYPE;
-        }
+        Decorator() noexcept { this->message.action = TYPE; }
     };
 };
 
@@ -288,10 +272,7 @@ template<int32_t TYPE>
 struct MarkerType {
     template<typename Derived, typename Base>
     struct Decorator : Base {
-        Decorator() noexcept
-        {
-            this->message.type = TYPE;
-        }
+        Decorator() noexcept { this->message.type = TYPE; }
     };
 };
 
@@ -308,10 +289,7 @@ struct Position : Base {
 
 template<typename Derived, typename Base>
 struct Orientation : Base {
-    Orientation() noexcept
-    {
-        orientation(1, 0, 0, 0);
-    }
+    Orientation() noexcept { orientation(1, 0, 0, 0); }
 
     Derived &orientation(const double w, const double x, const double y, const double z) noexcept
     {
@@ -325,10 +303,7 @@ struct Orientation : Base {
 
 template<typename Derived, typename Base>
 struct Scale : Base {
-    Scale() noexcept
-    {
-        scale(1, 1, 1);
-    }
+    Scale() noexcept { scale(1, 1, 1); }
 
     Derived &scale(const double x, const double y, const double z) noexcept
     {
@@ -341,10 +316,7 @@ struct Scale : Base {
 
 template<typename Derived, typename Base>
 struct PoseArrowScale : Base {
-    PoseArrowScale() noexcept
-    {
-        scale(0.2, 0.2, 1);
-    }
+    PoseArrowScale() noexcept { scale(0.2, 0.2, 1); }
 
     Derived &scale(const double length, const double width, const double height) noexcept
     {
@@ -357,10 +329,7 @@ struct PoseArrowScale : Base {
 
 template<typename Derived, typename Base>
 struct VectorArrowScale : Base {
-    VectorArrowScale() noexcept
-    {
-        scale(0.2, 0.4, 0.4);
-    }
+    VectorArrowScale() noexcept { scale(0.2, 0.4, 0.4); }
 
     Derived &scale(const double shaft_diameter, const double head_diameter, const double head_length) noexcept
     {
@@ -373,10 +342,7 @@ struct VectorArrowScale : Base {
 
 template<typename Derived, typename Base>
 struct PointScale : Base {
-    PointScale() noexcept
-    {
-        scale(0.05, 0.05);
-    }
+    PointScale() noexcept { scale(0.05, 0.05); }
 
     Derived &scale(const double width, const double height) noexcept
     {
@@ -388,10 +354,7 @@ struct PointScale : Base {
 
 template<typename Derived, typename Base>
 struct LineScale : Base {
-    LineScale() noexcept
-    {
-        scale(0.05);
-    }
+    LineScale() noexcept { scale(0.05); }
 
     Derived &scale(const double width) noexcept
     {
@@ -402,10 +365,7 @@ struct LineScale : Base {
 
 template<typename Derived, typename Base>
 struct TextScale : Base {
-    TextScale() noexcept
-    {
-        scale(0.05);
-    }
+    TextScale() noexcept { scale(0.05); }
 
     Derived &scale(const double height) noexcept
     {
@@ -416,10 +376,7 @@ struct TextScale : Base {
 
 template<typename Derived, typename Base>
 struct Color : Base {
-    Color() noexcept
-    {
-        color(1, 1, 1, 1);
-    }
+    Color() noexcept { color(1, 1, 1, 1); }
 
     Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
     {
@@ -433,10 +390,7 @@ struct Color : Base {
 
 template<typename Derived, typename Base>
 struct Colors : Base {
-    Colors() noexcept
-    {
-        color(1, 1, 1, 1);
-    }
+    Colors() noexcept { color(1, 1, 1, 1); }
 
     Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
     {
@@ -494,10 +448,7 @@ private:
 
 template<typename Derived, typename Base>
 struct Text : Base {
-    Text() noexcept
-    {
-        text("visualization_msgs::Marker");
-    }
+    Text() noexcept { text("visualization_msgs::Marker"); }
 
     Derived &text(const std::string &text) noexcept
     {
@@ -527,10 +478,7 @@ protected:
     T message;
 
 public:
-    operator const T &() const noexcept
-    {
-        return message;
-    }
+    operator const T &() const noexcept { return message; }
 };
 
 struct DeleteAll
@@ -647,8 +595,7 @@ class Rviz {
 public:
     Rviz(const std::string &frame_id = "map", const std::string &topic = "visualization_marker")
         : _publisher(_node_handler.advertise<visualization_msgs::Marker>(topic, 1))
-        , _frame_id(frame_id)
-    { }
+        , _frame_id(frame_id) { }
 
     const Rviz &operator<<(const visualization_msgs::Marker &marker) const
     {
