@@ -64,40 +64,44 @@ struct VectorValues {
     std::array<double, dimension> storage;
 };
 
-template<size_t dimension, typename Base>
+template<size_t dimension, typename Derived, typename Base>
 struct VectorAccessImpl : Base {
     double &operator[](ssize_t i) noexcept { return this->storage[i]; }
     const double &operator[](ssize_t i) const noexcept { return this->storage[i]; }
 };
 
-template<typename Base>
-struct VectorAccessImpl<1, Base> : VectorAccessImpl<0, Base> {
+template<typename Derived, typename Base>
+struct VectorAccessImpl<1, Derived, Base> : VectorAccessImpl<0, Derived, Base> {
     double &x() noexcept { return (*this)[0]; }
     const double &x() const noexcept { return (*this)[0]; }
+    Derived &x(double value) noexcept { x() = value; return this->derived(); }
 };
 
-template<typename Base>
-struct VectorAccessImpl<2, Base> : VectorAccessImpl<1, Base> {
+template<typename Derived, typename Base>
+struct VectorAccessImpl<2, Derived, Base> : VectorAccessImpl<1, Derived, Base> {
     double &y() noexcept { return (*this)[1]; }
     const double &y() const noexcept { return (*this)[1]; }
+    Derived &y(double value) noexcept { y() = value; return this->derived(); }
 };
 
-template<typename Base>
-struct VectorAccessImpl<3, Base> : VectorAccessImpl<2, Base> {
+template<typename Derived, typename Base>
+struct VectorAccessImpl<3, Derived, Base> : VectorAccessImpl<2, Derived, Base> {
     double &z() noexcept { return (*this)[2]; }
     const double &z() const noexcept { return (*this)[2]; }
+    Derived &z(double value) noexcept { z() = value; return this->derived(); }
 };
 
-template<typename Base>
-struct VectorAccessImpl<4, Base> : VectorAccessImpl<3, Base> {
+template<typename Derived, typename Base>
+struct VectorAccessImpl<4, Derived, Base> : VectorAccessImpl<3, Derived, Base> {
     double &w() noexcept { return (*this)[3]; }
     const double &w() const noexcept { return (*this)[3]; }
+    Derived &w(double value) noexcept { w() = value; return this->derived(); }
 };
 
 template<size_t dimension>
 struct VectorAccess {
     template<typename Derived, typename Base>
-    using Decorator = VectorAccessImpl<dimension, Base>;
+    using Decorator = VectorAccessImpl<dimension, Derived, Base>;
 };
 
 template<size_t dimension, typename Derived>
