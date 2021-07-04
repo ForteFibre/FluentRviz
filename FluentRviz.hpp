@@ -56,108 +56,94 @@ protected:
 
 template<size_t D>
 struct VectorValues {
+    static constexpr size_t dimension = D;
     std::array<double, D> storage;
 };
 
-template<size_t D>
-struct VectorBase {
-    template<typename Derived, typename Base>
-    struct Decorator : Base {
-        double &operator[](ssize_t i) noexcept { return this->storage[i]; }
-        const double &operator[](ssize_t i) const noexcept { return this->storage[i]; }
+template<typename Derived, typename Base>
+struct VectorBase : Base {
+    double &operator[](ssize_t i) noexcept { return this->storage[i]; }
+    const double &operator[](ssize_t i) const noexcept { return this->storage[i]; }
 
-    private:
-        template<typename Op>
-        Derived &apply(const Derived &rhs, const Op &op = Op()) noexcept
-        {
-            for (size_t i = 0; i < D; i++) (*this)[i] = op((*this)[i], rhs[i]);
-            return this->derived();
-        }
+private:
+    template<typename Op>
+    Derived &apply(const Derived &rhs, const Op &op = Op()) noexcept
+    {
+        for (size_t i = 0; i < Base::dimension; i++) (*this)[i] = op((*this)[i], rhs[i]);
+        return this->derived();
+    }
 
-        template<typename Op>
-        Derived &apply(const double &rhs, const Op &op = Op()) noexcept
-        {
-            for (size_t i = 0; i < D; i++) (*this)[i] = op((*this)[i], rhs);
-            return this->derived();
-        }
+    template<typename Op>
+    Derived &apply(const double &rhs, const Op &op = Op()) noexcept
+    {
+        for (size_t i = 0; i < Base::dimension; i++) (*this)[i] = op((*this)[i], rhs);
+        return this->derived();
+    }
 
-    public:
-        Derived &operator+=(const Derived &rhs) noexcept { return apply(rhs, std::plus<double>()); };
-        Derived &operator-=(const Derived &rhs) noexcept { return apply(rhs, std::minus<double>()); };
-        Derived &operator*=(const double &rhs) noexcept { return apply(rhs, std::multiplies<double>()); };
-        Derived &operator/=(const double &rhs) noexcept { return apply(rhs, std::divides<double>()); };
+public:
+    Derived &operator+=(const Derived &rhs) noexcept { return apply(rhs, std::plus<double>()); };
+    Derived &operator-=(const Derived &rhs) noexcept { return apply(rhs, std::minus<double>()); };
+    Derived &operator*=(const double &rhs) noexcept { return apply(rhs, std::multiplies<double>()); };
+    Derived &operator/=(const double &rhs) noexcept { return apply(rhs, std::divides<double>()); };
 
-        Derived operator+(const Derived &rhs) const noexcept { return Derived(*this) += rhs; }
-        Derived operator-(const Derived &rhs) const noexcept { return Derived(*this) -= rhs; }
-        Derived operator*(const double &rhs) const noexcept { return Derived(*this) *= rhs; }
-        Derived operator/(const double &rhs) const noexcept { return Derived(*this) /= rhs; }
-        friend Derived operator*(const double &lhs, const Derived &rhs) noexcept { return rhs * lhs; }
-        friend Derived operator/(const double &lhs, const Derived &rhs) noexcept { return rhs / lhs; }
+    Derived operator+(const Derived &rhs) const noexcept { return Derived(*this) += rhs; }
+    Derived operator-(const Derived &rhs) const noexcept { return Derived(*this) -= rhs; }
+    Derived operator*(const double &rhs) const noexcept { return Derived(*this) *= rhs; }
+    Derived operator/(const double &rhs) const noexcept { return Derived(*this) /= rhs; }
+    friend Derived operator*(const double &lhs, const Derived &rhs) noexcept { return rhs * lhs; }
+    friend Derived operator/(const double &lhs, const Derived &rhs) noexcept { return rhs / lhs; }
 
-        Derived operator+() const noexcept { return *this; }
-        Derived operator-() const noexcept { return *this * -1; }
+    Derived operator+() const noexcept { return *this; }
+    Derived operator-() const noexcept { return *this * -1; }
 
-        double dot(const Derived &rhs) const noexcept
-        {
-            return std::inner_product(this->storage.begin(), this->storage.end(), rhs.storage.begin(), 0.0);
-        }
+    double dot(const Derived &rhs) const noexcept
+    {
+        return std::inner_product(this->storage.begin(), this->storage.end(), rhs.storage.begin(), 0.0);
+    }
 
-        double norm() const noexcept { return std::sqrt(dot(*this)); }
-        Derived normalize() const noexcept { return *this / norm(); }
+    double norm() const noexcept { return std::sqrt(dot(*this)); }
+    Derived normalize() const noexcept { return *this / norm(); }
 
-        template<typename To>
-        operator To() const noexcept { return convert<To>(this->derived()); }
-    };
+    template<typename To>
+    operator To() const noexcept { return convert<To>(this->derived()); }
 };
 
-template<size_t D = 0>
-struct VectorAccessX {
-    template<typename Derived, typename Base>
-    struct Decorator : Base {
-        double &x() noexcept { return (*this)[D]; }
-        const double &x() const noexcept { return (*this)[D]; }
-        Derived &x(double value) noexcept { x() = value; return this->derived(); }
-    };
+template<typename Derived, typename Base>
+struct VectorAccessX : Base {
+    double &x() noexcept { return (*this)[0]; }
+    const double &x() const noexcept { return (*this)[0]; }
+    Derived &x(double value) noexcept { x() = value; return this->derived(); }
 };
 
-template<size_t D = 1>
-struct VectorAccessY {
-    template<typename Derived, typename Base>
-    struct Decorator : Base {
-        double &y() noexcept { return (*this)[D]; }
-        const double &y() const noexcept { return (*this)[D]; }
-        Derived &y(double value) noexcept { y() = value; return this->derived(); }
-    };
+template<typename Derived, typename Base>
+struct VectorAccessY : Base {
+    double &y() noexcept { return (*this)[1]; }
+    const double &y() const noexcept { return (*this)[1]; }
+    Derived &y(double value) noexcept { y() = value; return this->derived(); }
 };
 
-template<size_t D = 2>
-struct VectorAccessZ {
-    template<typename Derived, typename Base>
-    struct Decorator : Base {
-        double &z() noexcept { return (*this)[D]; }
-        const double &z() const noexcept { return (*this)[D]; }
-        Derived &z(double value) noexcept { z() = value; return this->derived(); }
-    };
+template<typename Derived, typename Base>
+struct VectorAccessZ : Base {
+    double &z() noexcept { return (*this)[2]; }
+    const double &z() const noexcept { return (*this)[3]; }
+    Derived &z(double value) noexcept { z() = value; return this->derived(); }
 };
 
-template<size_t D = 3>
-struct VectorAccessW {
-    template<typename Derived, typename Base>
-    struct Decorator : Base {
-        double &w() noexcept { return (*this)[D]; }
-        const double &w() const noexcept { return (*this)[D]; }
-        Derived &w(double value) noexcept { w() = value; return this->derived(); }
-    };
+template<typename Derived, typename Base>
+struct VectorAccessW : Base {
+    double &w() noexcept { return (*this)[3]; }
+    const double &w() const noexcept { return (*this)[3]; }
+    Derived &w(double value) noexcept { w() = value; return this->derived(); }
 };
 
 struct Vector3 : Decorate<
         Vector3,
         VectorValues<3>,
         CRTPDecorator,
-        VectorBase<3>::template Decorator,
-        VectorAccessX<>::template Decorator,
-        VectorAccessY<>::template Decorator,
-        VectorAccessZ<>::template Decorator
+        VectorBase,
+        VectorAccessX,
+        VectorAccessY,
+        VectorAccessZ
     > {
 
     Vector3(const double x, const double y, const double z)
@@ -182,11 +168,11 @@ struct Quaternion : Decorate<
         Quaternion,
         VectorValues<4>,
         CRTPDecorator,
-        VectorBase<4>::template Decorator,
-        VectorAccessX<>::template Decorator,
-        VectorAccessY<>::template Decorator,
-        VectorAccessZ<>::template Decorator,
-        VectorAccessW<>::template Decorator
+        VectorBase,
+        VectorAccessX,
+        VectorAccessY,
+        VectorAccessZ,
+        VectorAccessW
     > {
 
     Quaternion(const double x, const double y, const double z, const double w) noexcept
