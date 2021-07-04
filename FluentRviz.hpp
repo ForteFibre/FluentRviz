@@ -16,26 +16,21 @@ template<
     typename Derived,
     typename Base,
     template<typename, typename> typename ...Decorators>
-struct Decorate {
-    using Type = Base;
-};
+struct Decorate : Base { };
 
 template<
     typename Derived,
     typename Base,
     template<typename, typename> typename Decorator>
-struct Decorate<Derived, Base, Decorator> {
-    using Type = Decorator<Derived, Base>;
-};
+struct Decorate<Derived, Base, Decorator> : Decorator<Derived, Base> { };
 
 template<
     typename Derived,
     typename Base,
     template<typename, typename> typename Decorator,
     template<typename, typename> typename ...Decorators>
-struct Decorate<Derived, Base, Decorator, Decorators...> {
-    using Type = typename Decorate<Derived, Decorator<Derived, Base>, Decorators...>::Type;
-};
+struct Decorate<Derived, Base, Decorator, Decorators...>
+    : Decorate<Derived, Decorator<Derived, Base>, Decorators...> { };
 
 namespace detail {
     template<typename From, typename To, typename Enabler = void>
@@ -59,106 +54,114 @@ protected:
     const Derived &derived() const noexcept { return static_cast<const Derived &>(*this); }
 };
 
-template<size_t dimension>
+template<size_t D>
 struct VectorValues {
-    std::array<double, dimension> storage;
+    std::array<double, D> storage;
 };
 
-template<size_t dimension, typename Derived, typename Base>
-struct VectorAccessImpl : Base {
-    double &operator[](ssize_t i) noexcept { return this->storage[i]; }
-    const double &operator[](ssize_t i) const noexcept { return this->storage[i]; }
-};
-
-template<typename Derived, typename Base>
-struct VectorAccessImpl<1, Derived, Base> : VectorAccessImpl<0, Derived, Base> {
-    double &x() noexcept { return (*this)[0]; }
-    const double &x() const noexcept { return (*this)[0]; }
-    Derived &x(double value) noexcept { x() = value; return this->derived(); }
-};
-
-template<typename Derived, typename Base>
-struct VectorAccessImpl<2, Derived, Base> : VectorAccessImpl<1, Derived, Base> {
-    double &y() noexcept { return (*this)[1]; }
-    const double &y() const noexcept { return (*this)[1]; }
-    Derived &y(double value) noexcept { y() = value; return this->derived(); }
-};
-
-template<typename Derived, typename Base>
-struct VectorAccessImpl<3, Derived, Base> : VectorAccessImpl<2, Derived, Base> {
-    double &z() noexcept { return (*this)[2]; }
-    const double &z() const noexcept { return (*this)[2]; }
-    Derived &z(double value) noexcept { z() = value; return this->derived(); }
-};
-
-template<typename Derived, typename Base>
-struct VectorAccessImpl<4, Derived, Base> : VectorAccessImpl<3, Derived, Base> {
-    double &w() noexcept { return (*this)[3]; }
-    const double &w() const noexcept { return (*this)[3]; }
-    Derived &w(double value) noexcept { w() = value; return this->derived(); }
-};
-
-template<size_t dimension>
-struct VectorAccess {
+template<size_t D>
+struct VectorBase {
     template<typename Derived, typename Base>
-    using Decorator = VectorAccessImpl<dimension, Derived, Base>;
+    struct Decorator : Base {
+        double &operator[](ssize_t i) noexcept { return this->storage[i]; }
+        const double &operator[](ssize_t i) const noexcept { return this->storage[i]; }
+
+    private:
+        template<typename Op>
+        Derived &apply(const Derived &rhs, const Op &op = Op()) noexcept
+        {
+            for (size_t i = 0; i < D; i++) (*this)[i] = op((*this)[i], rhs[i]);
+            return this->derived();
+        }
+
+        template<typename Op>
+        Derived &apply(const double &rhs, const Op &op = Op()) noexcept
+        {
+            for (size_t i = 0; i < D; i++) (*this)[i] = op((*this)[i], rhs);
+            return this->derived();
+        }
+
+    public:
+        Derived &operator+=(const Derived &rhs) noexcept { return apply(rhs, std::plus<double>()); };
+        Derived &operator-=(const Derived &rhs) noexcept { return apply(rhs, std::minus<double>()); };
+        Derived &operator*=(const double &rhs) noexcept { return apply(rhs, std::multiplies<double>()); };
+        Derived &operator/=(const double &rhs) noexcept { return apply(rhs, std::divides<double>()); };
+
+        Derived operator+(const Derived &rhs) const noexcept { return Derived(*this) += rhs; }
+        Derived operator-(const Derived &rhs) const noexcept { return Derived(*this) -= rhs; }
+        Derived operator*(const double &rhs) const noexcept { return Derived(*this) *= rhs; }
+        Derived operator/(const double &rhs) const noexcept { return Derived(*this) /= rhs; }
+        friend Derived operator*(const double &lhs, const Derived &rhs) noexcept { return rhs * lhs; }
+        friend Derived operator/(const double &lhs, const Derived &rhs) noexcept { return rhs / lhs; }
+
+        Derived operator+() const noexcept { return *this; }
+        Derived operator-() const noexcept { return *this * -1; }
+
+        double dot(const Derived &rhs) const noexcept
+        {
+            return std::inner_product(this->storage.begin(), this->storage.end(), rhs.storage.begin(), 0.0);
+        }
+
+        double norm() const noexcept { return std::sqrt(dot(*this)); }
+        Derived normalize() const noexcept { return *this / norm(); }
+
+        template<typename To>
+        operator To() const noexcept { return convert<To>(this->derived()); }
+    };
 };
 
-template<size_t dimension, typename Derived>
-struct VectorBase
-    : Decorate<
-        Derived,
-        VectorValues<dimension>,
+template<size_t D = 0>
+struct VectorAccessX {
+    template<typename Derived, typename Base>
+    struct Decorator : Base {
+        double &x() noexcept { return (*this)[D]; }
+        const double &x() const noexcept { return (*this)[D]; }
+        Derived &x(double value) noexcept { x() = value; return this->derived(); }
+    };
+};
+
+template<size_t D = 1>
+struct VectorAccessY {
+    template<typename Derived, typename Base>
+    struct Decorator : Base {
+        double &y() noexcept { return (*this)[D]; }
+        const double &y() const noexcept { return (*this)[D]; }
+        Derived &y(double value) noexcept { y() = value; return this->derived(); }
+    };
+};
+
+template<size_t D = 2>
+struct VectorAccessZ {
+    template<typename Derived, typename Base>
+    struct Decorator : Base {
+        double &z() noexcept { return (*this)[D]; }
+        const double &z() const noexcept { return (*this)[D]; }
+        Derived &z(double value) noexcept { z() = value; return this->derived(); }
+    };
+};
+
+template<size_t D = 3>
+struct VectorAccessW {
+    template<typename Derived, typename Base>
+    struct Decorator : Base {
+        double &w() noexcept { return (*this)[D]; }
+        const double &w() const noexcept { return (*this)[D]; }
+        Derived &w(double value) noexcept { w() = value; return this->derived(); }
+    };
+};
+
+struct Vector3 : Decorate<
+        Vector3,
+        VectorValues<3>,
         CRTPDecorator,
-        VectorAccess<dimension>::template Decorator
-    >::Type {
+        VectorBase<3>::template Decorator,
+        VectorAccessX<>::template Decorator,
+        VectorAccessY<>::template Decorator,
+        VectorAccessZ<>::template Decorator
+    > {
 
-private:
-    template<typename Op>
-    Derived &apply(const Derived &rhs, const Op &op = Op()) noexcept
-    {
-        for (size_t i = 0; i < dimension; i++) (*this)[i] = op((*this)[i], rhs[i]);
-        return this->derived();
-    }
-
-    template<typename Op>
-    Derived &apply(const double &rhs, const Op &op = Op()) noexcept
-    {
-        for (size_t i = 0; i < dimension; i++) (*this)[i] = op((*this)[i], rhs);
-        return this->derived();
-    }
-
-public:
-    Derived &operator+=(const Derived &rhs) noexcept { return apply(rhs, std::plus<double>()); };
-    Derived &operator-=(const Derived &rhs) noexcept { return apply(rhs, std::minus<double>()); };
-    Derived &operator*=(const double &rhs) noexcept { return apply(rhs, std::multiplies<double>()); };
-    Derived &operator/=(const double &rhs) noexcept { return apply(rhs, std::divides<double>()); };
-
-    Derived operator+(const Derived &rhs) const noexcept { return Derived(*this) += rhs; }
-    Derived operator-(const Derived &rhs) const noexcept { return Derived(*this) -= rhs; }
-    Derived operator*(const double &rhs) const noexcept { return Derived(*this) *= rhs; }
-    Derived operator/(const double &rhs) const noexcept { return Derived(*this) /= rhs; }
-    friend Derived operator*(const double &lhs, const Derived &rhs) noexcept { return rhs * lhs; }
-    friend Derived operator/(const double &lhs, const Derived &rhs) noexcept { return rhs / lhs; }
-
-    Derived operator+() const noexcept { return *this; }
-    Derived operator-() const noexcept { return *this * -1; }
-
-    double dot(const Derived &rhs) const noexcept
-    {
-        return std::inner_product(this->storage.begin(), this->storage.end(), rhs.storage.begin(), 0.0);
-    }
-
-    double norm() const noexcept { return std::sqrt(dot(*this)); }
-    Derived normalize() const noexcept { return *this / norm(); }
-
-    template<typename To>
-    operator To() const noexcept { return convert<To>(this->derived()); }
-};
-
-struct Vector3 : VectorBase<3, Vector3> {
     Vector3(const double x, const double y, const double z)
-        : VectorBase<3, Vector3> { x, y, z }
+        : Decorate { x, y, z }
     { }
 
     static inline Vector3 UnitX() noexcept { return { 1, 0, 0 }; }
@@ -175,9 +178,19 @@ struct Vector3 : VectorBase<3, Vector3> {
     }
 };
 
-struct Quaternion : VectorBase<4, Quaternion> {
+struct Quaternion : Decorate<
+        Quaternion,
+        VectorValues<4>,
+        CRTPDecorator,
+        VectorBase<4>::template Decorator,
+        VectorAccessX<>::template Decorator,
+        VectorAccessY<>::template Decorator,
+        VectorAccessZ<>::template Decorator,
+        VectorAccessW<>::template Decorator
+    > {
+
     Quaternion(const double x, const double y, const double z, const double w) noexcept
-        : VectorBase<4, Quaternion> { x, y, z, w }
+        : Decorate { x, y, z, w }
     { }
 
     Quaternion(const double scalar, const Vector3 &vector) noexcept
@@ -539,14 +552,14 @@ struct DeleteAll
         DeleteAll,
         MessageBase<visualization_msgs::Marker>,
         ActionType<visualization_msgs::Marker::DELETEALL>::Decorator
-    >::Type { };
+    > { };
 
 struct Delete
     : Decorate<
         Delete,
         MessageBase<visualization_msgs::Marker>,
         ActionType<visualization_msgs::Marker::DELETE>::Decorator
-    >::Type {
+    > {
 
     Delete(const int32_t id, const std::string &ns = "")
     {
@@ -566,7 +579,7 @@ struct Add
         ActionType<visualization_msgs::Marker::ADD>::Decorator,
         MarkerType<MARKER_TYPE>::template Decorator,
         Decorators...
-    >::Type {
+    > {
 
     Add(const int32_t id, const std::string &ns = "")
     {
