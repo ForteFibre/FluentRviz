@@ -126,7 +126,7 @@ struct VectorAccessY : Base {
 template<typename Derived, typename Base>
 struct VectorAccessZ : Base {
     double &z() noexcept { return (*this)[2]; }
-    const double &z() const noexcept { return (*this)[3]; }
+    const double &z() const noexcept { return (*this)[2]; }
     Derived &z(double value) noexcept { z() = value; return this->derived(); }
 };
 
