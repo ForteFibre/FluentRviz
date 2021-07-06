@@ -439,19 +439,19 @@ T lerp(const T &a, const T &b, const double t) { return detail::lerp_impl(a, b, 
 template<typename T>
 auto lerp_func(const T &a, const T &b) { return [=](const double t) { lerp(a, b, t); }; }
 
-template<int32_t TYPE>
+template<int32_t Type>
 struct ActionType {
     template<typename Derived, typename Base>
     struct Decorator : Base {
-        Decorator() noexcept { this->message.action = TYPE; }
+        Decorator() noexcept { this->message.action = Type; }
     };
 };
 
-template<int32_t TYPE>
+template<int32_t Type>
 struct MarkerType {
     template<typename Derived, typename Base>
     struct Decorator : Base {
-        Decorator() noexcept { this->message.type = TYPE; }
+        Decorator() noexcept { this->message.type = Type; }
     };
 };
 
@@ -682,15 +682,15 @@ struct Delete
 };
 
 template<
-    int32_t MARKER_TYPE,
+    int32_t Type,
     template<typename, typename> typename ...Decorators>
 struct Add
     : Decorate<
-        Add<MARKER_TYPE, Decorators...>,
+        Add<Type, Decorators...>,
         MessageBase<visualization_msgs::Marker>,
         CRTPDecorator,
         ActionType<visualization_msgs::Marker::ADD>::Decorator,
-        MarkerType<MARKER_TYPE>::template Decorator,
+        MarkerType<Type>::template Decorator,
         Decorators...
     > {
 
