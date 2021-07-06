@@ -7,7 +7,10 @@
 #include <type_traits>
 
 #include <ros/ros.h>
+#include <std_msgs/ColorRGBA.h>
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Quaternion.h>
 #include <visualization_msgs/Marker.h>
 
 namespace flrv {
@@ -160,50 +163,6 @@ struct Vector3
     }
 };
 
-struct Quaternion
-    : Decorate<
-        Quaternion, VectorValues<4>,
-        CRTPDecorator, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ, VectorAccessW
-    > {
-
-    Quaternion(const double x, const double y, const double z, const double w) noexcept
-        : Decorate { x, y, z, w } { }
-
-    Quaternion(const double scalar, const Vector3 &vector) noexcept
-        : Quaternion(vector.x(), vector.y(), vector.z(), scalar) { }
-
-    double scalar() const noexcept { return w(); }
-    Vector3 vector() const noexcept { return { x(), y(), z() }; }
-
-    Quaternion conjugate() const noexcept { return Quaternion(scalar(), -vector()); }
-    Quaternion inverse() const noexcept { return conjugate() / dot(*this); }
-
-    Quaternion operator*(const Quaternion &rhs) const noexcept
-    {
-        double lsc = scalar(), rsc = rhs.scalar();
-        Vector3 lvec = vector(), rvec = rhs.vector();
-        return Quaternion(lsc * rsc - lvec.dot(rvec), lsc * rvec + rsc * lvec + lvec.cross(rvec));
-    }
-
-    friend Quaternion operator*(const Quaternion &lhs, const Vector3 &rhs) noexcept { return lhs * Quaternion(0, rhs); }
-    friend Quaternion operator*(const Vector3 &lhs, const Quaternion &rhs) noexcept { return Quaternion(0, lhs) * rhs; }
-};
-
-class Rotation {
-    Quaternion quaternion;
-
-public:
-    Rotation(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
-        : quaternion(std::cos(angle / 2), axis.normalize() * std::sin(angle / 2)) { }
-
-    Vector3 axis() const noexcept { return quaternion.vector() / std::sin(angle() / 2); }
-    double angle() const noexcept { return std::acos(quaternion.scalar()) * 2; }
-
-    Vector3 rotate(const Vector3 &rhs) const noexcept { return (quaternion * rhs * quaternion.inverse()).vector(); }
-
-    operator Quaternion() const noexcept { return quaternion; }
-};
-
 namespace detail {
     template<>
     struct converter<Vector3, geometry_msgs::Vector3> {
@@ -240,7 +199,38 @@ namespace detail {
             return { point.x, point.y, point.z };
         }
     };
+}
 
+struct Quaternion
+    : Decorate<
+        Quaternion, VectorValues<4>,
+        CRTPDecorator, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ, VectorAccessW
+    > {
+
+    Quaternion(const double x, const double y, const double z, const double w) noexcept
+        : Decorate { x, y, z, w } { }
+
+    Quaternion(const double scalar, const Vector3 &vector) noexcept
+        : Quaternion(vector.x(), vector.y(), vector.z(), scalar) { }
+
+    double scalar() const noexcept { return w(); }
+    Vector3 vector() const noexcept { return { x(), y(), z() }; }
+
+    Quaternion conjugate() const noexcept { return Quaternion(scalar(), -vector()); }
+    Quaternion inverse() const noexcept { return conjugate() / dot(*this); }
+
+    Quaternion operator*(const Quaternion &rhs) const noexcept
+    {
+        double lsc = scalar(), rsc = rhs.scalar();
+        Vector3 lvec = vector(), rvec = rhs.vector();
+        return Quaternion(lsc * rsc - lvec.dot(rvec), lsc * rvec + rsc * lvec + lvec.cross(rvec));
+    }
+
+    friend Quaternion operator*(const Quaternion &lhs, const Vector3 &rhs) noexcept { return lhs * Quaternion(0, rhs); }
+    friend Quaternion operator*(const Vector3 &lhs, const Quaternion &rhs) noexcept { return Quaternion(0, lhs) * rhs; }
+};
+
+namespace detail {
     template<>
     struct converter<Quaternion, geometry_msgs::Quaternion> {
         static inline geometry_msgs::Quaternion convert(const Quaternion &quaternion)
@@ -259,6 +249,192 @@ namespace detail {
         }
     };
 }
+
+class Rotation {
+    Quaternion quaternion;
+
+public:
+    Rotation(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
+        : quaternion(std::cos(angle / 2), axis.normalize() * std::sin(angle / 2)) { }
+
+    Vector3 axis() const noexcept { return quaternion.vector() / std::sin(angle() / 2); }
+    double angle() const noexcept { return std::acos(quaternion.scalar()) * 2; }
+
+    Vector3 rotate(const Vector3 &rhs) const noexcept { return (quaternion * rhs * quaternion.inverse()).vector(); }
+
+    operator Quaternion() const noexcept { return quaternion; }
+};
+
+template<typename Derived, typename Base>
+struct Conversion : Base {
+    template<typename To>
+    operator To() { return convert<To>(*this); }
+};
+
+template<typename ...Types>
+struct ColorValues {
+    static constexpr size_t dimension = sizeof...(Types);
+    std::tuple<Types...> values;
+
+    template<size_t I>
+    auto &get() { return std::get<I>(values); }
+};
+
+namespace detail {
+    template<typename ColorA, typename ColorB>
+    struct converter<ColorA, ColorB,
+        std::void_t<converter<ColorA, std_msgs::ColorRGBA>, converter<std_msgs::ColorRGBA, ColorB>>> {
+
+        static ColorB convert(const ColorA &color)
+        {
+            return converter<std_msgs::ColorRGBA, ColorB>::convert(converter<ColorA, std_msgs::ColorRGBA>::convert(color));
+        }
+    };
+}
+
+struct RGBA
+    : Decorate<
+        RGBA, ColorValues<double, double, double, double>,
+        Conversion
+    > {
+
+    RGBA(const double red, const double green, const double blue, const double alpha = 1.0)
+        : Decorate { std::forward_as_tuple(red, green, blue, alpha) } { }
+
+    double &red() noexcept { return std::get<0>(values); }
+    double &green() noexcept { return std::get<1>(values); }
+    double &blue() noexcept { return std::get<2>(values); }
+    double &alpha() noexcept { return std::get<3>(values); }
+
+    const double &red() const noexcept { return std::get<0>(values); }
+    const double &green() const noexcept { return std::get<1>(values); }
+    const double &blue() const noexcept { return std::get<2>(values); }
+    const double &alpha() const noexcept { return std::get<3>(values); }
+
+    RGBA &red(const double red) noexcept { this->red() = red; return *this; }
+    RGBA &blue(const double blue) noexcept { this->blue() = blue; return *this; }
+    RGBA &green(const double green) noexcept { this->green() = green; return *this; }
+    RGBA &alpha(const double alpha) noexcept { this->alpha() = alpha; return *this; }
+};
+
+namespace detail {
+    template<>
+    struct converter<RGBA, std_msgs::ColorRGBA> {
+        static std_msgs::ColorRGBA convert(const RGBA &rgba)
+        {
+            std_msgs::ColorRGBA ret;
+            ret.r = rgba.red();
+            ret.g = rgba.green();
+            ret.b = rgba.blue();
+            ret.a = rgba.alpha();
+            return ret;
+        }
+    };
+
+    template<>
+    struct converter<std_msgs::ColorRGBA, RGBA> {
+        static RGBA convert(const std_msgs::ColorRGBA &color_rgba)
+        {
+            return { color_rgba.r, color_rgba.g, color_rgba.b, color_rgba.a };
+        }
+    };
+}
+
+struct HSLA
+    : Decorate<
+        HSLA, ColorValues<double, double, double, double>,
+        Conversion
+    > {
+
+public:
+    HSLA(const double hue, const double saturation, const double lightness, const double alpha = 1.0)
+        : Decorate { std::forward_as_tuple(hue, saturation, lightness, alpha) } { }
+
+    double &hue() noexcept { return std::get<0>(values); }
+    double &saturation() noexcept { return std::get<1>(values); }
+    double &lightness() noexcept { return std::get<2>(values); }
+    double &alpha() noexcept { return std::get<3>(values); }
+
+    const double &hue() const noexcept { return std::get<0>(values); }
+    const double &saturation() const noexcept { return std::get<1>(values); }
+    const double &lightness() const noexcept { return std::get<2>(values); }
+    const double &alpha() const noexcept { return std::get<3>(values); }
+
+    HSLA &hue(const double hue) noexcept { this->hue() = hue; return *this; }
+    HSLA &saturation(const double saturation) noexcept { this->saturation() = saturation; return *this; }
+    HSLA &lightness(const double lightness) noexcept { this->lightness() = lightness; return *this; }
+    HSLA &alpha(const double alpha) noexcept { this->alpha() = alpha; return *this; }
+};
+
+namespace detail {
+    template<>
+    struct converter<HSLA, std_msgs::ColorRGBA> {
+        static std_msgs::ColorRGBA convert(const HSLA &hsla)
+        {
+            const double h = hsla.hue() / 60, s = hsla.saturation(), l = hsla.lightness(), a = hsla.alpha();
+
+            const double c = (1 - std::abs(2 * l - 1)) * s;
+            const double x = c * (1 - std::abs(std::remainder(h, 2) - 1));
+
+            const double m = l - c / 2;
+
+            const auto f = [&](double v0, double v1, double v2, double v3, double v4, double v5) {
+                if (0 <= h && h < 1) return v0;
+                if (1 <= h && h < 2) return v1;
+                if (2 <= h && h < 3) return v2;
+                if (3 <= h && h < 4) return v3;
+                if (4 <= h && h < 5) return v4;
+                if (5 <= h && h < 6) return v5;
+            };
+
+            std_msgs::ColorRGBA ret;
+            ret.r = m + f(c, x, 0, 0, x, c);
+            ret.g = m + f(x, c, c, x, 0, 0);
+            ret.b = m + f(0, 0, x, c, c, x);
+            ret.a = a;
+            return ret;
+        }
+    };
+
+    template<>
+    struct converter<std_msgs::ColorRGBA, HSLA> {
+        static HSLA convert(const std_msgs::ColorRGBA &color_rgba)
+        {
+            const double r = color_rgba.r, g = color_rgba.g, b = color_rgba.b, a = color_rgba.a;
+
+            const double max = std::max({ r, g, b });
+            const double min = std::min({ r, g, b });
+            const double c = max - min;
+
+            const double h = std::remainder([&] {
+                if (c == 0) return 0.0;
+                if (max == r) return 60 * (0 + (g - b) / c);
+                if (max == g) return 60 * (2 + (b - r) / c);
+                if (max == b) return 60 * (4 + (r - g) / c);
+            }() + 360, 360);
+            const double l = (max + min) / 2;
+            const double s = (l == 0 || l == 1) ? 0 : c / (1 - std::abs(2 * l - 1));
+
+            return { h, s, l, a };
+        }
+    };
+}
+
+namespace detail {
+    template<typename T, size_t ...Indices>
+    T lerp_impl(const T &a, const T &b, const double t, std::index_sequence<Indices...>)
+    {
+        T ret;
+        ((ret.template get<Indices>() = a.template get<Indices>() * (1 - t) + b.template get<Indices>() * t), ...);
+        return ret;
+    }
+}
+
+template<typename T>
+T lerp(const T &a, const T &b, const double t) { return detail::lerp_impl(a, b, t, std::make_index_sequence<T::dimension>()); }
+
+template<typename T>
+auto lerp_func(const T &a, const T &b) { return [=](const double t) { lerp(a, b, t); }; }
 
 template<int32_t TYPE>
 struct ActionType {
