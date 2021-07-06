@@ -457,6 +457,12 @@ struct MarkerType {
 
 template<typename Derived, typename Base>
 struct Position : Base {
+    Derived &position(const geometry_msgs::Point &position) noexcept
+    {
+        this->message.pose.position = position;
+        return this->derived();
+    }
+
     Derived &position(const double x, const double y, const double z) noexcept
     {
         this->message.pose.position.x = x;
@@ -469,6 +475,12 @@ struct Position : Base {
 template<typename Derived, typename Base>
 struct Orientation : Base {
     Orientation() noexcept { orientation(1, 0, 0, 0); }
+
+    Derived &orientation(geometry_msgs::Quaternion &orientation) noexcept
+    {
+        this->message.pose.orientation = orientation;
+        return this->derived();
+    }
 
     Derived &orientation(const double w, const double x, const double y, const double z) noexcept
     {
@@ -557,6 +569,12 @@ template<typename Derived, typename Base>
 struct Color : Base {
     Color() noexcept { color(1, 1, 1, 1); }
 
+    Derived &color(const std_msgs::ColorRGBA &color) noexcept
+    {
+        this->message.color = color;
+        return this->derived();
+    }
+
     Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
     {
         this->message.color.r = r;
@@ -568,17 +586,19 @@ struct Color : Base {
 };
 
 template<typename Derived, typename Base>
-struct Colors : Base {
+struct Colors : Color<Derived, Base> {
     Colors() noexcept { color(1, 1, 1, 1); }
+
+    Derived &color(const std_msgs::ColorRGBA &color) noexcept
+    {
+        this->message.colors.clear();
+        return Color<Derived, Base>::color(color);
+    }
 
     Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
     {
-        this->message.color.r = r;
-        this->message.color.g = g;
-        this->message.color.b = b;
-        this->message.color.a = a;
         this->message.colors.clear();
-        return this->derived();
+        return Color<Derived, Base>::color(r, g, b, a);
     }
 
     Derived &color(const std::vector<std_msgs::ColorRGBA> &colors) noexcept
