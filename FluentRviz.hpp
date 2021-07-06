@@ -52,7 +52,7 @@ template<typename To, typename From>
 To convert(const From &from) { return detail::converter<From, To>::convert(from); }
 
 template<typename Derived, typename Base>
-struct Conversion : Base {
+struct CustomizableConversion : Base {
     template<typename To>
     operator To() { return convert<To>(this->derived()); }
 };
@@ -146,7 +146,7 @@ struct VectorAccessW : Base {
 struct Vector3
     : Decorate<
         Vector3, VectorValues<3>,
-        CRTPDecorator, Conversion, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ
+        CRTPDecorator, CustomizableConversion, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ
     > {
 
     Vector3(const double x, const double y, const double z)
@@ -207,7 +207,7 @@ namespace detail {
 struct Quaternion
     : Decorate<
         Quaternion, VectorValues<4>,
-        CRTPDecorator, Conversion, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ, VectorAccessW
+        CRTPDecorator, CustomizableConversion, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ, VectorAccessW
     > {
 
     Quaternion(const double x, const double y, const double z, const double w) noexcept
@@ -292,7 +292,7 @@ namespace detail {
 struct RGBA
     : Decorate<
         RGBA, ColorValues<double, double, double, double>,
-        CRTPDecorator, Conversion
+        CRTPDecorator, CustomizableConversion
     > {
 
     RGBA(const double red, const double green, const double blue, const double alpha = 1.0)
@@ -340,7 +340,7 @@ namespace detail {
 struct HSLA
     : Decorate<
         HSLA, ColorValues<double, double, double, double>,
-        CRTPDecorator, Conversion
+        CRTPDecorator, CustomizableConversion
     > {
 
 public:
