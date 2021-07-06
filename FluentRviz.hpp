@@ -53,6 +53,9 @@ To convert(const From &from) { return detail::converter<From, To>::convert(from)
 
 template<typename Derived, typename Base>
 struct CustomizableConversion : Base {
+    template<typename From>
+    Derived from(const From &from) { return convert<Derived>(from); }
+
     template<typename To>
     operator To() { return convert<To>(this->derived()); }
 };
