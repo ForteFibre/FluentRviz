@@ -52,6 +52,12 @@ template<typename To, typename From>
 To convert(const From &from) { return detail::converter<From, To>::convert(from); }
 
 template<typename Derived, typename Base>
+struct Conversion : Base {
+    template<typename To>
+    operator To() { return convert<To>(this->derived()); }
+};
+
+template<typename Derived, typename Base>
 struct CRTPDecorator : Base {
 protected:
     Derived &derived() noexcept { return static_cast<Derived &>(*this); }
@@ -90,26 +96,23 @@ public:
     Derived &operator*=(const double &rhs) noexcept { return apply(rhs, std::multiplies<double>()); };
     Derived &operator/=(const double &rhs) noexcept { return apply(rhs, std::divides<double>()); };
 
-    Derived operator+(const Derived &rhs) const noexcept { return Derived(*this) += rhs; }
-    Derived operator-(const Derived &rhs) const noexcept { return Derived(*this) -= rhs; }
-    Derived operator*(const double &rhs) const noexcept { return Derived(*this) *= rhs; }
-    Derived operator/(const double &rhs) const noexcept { return Derived(*this) /= rhs; }
+    Derived operator+(const Derived &rhs) const noexcept { return Derived(this->derived()) += rhs; }
+    Derived operator-(const Derived &rhs) const noexcept { return Derived(this->derived()) -= rhs; }
+    Derived operator*(const double &rhs) const noexcept { return Derived(this->derived()) *= rhs; }
+    Derived operator/(const double &rhs) const noexcept { return Derived(this->derived()) /= rhs; }
     friend Derived operator*(const double &lhs, const Derived &rhs) noexcept { return rhs * lhs; }
     friend Derived operator/(const double &lhs, const Derived &rhs) noexcept { return rhs / lhs; }
 
-    Derived operator+() const noexcept { return *this; }
-    Derived operator-() const noexcept { return *this * -1; }
+    Derived operator+() const noexcept { return this->derived(); }
+    Derived operator-() const noexcept { return this->derived() * -1; }
 
     double dot(const Derived &rhs) const noexcept
     {
         return std::inner_product(this->storage.begin(), this->storage.end(), rhs.storage.begin(), 0.0);
     }
 
-    double norm() const noexcept { return std::sqrt(dot(*this)); }
-    Derived normalize() const noexcept { return *this / norm(); }
-
-    template<typename To>
-    operator To() const noexcept { return convert<To>(this->derived()); }
+    double norm() const noexcept { return std::sqrt(dot(this->derived())); }
+    Derived normalize() const noexcept { return this->derived() / norm(); }
 };
 
 template<typename Derived, typename Base>
@@ -143,7 +146,7 @@ struct VectorAccessW : Base {
 struct Vector3
     : Decorate<
         Vector3, VectorValues<3>,
-        CRTPDecorator, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ
+        CRTPDecorator, Conversion, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ
     > {
 
     Vector3(const double x, const double y, const double z)
@@ -204,7 +207,7 @@ namespace detail {
 struct Quaternion
     : Decorate<
         Quaternion, VectorValues<4>,
-        CRTPDecorator, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ, VectorAccessW
+        CRTPDecorator, Conversion, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ, VectorAccessW
     > {
 
     Quaternion(const double x, const double y, const double z, const double w) noexcept
@@ -265,12 +268,6 @@ public:
     operator Quaternion() const noexcept { return quaternion; }
 };
 
-template<typename Derived, typename Base>
-struct Conversion : Base {
-    template<typename To>
-    operator To() { return convert<To>(*this); }
-};
-
 template<typename ...Types>
 struct ColorValues {
     static constexpr size_t dimension = sizeof...(Types);
@@ -295,7 +292,7 @@ namespace detail {
 struct RGBA
     : Decorate<
         RGBA, ColorValues<double, double, double, double>,
-        Conversion
+        CRTPDecorator, Conversion
     > {
 
     RGBA(const double red, const double green, const double blue, const double alpha = 1.0)
@@ -343,7 +340,7 @@ namespace detail {
 struct HSLA
     : Decorate<
         HSLA, ColorValues<double, double, double, double>,
-        Conversion
+        CRTPDecorator, Conversion
     > {
 
 public:
