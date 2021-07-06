@@ -113,28 +113,28 @@ template<typename Derived, typename Base>
 struct VectorAccessX : Base {
     double &x() noexcept { return (*this)[0]; }
     const double &x() const noexcept { return (*this)[0]; }
-    Derived &x(double value) && noexcept { x() = value; return this->derived(); }
+    Derived &x(double value) noexcept { x() = value; return this->derived(); }
 };
 
 template<typename Derived, typename Base>
 struct VectorAccessY : Base {
     double &y() noexcept { return (*this)[1]; }
     const double &y() const noexcept { return (*this)[1]; }
-    Derived &y(double value) && noexcept { y() = value; return this->derived(); }
+    Derived &y(double value) noexcept { y() = value; return this->derived(); }
 };
 
 template<typename Derived, typename Base>
 struct VectorAccessZ : Base {
     double &z() noexcept { return (*this)[2]; }
     const double &z() const noexcept { return (*this)[2]; }
-    Derived &z(double value) && noexcept { z() = value; return this->derived(); }
+    Derived &z(double value) noexcept { z() = value; return this->derived(); }
 };
 
 template<typename Derived, typename Base>
 struct VectorAccessW : Base {
     double &w() noexcept { return (*this)[3]; }
     const double &w() const noexcept { return (*this)[3]; }
-    Derived &w(double value) && noexcept { w() = value; return this->derived(); }
+    Derived &w(double value) noexcept { w() = value; return this->derived(); }
 };
 
 struct Vector3
