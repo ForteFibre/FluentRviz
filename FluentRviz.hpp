@@ -274,7 +274,10 @@ struct ColorValues {
     std::tuple<Types...> values;
 
     template<size_t I>
-    auto &get() { return std::get<I>(values); }
+    auto &get() noexcept { return std::get<I>(values); }
+
+    template<size_t I>
+    const auto &get() const noexcept { return std::get<I>(values); }
 };
 
 namespace detail {
@@ -298,15 +301,15 @@ struct RGBA
     RGBA(const double red, const double green, const double blue, const double alpha = 1.0)
         : Decorate { std::forward_as_tuple(red, green, blue, alpha) } { }
 
-    double &red() noexcept { return std::get<0>(values); }
-    double &green() noexcept { return std::get<1>(values); }
-    double &blue() noexcept { return std::get<2>(values); }
-    double &alpha() noexcept { return std::get<3>(values); }
+    double &red() noexcept { return get<0>(); }
+    double &green() noexcept { return get<1>(); }
+    double &blue() noexcept { return get<2>(); }
+    double &alpha() noexcept { return get<3>(); }
 
-    const double &red() const noexcept { return std::get<0>(values); }
-    const double &green() const noexcept { return std::get<1>(values); }
-    const double &blue() const noexcept { return std::get<2>(values); }
-    const double &alpha() const noexcept { return std::get<3>(values); }
+    const double &red() const noexcept { return get<0>(); }
+    const double &green() const noexcept { return get<1>(); }
+    const double &blue() const noexcept { return get<2>(); }
+    const double &alpha() const noexcept { return get<3>(); }
 
     RGBA &red(const double red) noexcept { this->red() = red; return *this; }
     RGBA &blue(const double blue) noexcept { this->blue() = blue; return *this; }
@@ -347,15 +350,15 @@ public:
     HSLA(const double hue, const double saturation, const double lightness, const double alpha = 1.0)
         : Decorate { std::forward_as_tuple(hue, saturation, lightness, alpha) } { }
 
-    double &hue() noexcept { return std::get<0>(values); }
-    double &saturation() noexcept { return std::get<1>(values); }
-    double &lightness() noexcept { return std::get<2>(values); }
-    double &alpha() noexcept { return std::get<3>(values); }
+    double &hue() noexcept { return get<0>(); }
+    double &saturation() noexcept { return get<1>(); }
+    double &lightness() noexcept { return get<2>(); }
+    double &alpha() noexcept { return get<3>(); }
 
-    const double &hue() const noexcept { return std::get<0>(values); }
-    const double &saturation() const noexcept { return std::get<1>(values); }
-    const double &lightness() const noexcept { return std::get<2>(values); }
-    const double &alpha() const noexcept { return std::get<3>(values); }
+    const double &hue() const noexcept { return get<0>(); }
+    const double &saturation() const noexcept { return get<1>(); }
+    const double &lightness() const noexcept { return get<2>(); }
+    const double &alpha() const noexcept { return get<3>(); }
 
     HSLA &hue(const double hue) noexcept { this->hue() = hue; return *this; }
     HSLA &saturation(const double saturation) noexcept { this->saturation() = saturation; return *this; }
