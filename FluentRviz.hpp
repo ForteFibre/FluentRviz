@@ -326,10 +326,7 @@ namespace detail {
         static std_msgs::ColorRGBA convert(const RGBA &rgba)
         {
             std_msgs::ColorRGBA ret;
-            ret.r = rgba.red();
-            ret.g = rgba.green();
-            ret.b = rgba.blue();
-            ret.a = rgba.alpha();
+            ret.r = rgba.red(), ret.g = rgba.green(), ret.b = rgba.blue(), ret.a = rgba.alpha();
             return ret;
         }
     };
