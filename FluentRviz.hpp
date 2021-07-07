@@ -457,9 +457,10 @@ struct MarkerType {
 
 template<typename Derived, typename Base>
 struct Position : Base {
-    Derived &position(const geometry_msgs::Point &position) noexcept
+    template<typename T>
+    Derived &position(const T &position) noexcept
     {
-        this->message.pose.position = position;
+        this->message.pose.position = convert<geometry_msgs::Point>(position);
         return this->derived();
     }
 
@@ -476,9 +477,10 @@ template<typename Derived, typename Base>
 struct Orientation : Base {
     Orientation() noexcept { orientation(1, 0, 0, 0); }
 
-    Derived &orientation(geometry_msgs::Quaternion &orientation) noexcept
+    template<typename T>
+    Derived &orientation(const T &orientation) noexcept
     {
-        this->message.pose.orientation = orientation;
+        this->message.pose.orientation = convert<geometry_msgs::Quaternion>(orientation);
         return this->derived();
     }
 
@@ -569,9 +571,10 @@ template<typename Derived, typename Base>
 struct Color : Base {
     Color() noexcept { color(1, 1, 1, 1); }
 
-    Derived &color(const std_msgs::ColorRGBA &color) noexcept
+    template<typename T>
+    Derived &color(const T &color) noexcept
     {
-        this->message.color = color;
+        this->message.color = convert<std_msgs::ColorRGBA>(color);
         return this->derived();
     }
 
@@ -589,7 +592,8 @@ template<typename Derived, typename Base>
 struct Colors : Color<Derived, Base> {
     Colors() noexcept { color(1, 1, 1, 1); }
 
-    Derived &color(const std_msgs::ColorRGBA &color) noexcept
+    template<typename T>
+    Derived &color(const T &color) noexcept
     {
         this->message.colors.clear();
         return Color<Derived, Base>::color(color);
@@ -601,18 +605,24 @@ struct Colors : Color<Derived, Base> {
         return Color<Derived, Base>::color(r, g, b, a);
     }
 
-    Derived &color(const std::vector<std_msgs::ColorRGBA> &colors) noexcept
+    template<typename T>
+    Derived &color(const std::vector<T> &colors) noexcept
     {
-        this->message.colors = colors;
+        this->message.colors.reserve(colors.size());
+        std::transform(colors.begin(), colors.end(), std::back_inserter(this->message.colors),
+            [](const T &t) { return convert<geometry_msgs::Point>(t); });
         return this->derived();
     }
 };
 
 template<typename Derived, typename Base>
 struct Points : Base {
-    Derived &points(const std::vector<geometry_msgs::Point> &points) noexcept
+    template<typename T>
+    Derived &points(const std::vector<T> &points) noexcept
     {
-        this->message.points = points;
+        this->message.points.reserve(points.size());
+        std::transform(points.begin(), points.end(), std::back_inserter(this->message.points),
+            [](const T &t) { return convert<geometry_msgs::Point>(t); });
         return this->derived();
     }
 };
@@ -625,17 +635,22 @@ struct ArrowPoints : Base {
         end(1, 0, 0);
     }
 
-    Derived &start(const double x, const double y, const double z) noexcept
-    {
-        return set(0, x, y, z);
-    }
+    template<typename T>
+    Derived &start(const T &point) noexcept { return set(0, point); }
+    Derived &start(const double x, const double y, const double z) noexcept { return set(0, x, y, z); }
 
-    Derived &end(const double x, const double y, const double z) noexcept
-    {
-        return set(1, x, y, z);
-    }
+    template<typename T>
+    Derived &end(const T &point) noexcept { return set(1, point); }
+    Derived &end(const double x, const double y, const double z) noexcept { return set(1, x, y, z); }
 
 private:
+    template<typename T>
+    Derived &set(size_t index, const T &point) noexcept
+    {
+        this->message.points[index] = convert<geometry_msgs::Point>(point);
+        return this->derived();
+    }
+
     Derived &set(size_t index, const double x, const double y, const double z) noexcept
     {
         this->message.points[index].x = x;
