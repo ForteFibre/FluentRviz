@@ -350,7 +350,7 @@ struct HSLA
     > {
 
 public:
-    HSLA(const double hue, const double saturation, const double lightness, const double alpha = 1.0)
+    HSLA(const double hue, const double saturation = 1.0, const double lightness = 0.5, const double alpha = 1.0)
         : Decorate { std::forward_as_tuple(hue, saturation, lightness, alpha) } { }
 
     double &hue() noexcept { return get<0>(); }
@@ -388,6 +388,7 @@ namespace detail {
                 if (3 <= h && h < 4) return v3;
                 if (4 <= h && h < 5) return v4;
                 if (5 <= h && h < 6) return v5;
+                return 0.0;
             };
 
             std_msgs::ColorRGBA ret;
@@ -414,6 +415,7 @@ namespace detail {
                 if (max == r) return 60 * (0 + (g - b) / c);
                 if (max == g) return 60 * (2 + (b - r) / c);
                 if (max == b) return 60 * (4 + (r - g) / c);
+                return 0.0;
             }() + 360, 360);
             const double l = (max + min) / 2;
             const double s = (l == 0 || l == 1) ? 0 : c / (1 - std::abs(2 * l - 1));
