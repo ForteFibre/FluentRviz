@@ -383,7 +383,7 @@ struct HSLA
 
     HSLA() = default;
 
-    HSLA(const double hue, const double saturation = 1.0, const double lightness = 0.5, const double alpha = 1.0)
+    HSLA(const double hue, const double saturation = 100.0, const double lightness = 50.0, const double alpha = 1.0)
         : Decorate { std::forward_as_tuple(hue, saturation, lightness, alpha) } { }
 
     double &hue() noexcept { return get<0>(); }
@@ -407,7 +407,7 @@ namespace detail {
     struct converter<HSLA, std_msgs::ColorRGBA> {
         static void convert(const HSLA &hsla, std_msgs::ColorRGBA &ret)
         {
-            const double h = hsla.hue() / 60, s = hsla.saturation(), l = hsla.lightness(), a = hsla.alpha();
+            const double h = hsla.hue() / 60, s = hsla.saturation() / 100, l = hsla.lightness() / 100, a = hsla.alpha();
 
             const double c = (1 - std::abs(2 * l - 1)) * s;
             const double x = c * (1 - std::abs(std::remainder(h, 2) - 1));
@@ -438,15 +438,17 @@ namespace detail {
             const double min = std::min({ r, g, b });
             const double c = max - min;
 
-            const double h = std::remainder([&] {
-                if (c == 0) return 0.0;
-                if (max == r) return 60 * (0 + (g - b) / c);
-                if (max == g) return 60 * (2 + (b - r) / c);
-                if (max == b) return 60 * (4 + (r - g) / c);
-                return 0.0;
-            }() + 360, 360);
-            const double l = (max + min) / 2;
-            const double s = (l == 0 || l == 1) ? 0 : c / (1 - std::abs(2 * l - 1));
+            const double h = 60 * [&] {
+                if (c != 0) return 0.0;
+                if (max == g) return (2 + (b - r) / c);
+                if (max == b) return (4 + (r - g) / c);
+                return std::remainder(6 + (g - b) / c, 6);
+            }();
+            const double l = 100 * ((max + min) / 2);
+            const double s = 100 * [&] {
+                if (l == 0 || l == 1) return 0.0;
+                return c / (1 - std::abs(2 * l - 1));
+            }();
 
             ret.hue() = h, ret.saturation() = s, ret.lightness() = l, ret.alpha() = a;
         }
