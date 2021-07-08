@@ -625,11 +625,10 @@ struct Colors : Color<Derived, Base> {
     {
         if constexpr (internal::is_convertible_v<T, decltype(this->message.colors)>) {
             convert(color, this->message.colors);
-            return this->derived();
         } else {
-            this->message.colors.clear();
-            return Color<Derived, Base>::color(color);
+            convert(color, this->message.color);
         }
+        return this->derived();
     }
 
     Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
