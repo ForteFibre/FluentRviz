@@ -16,51 +16,84 @@
 namespace flrv {
 
 template<
-    typename Derived,
-    typename Base,
-    template<typename, typename> typename ...Decorators>
+    class Derived,
+    class Base,
+    template<class, class> class ...Decorators>
 struct Decorate : Base { };
 
 template<
-    typename Derived,
-    typename Base,
-    template<typename, typename> typename Decorator>
+    class Derived,
+    class Base,
+    template<class, class> class Decorator>
 struct Decorate<Derived, Base, Decorator>
     : Decorator<Derived, Base> { };
 
 template<
-    typename Derived,
-    typename Base,
-    template<typename, typename> typename Decorator,
-    template<typename, typename> typename ...Decorators>
+    class Derived,
+    class Base,
+    template<class, class> class Decorator,
+    template<class, class> class ...Decorators>
 struct Decorate<Derived, Base, Decorator, Decorators...>
     : Decorate<Derived, Decorator<Derived, Base>, Decorators...> { };
 
 namespace detail {
-    template<typename From, typename To, typename Enabler = void>
+    template<class From, class To, class Enabler = void>
     struct converter {
-        static inline To convert(const From &from) = delete;
+        static void convert(const From &from, To &to) = delete;
     };
 
-    template<typename Type>
+    template<class Type>
     struct converter<Type, Type> {
-        static inline Type convert(const Type &value) { return value; };
+        static void convert(const Type &value, Type &ret) { ret = value; };
+    };
+
+    template<class From, class T>
+    struct converter<From, std::vector<T>> {
+        static void convert(const From &from, std::vector<T> &ret)
+        {
+            ret.reserve(std::size(from));
+            std::transform(std::begin(from), std::end(from), std::back_inserter(ret),
+                [](const auto &e) { return converter<decltype(e), T>::convert(e); });
+        }
     };
 }
 
-template<typename To, typename From>
-To convert(const From &from) { return detail::converter<From, To>::convert(from); }
+template<class From, class To>
+void convert(const From &from, To &to) { detail::converter<From, To>::convert(from, to); }
 
-template<typename Derived, typename Base>
+namespace internal {
+    namespace detail {
+        template <class AlwaysVoid, template<class...> class Op, class... Args>
+        struct detector : std::false_type { };
+
+        template <template<class...> class Op, class... Args>
+        struct detector<std::void_t<Op<Args...>>, Op, Args...> : std::true_type { };
+    }
+
+    template <template<class...> class Op, class... Args>
+    constexpr inline bool is_detected_v = detail::detector<void, Op, Args...>::value;
+
+    template<class From, class To>
+    using convert_t = decltype(convert<To>(std::declval<From>()));
+
+    template<class From, class To>
+    constexpr inline bool is_convertible_v = is_detected_v<convert_t, From, To>;
+}
+
+template<class Derived, class Base>
 struct CustomizableConversion : Base {
-    template<typename From>
+    template<class From>
     Derived from(const From &from) { return convert<Derived>(from); }
 
-    template<typename To>
-    operator To() { return convert<To>(this->derived()); }
+    template<class To>
+    operator To() {
+        To ret;
+        convert(this->derived(), ret);
+        return ret;
+    }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct CRTPDecorator : Base {
 protected:
     Derived &derived() noexcept { return static_cast<Derived &>(*this); }
@@ -73,20 +106,20 @@ struct VectorValues {
     std::array<double, D> storage;
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct VectorBase : Base {
     double &operator[](ssize_t i) noexcept { return this->storage[i]; }
     const double &operator[](ssize_t i) const noexcept { return this->storage[i]; }
 
 private:
-    template<typename Op>
+    template<class Op>
     Derived &apply(const Derived &rhs, const Op &op = Op()) noexcept
     {
         for (size_t i = 0; i < Base::dimension; i++) (*this)[i] = op((*this)[i], rhs[i]);
         return this->derived();
     }
 
-    template<typename Op>
+    template<class Op>
     Derived &apply(const double &rhs, const Op &op = Op()) noexcept
     {
         for (size_t i = 0; i < Base::dimension; i++) (*this)[i] = op((*this)[i], rhs);
@@ -118,28 +151,28 @@ public:
     Derived normalize() const noexcept { return this->derived() / norm(); }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct VectorAccessX : Base {
     double &x() noexcept { return (*this)[0]; }
     const double &x() const noexcept { return (*this)[0]; }
     Derived &x(double value) noexcept { x() = value; return this->derived(); }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct VectorAccessY : Base {
     double &y() noexcept { return (*this)[1]; }
     const double &y() const noexcept { return (*this)[1]; }
     Derived &y(double value) noexcept { y() = value; return this->derived(); }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct VectorAccessZ : Base {
     double &z() noexcept { return (*this)[2]; }
     const double &z() const noexcept { return (*this)[2]; }
     Derived &z(double value) noexcept { z() = value; return this->derived(); }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct VectorAccessW : Base {
     double &w() noexcept { return (*this)[3]; }
     const double &w() const noexcept { return (*this)[3]; }
@@ -151,6 +184,8 @@ struct Vector3
         Vector3, VectorValues<3>,
         CRTPDecorator, CustomizableConversion, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ
     > {
+
+    Vector3() = default;
 
     Vector3(const double x, const double y, const double z)
         : Decorate { x, y, z } { }
@@ -172,37 +207,33 @@ struct Vector3
 namespace detail {
     template<>
     struct converter<Vector3, geometry_msgs::Vector3> {
-        static inline geometry_msgs::Vector3 convert(const Vector3 &vector)
+        static void convert(const Vector3 &vector, geometry_msgs::Vector3 &ret)
         {
-            geometry_msgs::Vector3 ret;
             ret.x = vector.x(), ret.y = vector.y(), ret.z = vector.z();
-            return ret;
         }
     };
 
     template<>
     struct converter<geometry_msgs::Vector3, Vector3> {
-        static inline Vector3 convert(const geometry_msgs::Vector3 &vector)
+        static void convert(const geometry_msgs::Vector3 &vector, Vector3 &ret)
         {
-            return { vector.x, vector.y, vector.z };
+            ret.x() = vector.x, ret.y() = vector.y, ret.z() = vector.z;
         }
     };
 
     template<>
     struct converter<Vector3, geometry_msgs::Point> {
-        static inline geometry_msgs::Point convert(const Vector3 &vector)
+        static void convert(const Vector3 &vector, geometry_msgs::Point &ret)
         {
-            geometry_msgs::Point ret;
             ret.x = vector.x(), ret.y = vector.y(), ret.z = vector.z();
-            return ret;
         }
     };
 
     template<>
     struct converter<geometry_msgs::Point, Vector3> {
-        static inline Vector3 convert(const geometry_msgs::Point &point)
+        static void convert(const geometry_msgs::Point &point, Vector3 &ret)
         {
-            return { point.x, point.y, point.z };
+            ret.x() = point.x, ret.y() = point.y, ret.z() = point.z;
         }
     };
 }
@@ -212,6 +243,8 @@ struct Quaternion
         Quaternion, VectorValues<4>,
         CRTPDecorator, CustomizableConversion, VectorBase, VectorAccessX, VectorAccessY, VectorAccessZ, VectorAccessW
     > {
+
+    Quaternion() = default;
 
     Quaternion(const double x, const double y, const double z, const double w) noexcept
         : Decorate { x, y, z, w } { }
@@ -239,19 +272,17 @@ struct Quaternion
 namespace detail {
     template<>
     struct converter<Quaternion, geometry_msgs::Quaternion> {
-        static inline geometry_msgs::Quaternion convert(const Quaternion &quaternion)
+        static void convert(const Quaternion &quaternion, geometry_msgs::Quaternion &ret)
         {
-            geometry_msgs::Quaternion ret;
             ret.x = quaternion.x(), ret.y = quaternion.y(), ret.z = quaternion.z(), ret.w = quaternion.w();
-            return ret;
         }
     };
 
     template<>
     struct converter<geometry_msgs::Quaternion, Quaternion> {
-        static inline Quaternion convert(const geometry_msgs::Quaternion &quaternion)
+        static void convert(const geometry_msgs::Quaternion &quaternion, Quaternion &ret)
         {
-            return { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
+            ret.x() = quaternion.x, ret.y() = quaternion.y, ret.z() = quaternion.z, ret.w() = quaternion.w;
         }
     };
 }
@@ -271,7 +302,7 @@ public:
     operator Quaternion() const noexcept { return quaternion; }
 };
 
-template<typename ...Types>
+template<class ...Types>
 struct ColorValues {
     static constexpr size_t dimension = sizeof...(Types);
     std::tuple<Types...> values;
@@ -284,13 +315,15 @@ struct ColorValues {
 };
 
 namespace detail {
-    template<typename ColorA, typename ColorB>
+    template<class ColorA, class ColorB>
     struct converter<ColorA, ColorB,
         std::void_t<converter<ColorA, std_msgs::ColorRGBA>, converter<std_msgs::ColorRGBA, ColorB>>> {
 
-        static ColorB convert(const ColorA &color)
+        static void convert(const ColorA &color, ColorB &ret)
         {
-            return converter<std_msgs::ColorRGBA, ColorB>::convert(converter<ColorA, std_msgs::ColorRGBA>::convert(color));
+            std_msgs::ColorRGBA tmp;
+            converter<ColorA, std_msgs::ColorRGBA>::convert(color, tmp);
+            converter<std_msgs::ColorRGBA, ColorB>::convert(tmp, ret);
         }
     };
 }
@@ -300,6 +333,8 @@ struct RGBA
         RGBA, ColorValues<double, double, double, double>,
         CRTPDecorator, CustomizableConversion
     > {
+
+    RGBA() = default;
 
     RGBA(const double red, const double green, const double blue, const double alpha = 1.0)
         : Decorate { std::forward_as_tuple(red, green, blue, alpha) } { }
@@ -323,19 +358,17 @@ struct RGBA
 namespace detail {
     template<>
     struct converter<RGBA, std_msgs::ColorRGBA> {
-        static std_msgs::ColorRGBA convert(const RGBA &rgba)
+        static void convert(const RGBA &rgba, std_msgs::ColorRGBA &ret)
         {
-            std_msgs::ColorRGBA ret;
             ret.r = rgba.red(), ret.g = rgba.green(), ret.b = rgba.blue(), ret.a = rgba.alpha();
-            return ret;
         }
     };
 
     template<>
     struct converter<std_msgs::ColorRGBA, RGBA> {
-        static RGBA convert(const std_msgs::ColorRGBA &color_rgba)
+        static void convert(const std_msgs::ColorRGBA &color_rgba, RGBA &ret)
         {
-            return { color_rgba.r, color_rgba.g, color_rgba.b, color_rgba.a };
+            ret.red() = color_rgba.r, ret.green() = color_rgba.g, ret.blue() = color_rgba.b, ret.alpha() = color_rgba.a;
         }
     };
 }
@@ -346,7 +379,8 @@ struct HSLA
         CRTPDecorator, CustomizableConversion
     > {
 
-public:
+    HSLA() = default;
+
     HSLA(const double hue, const double saturation = 1.0, const double lightness = 0.5, const double alpha = 1.0)
         : Decorate { std::forward_as_tuple(hue, saturation, lightness, alpha) } { }
 
@@ -369,7 +403,7 @@ public:
 namespace detail {
     template<>
     struct converter<HSLA, std_msgs::ColorRGBA> {
-        static std_msgs::ColorRGBA convert(const HSLA &hsla)
+        static void convert(const HSLA &hsla, std_msgs::ColorRGBA &ret)
         {
             const double h = hsla.hue() / 60, s = hsla.saturation(), l = hsla.lightness(), a = hsla.alpha();
 
@@ -388,18 +422,13 @@ namespace detail {
                 return 0.0;
             };
 
-            std_msgs::ColorRGBA ret;
-            ret.r = m + f(c, x, 0, 0, x, c);
-            ret.g = m + f(x, c, c, x, 0, 0);
-            ret.b = m + f(0, 0, x, c, c, x);
-            ret.a = a;
-            return ret;
+            ret.r = m + f(c, x, 0, 0, x, c), ret.g = m + f(x, c, c, x, 0, 0), ret.b = m + f(0, 0, x, c, c, x), ret.a = a;
         }
     };
 
     template<>
     struct converter<std_msgs::ColorRGBA, HSLA> {
-        static HSLA convert(const std_msgs::ColorRGBA &color_rgba)
+        static void convert(const std_msgs::ColorRGBA &color_rgba, HSLA &ret)
         {
             const double r = color_rgba.r, g = color_rgba.g, b = color_rgba.b, a = color_rgba.a;
 
@@ -417,13 +446,13 @@ namespace detail {
             const double l = (max + min) / 2;
             const double s = (l == 0 || l == 1) ? 0 : c / (1 - std::abs(2 * l - 1));
 
-            return { h, s, l, a };
+            ret.hue() = h, ret.saturation() = s, ret.lightness() = l, ret.alpha() = a;
         }
     };
 }
 
 namespace detail {
-    template<typename T, size_t ...Indices>
+    template<class T, size_t ...Indices>
     T lerp_impl(const T &a, const T &b, const double t, std::index_sequence<Indices...>)
     {
         T ret;
@@ -432,15 +461,15 @@ namespace detail {
     }
 }
 
-template<typename T>
+template<class T>
 T lerp(const T &a, const T &b, const double t) { return detail::lerp_impl(a, b, t, std::make_index_sequence<T::dimension>()); }
 
-template<typename T>
+template<class T>
 auto lerp_func(const T &a, const T &b) { return [=](const double t) { lerp(a, b, t); }; }
 
 template<int32_t Type>
 struct ActionType {
-    template<typename Derived, typename Base>
+    template<class Derived, class Base>
     struct Decorator : Base {
         Decorator() noexcept { this->message.action = Type; }
     };
@@ -448,18 +477,18 @@ struct ActionType {
 
 template<int32_t Type>
 struct MarkerType {
-    template<typename Derived, typename Base>
+    template<class Derived, class Base>
     struct Decorator : Base {
         Decorator() noexcept { this->message.type = Type; }
     };
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct Position : Base {
-    template<typename T>
+    template<class T>
     Derived &position(const T &position) noexcept
     {
-        this->message.pose.position = convert<geometry_msgs::Point>(position);
+        convert(position, this->message.pose.position);
         return this->derived();
     }
 
@@ -472,14 +501,14 @@ struct Position : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct Orientation : Base {
     Orientation() noexcept { orientation(1, 0, 0, 0); }
 
-    template<typename T>
+    template<class T>
     Derived &orientation(const T &orientation) noexcept
     {
-        this->message.pose.orientation = convert<geometry_msgs::Quaternion>(orientation);
+        convert(orientation, this->message.pose.orientation);
         return this->derived();
     }
 
@@ -493,7 +522,7 @@ struct Orientation : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct Scale : Base {
     Scale() noexcept { scale(1, 1, 1); }
 
@@ -506,7 +535,7 @@ struct Scale : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct PoseArrowScale : Base {
     PoseArrowScale() noexcept { scale(0.2, 0.2, 1); }
 
@@ -519,7 +548,7 @@ struct PoseArrowScale : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct VectorArrowScale : Base {
     VectorArrowScale() noexcept { scale(0.2, 0.4, 0.4); }
 
@@ -532,7 +561,7 @@ struct VectorArrowScale : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct PointScale : Base {
     PointScale() noexcept { scale(0.05, 0.05); }
 
@@ -544,7 +573,7 @@ struct PointScale : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct LineScale : Base {
     LineScale() noexcept { scale(0.05); }
 
@@ -555,7 +584,7 @@ struct LineScale : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct TextScale : Base {
     TextScale() noexcept { scale(0.05); }
 
@@ -566,14 +595,14 @@ struct TextScale : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct Color : Base {
     Color() noexcept { color(1, 1, 1, 1); }
 
-    template<typename T>
+    template<class T>
     Derived &color(const T &color) noexcept
     {
-        this->message.color = convert<std_msgs::ColorRGBA>(color);
+        convert(color, this->message.color);
         return this->derived();
     }
 
@@ -587,15 +616,20 @@ struct Color : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct Colors : Color<Derived, Base> {
     Colors() noexcept { color(1, 1, 1, 1); }
 
-    template<typename T>
+    template<class T>
     Derived &color(const T &color) noexcept
     {
-        this->message.colors.clear();
-        return Color<Derived, Base>::color(color);
+        if constexpr (internal::is_convertible_v<T, decltype(this->message.colors)>) {
+            convert(color, this->message.colors);
+            return this->derived();
+        } else {
+            this->message.colors.clear();
+            return Color<Derived, Base>::color(color);
+        }
     }
 
     Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
@@ -603,30 +637,19 @@ struct Colors : Color<Derived, Base> {
         this->message.colors.clear();
         return Color<Derived, Base>::color(r, g, b, a);
     }
-
-    template<typename T>
-    Derived &color(const std::vector<T> &colors) noexcept
-    {
-        this->message.colors.reserve(colors.size());
-        std::transform(colors.begin(), colors.end(), std::back_inserter(this->message.colors),
-            [](const T &t) { return convert<geometry_msgs::Point>(t); });
-        return this->derived();
-    }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct Points : Base {
-    template<typename T>
+    template<class T>
     Derived &points(const std::vector<T> &points) noexcept
     {
-        this->message.points.reserve(points.size());
-        std::transform(points.begin(), points.end(), std::back_inserter(this->message.points),
-            [](const T &t) { return convert<geometry_msgs::Point>(t); });
+        convert(points, this->message.points);
         return this->derived();
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct ArrowPoints : Base {
     ArrowPoints() noexcept
     {
@@ -634,19 +657,19 @@ struct ArrowPoints : Base {
         end(1, 0, 0);
     }
 
-    template<typename T>
+    template<class T>
     Derived &start(const T &point) noexcept { return set(0, point); }
     Derived &start(const double x, const double y, const double z) noexcept { return set(0, x, y, z); }
 
-    template<typename T>
+    template<class T>
     Derived &end(const T &point) noexcept { return set(1, point); }
     Derived &end(const double x, const double y, const double z) noexcept { return set(1, x, y, z); }
 
 private:
-    template<typename T>
+    template<class T>
     Derived &set(size_t index, const T &point) noexcept
     {
-        this->message.points[index] = convert<geometry_msgs::Point>(point);
+        convert(point, this->message.points[index]);
         return this->derived();
     }
 
@@ -659,7 +682,7 @@ private:
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct Text : Base {
     Text() noexcept { text("visualization_msgs::Marker"); }
 
@@ -670,7 +693,7 @@ struct Text : Base {
     }
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct MeshResource : Base {
     Derived &mesh_resource(const std::string &mesh_resource) noexcept
     {
@@ -685,7 +708,7 @@ struct MeshResource : Base {
     }
 };
 
-template<typename T>
+template<class T>
 struct MessageBase {
 protected:
     T message;
@@ -717,7 +740,7 @@ struct Delete
 
 template<
     int32_t Type,
-    template<typename, typename> typename ...Decorators>
+    template<class, class> class ...Decorators>
 struct Add
     : Decorate<
         Add<Type, Decorators...>,
