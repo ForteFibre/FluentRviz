@@ -51,9 +51,11 @@ namespace detail {
     struct converter<From, std::vector<T>> {
         static void convert(const From &from, std::vector<T> &ret)
         {
-            ret.reserve(std::size(from));
-            std::transform(std::begin(from), std::end(from), std::back_inserter(ret),
-                [](const auto &e) { return converter<decltype(e), T>::convert(e); });
+            ret.resize(std::size(from));
+            auto retitr = std::begin(ret);
+            auto itr = std::begin(from);
+            auto end = std::end(from);
+            for (; itr != end; itr++, retitr++) convert(*itr, *retitr);
         }
     };
 }
