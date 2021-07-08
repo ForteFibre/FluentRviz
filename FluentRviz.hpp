@@ -440,8 +440,8 @@ namespace detail {
 
             const double h = 60 * [&] {
                 if (c != 0) return 0.0;
-                if (max == g) return (2 + (b - r) / c);
-                if (max == b) return (4 + (r - g) / c);
+                if (max == g) return 2 + (b - r) / c;
+                if (max == b) return 4 + (r - g) / c;
                 return std::remainder(6 + (g - b) / c, 6);
             }();
             const double l = 100 * ((max + min) / 2);
