@@ -12,6 +12,7 @@
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/Quaternion.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 namespace flrv {
 
@@ -62,25 +63,6 @@ namespace detail {
 
 template<class From, class To>
 void convert(const From &from, To &to) { detail::converter<From, To>::convert(from, to); }
-
-namespace internal {
-    namespace detail {
-        template <class AlwaysVoid, template<class...> class Op, class... Args>
-        struct detector : std::false_type { };
-
-        template <template<class...> class Op, class... Args>
-        struct detector<std::void_t<Op<Args...>>, Op, Args...> : std::true_type { };
-    }
-
-    template <template<class...> class Op, class... Args>
-    constexpr inline bool is_detected_v = detail::detector<void, Op, Args...>::value;
-
-    template<class From, class To>
-    using convert_t = decltype(convert<To>(std::declval<From>()));
-
-    template<class From, class To>
-    constexpr inline bool is_convertible_v = is_detected_v<convert_t, From, To>;
-}
 
 template<class Derived, class Base>
 struct CustomizableConversion : Base {
@@ -627,18 +609,21 @@ struct Colors : Color<Derived, Base> {
     template<class T>
     Derived &color(const T &color) noexcept
     {
-        if constexpr (internal::is_convertible_v<T, decltype(this->message.colors)>) {
-            convert(color, this->message.colors);
-        } else {
-            convert(color, this->message.color);
-        }
-        return this->derived();
+        this->message.colors.clear();
+        return Color<Derived, Base>::color(color);
     }
 
     Derived &color(const double r, const double g, const double b, const double a = 1) noexcept
     {
         this->message.colors.clear();
         return Color<Derived, Base>::color(r, g, b, a);
+    }
+
+    template<typename T>
+    Derived &colors(const T &colors) noexcept
+    {
+        convert(colors, this->message.colors);
+        return this->derived();
     }
 };
 
