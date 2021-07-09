@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     geometry_msgs::Quaternion quaternion = q;
 
     flrv::RGBA rgba = { 1, 1, 0 };
-    flrv::HSLA hsla = { 240, 1, 0.5 };
+    flrv::HSLA hsla = { 240, 100, 50 };
 
     std_msgs::ColorRGBA color_rgba = rgba;
     std_msgs::ColorRGBA color_hsla = hsla;
