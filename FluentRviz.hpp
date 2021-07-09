@@ -49,7 +49,9 @@ namespace detail {
     };
 
     template<class From, class T>
-    struct converter<From, std::vector<T>> {
+    struct converter<From, std::vector<T>,
+        std::enable_if_t<!std::is_same_v<From, std::vector<T>>>> {
+
         static void convert(const From &from, std::vector<T> &ret)
         {
             ret.resize(std::size(from));
@@ -63,6 +65,25 @@ namespace detail {
 
 template<class From, class To>
 void convert(const From &from, To &to) { detail::converter<From, To>::convert(from, to); }
+
+namespace internal {
+    namespace detail {
+        template <class AlwaysVoid, template<class...> class Op, class... Args>
+        struct detector : std::false_type { };
+
+        template <template<class...> class Op, class... Args>
+        struct detector<std::void_t<Op<Args...>>, Op, Args...> : std::true_type { };
+    }
+
+    template <template<class...> class Op, class... Args>
+    constexpr inline bool is_detected_v = detail::detector<void, Op, Args...>::value;
+
+    template<class From, class To>
+    using convert_t = decltype(convert(std::declval<From>(), std::declval<To &>()));
+
+    template<class From, class To>
+    constexpr inline bool is_convertible_v = is_detected_v<convert_t, From, To>;
+}
 
 template<class Derived, class Base>
 struct CustomizableConversion : Base {
@@ -301,7 +322,10 @@ struct ColorValues {
 namespace detail {
     template<class ColorA, class ColorB>
     struct converter<ColorA, ColorB,
-        std::void_t<converter<ColorA, std_msgs::ColorRGBA>, converter<std_msgs::ColorRGBA, ColorB>>> {
+        std::enable_if_t<
+            !std::is_same_v<ColorA, ColorB>
+            && internal::is_convertible_v<ColorA, std_msgs::ColorRGBA>
+            && internal::is_convertible_v<std_msgs::ColorRGBA, ColorB>>> {
 
         static void convert(const ColorA &color, ColorB &ret)
         {
@@ -527,9 +551,9 @@ struct PoseArrowScale : Base {
 
     Derived &scale(const double length, const double width, const double height) noexcept
     {
-        this->marker.scale.x = length;
-        this->marker.scale.y = width;
-        this->marker.scale.z = height;
+        this->message.scale.x = length;
+        this->message.scale.y = width;
+        this->message.scale.z = height;
         return this->derived();
     }
 };
@@ -553,8 +577,8 @@ struct PointScale : Base {
 
     Derived &scale(const double width, const double height) noexcept
     {
-        this->marker.scale.x = width;
-        this->marker.scale.y = height;
+        this->message.scale.x = width;
+        this->message.scale.y = height;
         return this->derived();
     }
 };
@@ -565,7 +589,7 @@ struct LineScale : Base {
 
     Derived &scale(const double width) noexcept
     {
-        this->marker.scale.x = width;
+        this->message.scale.x = width;
         return this->derived();
     }
 };
@@ -576,7 +600,7 @@ struct TextScale : Base {
 
     Derived &scale(const double height) noexcept
     {
-        this->marker.scale.z = height;
+        this->message.scale.z = height;
         return this->derived();
     }
 };
@@ -698,11 +722,15 @@ struct MeshResource : Base {
 
 template<class T>
 struct MessageBase {
+    using message_type = T;
+
 protected:
     T message;
+};
 
-public:
-    operator const T &() const noexcept { return message; }
+template<typename Derived, typename Base>
+struct MessageConversion : Base {
+    operator const typename Base::message_type &() { return this->message; }
 };
 
 struct DeleteAll
@@ -760,54 +788,67 @@ struct Add
 
 using PoseArrowMarker = Add<
     visualization_msgs::Marker::ARROW,
+    MessageConversion,
     Position, Orientation, PoseArrowScale, Color>;
 
 using VectorArrowMarker = Add<
     visualization_msgs::Marker::ARROW,
+    MessageConversion,
     VectorArrowScale, Color, ArrowPoints>;
 
 using CubeMarker = Add<
     visualization_msgs::Marker::CUBE,
+    MessageConversion,
     Position, Orientation, Scale, Color>;
 
 using SphereMarker = Add<
     visualization_msgs::Marker::SPHERE,
+    MessageConversion,
     Position, Orientation, Scale, Color>;
 
 using CylinderMarker = Add<
     visualization_msgs::Marker::CYLINDER,
+    MessageConversion,
     Position, Orientation, Scale, Color>;
 
 using LineStripMarker = Add<
     visualization_msgs::Marker::LINE_STRIP,
+    MessageConversion,
     Position, Orientation, LineScale, Color, Points>;
 
 using LineListMarker = Add<
     visualization_msgs::Marker::LINE_LIST,
+    MessageConversion,
     Position, Orientation, LineScale, Colors, Points>;
 
 using CubeListMarker = Add<
     visualization_msgs::Marker::CUBE_LIST,
+    MessageConversion,
     Position, Orientation, Scale, Colors, Points>;
 
 using SphereListMarker = Add<
     visualization_msgs::Marker::SPHERE_LIST,
+    MessageConversion,
     Position, Orientation, Scale, Colors, Points>;
 
 using PointsMarker = Add<
     visualization_msgs::Marker::POINTS,
+    MessageConversion,
     Position, Orientation, PointScale, Colors, Points>;
 
 using TextViewFacingMarker = Add<
     visualization_msgs::Marker::TEXT_VIEW_FACING,
+    MessageConversion,
     Position, TextScale, Color, Text>;
 
 using MeshResourceMarker = Add<
     visualization_msgs::Marker::MESH_RESOURCE,
+    MessageConversion,
     Position, Orientation, Scale, Color, MeshResource>;
 
 using TriangleListMarker = Add<
     visualization_msgs::Marker::TRIANGLE_LIST,
+    MessageConversion,
     Position, Orientation, Scale, Colors, Points>;
 
 class Rviz {
@@ -835,4 +876,90 @@ public:
     }
 };
 
+template<typename Derived, typename Base>
+struct PositionsHolder : Base {
+protected:
+    std::vector<Vector3> _positions;
+
+public:
+    template<typename T>
+    Derived &positions(const T &positions) noexcept
+    {
+        convert(positions, _positions);
+        return this->derived();
+    }
+};
+
+template<typename Derived, typename Base>
+struct OrientationsHolder : Base {
+protected:
+    std::vector<Rotation> _orientations;
+
+public:
+    template<typename T>
+    Derived &orientations(const T &orientations) noexcept
+    {
+        convert(orientations, _orientations);
+        return this->derived();
+    }
+};
+
+template<typename Derived, typename Base>
+struct ColorsHolder : Base {
+protected:
+    std::vector<RGBA> _colors;
+
+public:
+    template<typename T>
+    Derived &colors(const T &colors) noexcept
+    {
+        convert(colors, _colors);
+        return this->derived();
+    }
+};
+
+template<typename Derived, typename Base>
+struct Frame : Base {
+protected:
+    std::vector<Vector3> _frame;
+
+public:
+    template<typename T>
+    Derived &frame(const T &frame) noexcept
+    {
+        convert(frame, _frame);
+        return this->derived();
+    }
+
+    operator visualization_msgs::Marker() const noexcept
+    {
+        visualization_msgs::Marker ret = this->message;
+        const size_t frame_num = std::min(this->_positions.size(), this->_orientations.size());
+        const size_t frame_size = this->_frame.size() / 2;
+        const size_t color_num = this->_colors.size();
+
+        if (color_num >= frame_num) {
+            ret.colors.resize(frame_size * frame_num);
+            for (size_t i = 0; i < frame_num; i++) {
+                for (size_t j = 0; j < frame_size; j++) {
+                    convert(this->_colors[i], ret.colors[i]);
+                }
+            }
+        }
+
+        for (size_t i = 0; i < frame_num; i++) {
+            for (size_t j = 0; j < 2 * frame_size; j += 2) {
+                ret.points.push_back(this->_orientations[i].rotate(this->_frame[j]) + this->_positions[i]);
+                ret.points.push_back(this->_orientations[i].rotate(this->_frame[j + 1]) + this->_positions[i]);
+            }
+        }
+
+        return ret;
+    }
+};
+
+using FramesMarker = Add<
+    visualization_msgs::Marker::LINE_LIST,
+    Position, Orientation, Color, LineScale,
+    PositionsHolder, OrientationsHolder, ColorsHolder, Frame>;
 }
