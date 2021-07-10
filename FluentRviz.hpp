@@ -759,7 +759,13 @@ struct DeleteAll
         DeleteAll,
         MessageBase<visualization_msgs::Marker>,
         ActionType<visualization_msgs::Marker::DELETEALL>::Decorator
-    > { };
+    > {
+
+    DeleteAll(const std::string &ns = "")
+    {
+        this->message.ns = ns;
+    }
+};
 
 struct Delete
     : Decorate<
