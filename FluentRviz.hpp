@@ -480,6 +480,29 @@ struct AutoConverter {
     void operator()(const From &from, To &to) { return convert(from, to); };
 };
 
+class Indices {
+    ssize_t _begin, _end, _step;
+
+    class Cursol {
+        ssize_t _value, _step;
+
+    public:
+        Cursol() noexcept = default;
+        Cursol(ssize_t value, ssize_t step) noexcept : _value(value), _step(step) { }
+
+        ssize_t &operator*() noexcept { return _value; }
+        bool operator!=(const Cursol &rhs) const noexcept { return _value != rhs._value; }
+        Cursol &operator++() noexcept { _value += _step; return *this; }
+    };
+
+public:
+    Indices(ssize_t begin, ssize_t end, ssize_t step = 1): _begin(begin), _end(end), _step(step) { }
+    Indices(ssize_t end): Indices(0, end) { }
+
+    Cursol begin() { return Cursol(_begin, _step); }
+    Cursol end() { return Cursol(_end, _step); }
+};
+
 template<int32_t Type>
 struct ActionType {
     template<class Derived, class Base>
