@@ -77,10 +77,10 @@ namespace internal {
     constexpr inline bool is_detected_v = detail::detector<void, Op, Args...>::value;
 
     template<class From, class To>
-    using convert_t = decltype(convert(std::declval<From>(), std::declval<To &>()));
+    using convert_type = decltype(convert(std::declval<From>(), std::declval<To &>()));
 
     template<class From, class To>
-    constexpr inline bool is_convertible_v = is_detected_v<convert_t, From, To>;
+    constexpr inline bool is_convertible_v = is_detected_v<convert_type, From, To>;
 }
 
 template<class Derived, class Base>
@@ -475,6 +475,12 @@ T lerp(const T &a, const T &b, const double t) { return detail::lerp_impl(a, b, 
 template<class T>
 auto lerp_func(const T &a, const T &b) { return [=](const double t) { lerp(a, b, t); }; }
 
+template<typename To>
+struct AutoConverter {
+    template<typename From>
+    void operator()(const From &from, To &to) { return convert(from, to); };
+};
+
 template<int32_t Type>
 struct ActionType {
     template<class Derived, class Base>
@@ -624,6 +630,14 @@ struct Color : Base {
     }
 };
 
+namespace internal {
+    template<typename T>
+    using size_type = decltype(std::declval<T>().size());
+
+    template<typename T>
+    using is_quantifiable_v = is_detected_v<size_type, T>;
+}
+
 template<class Derived, class Base>
 struct Colors : Color<Derived, Base> {
     Colors() noexcept { color(1, 1, 1, 1); }
@@ -646,6 +660,12 @@ struct Colors : Color<Derived, Base> {
     {
         convert(colors, this->message.colors);
         return this->derived();
+    }
+
+    template<typename Iterable, typename MapFunc = AutoConverter>
+    Derived &colors(const Iterable &iterable, const MapFunc &func = MapFunc())
+    {
+
     }
 };
 
