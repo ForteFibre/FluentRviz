@@ -635,7 +635,7 @@ namespace internal {
     using size_type = decltype(std::declval<T>().size());
 
     template<typename T>
-    using is_quantifiable_v = is_detected_v<size_type, T>;
+    using has_size_v = is_detected_v<size_type, T>;
 }
 
 template<class Derived, class Base>
@@ -655,27 +655,31 @@ struct Colors : Color<Derived, Base> {
         return Color<Derived, Base>::color(r, g, b, a);
     }
 
-    template<typename T>
-    Derived &colors(const T &colors) noexcept
-    {
-        convert(colors, this->message.colors);
-        return this->derived();
-    }
-
     template<typename Iterable, typename MapFunc = AutoConverter>
     Derived &colors(const Iterable &iterable, const MapFunc &func = MapFunc())
     {
+        if constexpr (internal::has_size_v<Iterable>) {
+            this->message.colors.reserve(iterable.size());
+        }
 
+        for (const auto &e : iterable) {
+            this->message.colors.push_back(func(e));
+        }
     }
 };
 
 template<class Derived, class Base>
 struct Points : Base {
-    template<class T>
-    Derived &points(const std::vector<T> &points) noexcept
+    template<typename Iterable, typename MapFunc = AutoConverter>
+    Derived &points(const Iterable &iterable, const MapFunc &func = MapFunc())
     {
-        convert(points, this->message.points);
-        return this->derived();
+        if constexpr (internal::has_size_v<Iterable>) {
+            this->message.points.reserve(iterable.size());
+        }
+
+        for (const auto &e : iterable) {
+            this->message.points.push_back(func(e));
+        }
     }
 };
 
