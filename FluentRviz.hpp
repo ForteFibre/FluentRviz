@@ -475,9 +475,8 @@ T lerp(const T &a, const T &b, const double t) { return detail::lerp_impl(a, b, 
 template<class T>
 auto lerp_func(const T &a, const T &b) { return [=](const double t) { lerp(a, b, t); }; }
 
-template<typename To>
 struct AutoConverter {
-    template<typename From>
+    template<typename From, typename To>
     void operator()(const From &from, To &to) { return convert(from, to); };
 };
 
@@ -635,7 +634,7 @@ namespace internal {
     using size_type = decltype(std::declval<T>().size());
 
     template<typename T>
-    using has_size_v = is_detected_v<size_type, T>;
+    constexpr inline bool has_size_v = is_detected_v<size_type, T>;
 }
 
 template<class Derived, class Base>
