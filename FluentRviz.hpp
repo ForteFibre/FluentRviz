@@ -520,12 +520,7 @@ namespace converter {
     struct impl<std_msgs::ColorRGBA, param::RGBA> {
         static param::RGBA convert(const std_msgs::ColorRGBA &color_rgba)
         {
-            return {
-                static_cast<uint32_t>(color_rgba.r * 255),
-                static_cast<uint32_t>(color_rgba.g * 255),
-                static_cast<uint32_t>(color_rgba.b * 255),
-                color_rgba.a
-            };
+            return { color_rgba.r * 255, color_rgba.g * 255, color_rgba.b * 255, color_rgba.a };
         }
     };
 
