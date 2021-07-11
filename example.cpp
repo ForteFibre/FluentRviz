@@ -12,8 +12,8 @@ int main(int argc, char **argv)
     rviz << flrv::marker::LineList(2)
         .color(0, 0, 1)
         .scale(0.05)
-        .each(flrv::util::Indices(10), [](size_t i, flrv::marker::LineList::Element &element) {
-            element.add_position(i, i, 0).add_position(i, -i, 0);
+        .each(flrv::util::Indices(10), [](size_t i, flrv::marker::LineList::Manipulator &manipulator) {
+            manipulator.add_position(i, i, 0).add_position(i, -i, 0);
         });
 
     flrv::param::Vector3 v = { 1, 2, 3 };

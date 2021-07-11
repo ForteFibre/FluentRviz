@@ -767,33 +767,33 @@ namespace marker {
 
         template<class Derived, class Base>
         struct Each : Base {
-            struct Element;
+            struct Manipulator;
 
             template<class Iterable, class Func>
             Derived &each(const Iterable &iterable, const Func &func)
             {
-                Element element(this->message);
+                Manipulator element(this->message);
                 for (const auto &e : iterable) func(e, element);
                 return this->derived();
             }
         };
 
         template<class Derived, class Base>
-        struct Each<Derived, Base>::Element {
+        struct Each<Derived, Base>::Manipulator {
         private:
             visualization_msgs::Marker &_marker;
 
         public:
-            Element(visualization_msgs::Marker &marker): _marker(marker) { }
+            Manipulator(visualization_msgs::Marker &marker): _marker(marker) { }
 
             template<typename T>
-            Element &add_position(const T &position)
+            Manipulator &add_position(const T &position)
             {
                 _marker.points.push_back(util::convert<geometry_msgs::Point>(position));
                 return *this;
             }
 
-            Element &add_position(const double x, const double y, const double z)
+            Manipulator &add_position(const double x, const double y, const double z)
             {
                 geometry_msgs::Point point;
                 point.x = x, point.y = y, point.z = z;
@@ -802,13 +802,13 @@ namespace marker {
             }
 
             template<typename T>
-            Element &add_color(const T &position)
+            Manipulator &add_color(const T &position)
             {
                 _marker.colors.push_back(util::convert<std_msgs::ColorRGBA>(position));
                 return *this;
             }
 
-            Element &add_color(const double r, const double g, const double b, const double a = 1.0)
+            Manipulator &add_color(const double r, const double g, const double b, const double a = 1.0)
             {
                 std_msgs::ColorRGBA color;
                 color.r = r, color.g = g, color.b = b, color.a = a;
