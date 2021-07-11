@@ -310,15 +310,15 @@ namespace param {
         const auto &get() const noexcept { return std::get<I>(values); }
     };
 
-    struct RGBA
+    struct Color
         : util::Decorate<
-            RGBA, ColorValues<double, double, double, double>,
+            Color, ColorValues<double, double, double, double>,
             util::decorator::CRTPDecorator, util::decorator::CustomizableConversion
         > {
 
-        RGBA() = default;
+        Color() = default;
 
-        RGBA(const double red, const double green, const double blue, const double alpha = 1.0)
+        Color(const double red, const double green, const double blue, const double alpha = 1.0)
             : Decorate { std::forward_as_tuple(red, green, blue, alpha) } { }
 
         double &red() noexcept { return get<0>(); }
@@ -331,10 +331,37 @@ namespace param {
         const double &blue() const noexcept { return get<2>(); }
         const double &alpha() const noexcept { return get<3>(); }
 
-        RGBA &red(const double red) noexcept { this->red() = red; return *this; }
-        RGBA &blue(const double blue) noexcept { this->blue() = blue; return *this; }
-        RGBA &green(const double green) noexcept { this->green() = green; return *this; }
-        RGBA &alpha(const double alpha) noexcept { this->alpha() = alpha; return *this; }
+        Color &red(const double red) noexcept { this->red() = red; return *this; }
+        Color &blue(const double blue) noexcept { this->blue() = blue; return *this; }
+        Color &green(const double green) noexcept { this->green() = green; return *this; }
+        Color &alpha(const double alpha) noexcept { this->alpha() = alpha; return *this; }
+    };
+
+    struct RGBA
+        : util::Decorate<
+            RGBA, ColorValues<uint32_t, uint32_t, uint32_t, double>,
+            util::decorator::CRTPDecorator, util::decorator::CustomizableConversion
+        > {
+
+        RGBA() = default;
+
+        RGBA(const uint32_t red, const uint32_t green, const uint32_t blue, const double alpha = 1.0)
+            : Decorate { std::forward_as_tuple(red, green, blue, alpha) } { }
+
+        uint32_t &red() noexcept { return get<0>(); }
+        uint32_t &green() noexcept { return get<1>(); }
+        uint32_t &blue() noexcept { return get<2>(); }
+        double &alpha() noexcept { return get<3>(); }
+
+        const uint32_t &red() const noexcept { return get<0>(); }
+        const uint32_t &green() const noexcept { return get<1>(); }
+        const uint32_t &blue() const noexcept { return get<2>(); }
+        const double &alpha() const noexcept { return get<3>(); }
+
+        RGBA &red(const uint32_t red) noexcept { this->red() = red; return *this; }
+        RGBA &blue(const uint32_t blue) noexcept { this->blue() = blue; return *this; }
+        RGBA &green(const uint32_t green) noexcept { this->green() = green; return *this; }
+        RGBA &alpha(const uint32_t alpha) noexcept { this->alpha() = alpha; return *this; }
     };
 
     struct HSLA
@@ -436,11 +463,29 @@ namespace converter {
     };
 
     template<>
+    struct impl<param::Color, std_msgs::ColorRGBA> {
+        static std_msgs::ColorRGBA convert(const param::Color &color)
+        {
+            std_msgs::ColorRGBA ret;
+            ret.r = color.red(), ret.g = color.green(), ret.b = color.blue(), ret.a = color.alpha();
+            return ret;
+        }
+    };
+
+    template<>
+    struct impl<std_msgs::ColorRGBA, param::Color> {
+        static param::Color convert(const std_msgs::ColorRGBA &color_rgba)
+        {
+            return { color_rgba.r, color_rgba.g, color_rgba.b, color_rgba.a };
+        }
+    };
+
+    template<>
     struct impl<param::RGBA, std_msgs::ColorRGBA> {
         static std_msgs::ColorRGBA convert(const param::RGBA &rgba)
         {
             std_msgs::ColorRGBA ret;
-            ret.r = rgba.red(), ret.g = rgba.green(), ret.b = rgba.blue(), ret.a = rgba.alpha();
+            ret.r = rgba.red() / 255, ret.g = rgba.green() / 255, ret.b = rgba.blue() / 255, ret.a = rgba.alpha();
             return ret;
         }
     };
@@ -449,7 +494,12 @@ namespace converter {
     struct impl<std_msgs::ColorRGBA, param::RGBA> {
         static param::RGBA convert(const std_msgs::ColorRGBA &color_rgba)
         {
-            return { color_rgba.r, color_rgba.g, color_rgba.b, color_rgba.a };
+            return {
+                static_cast<uint32_t>(color_rgba.r * 255),
+                static_cast<uint32_t>(color_rgba.g * 255),
+                static_cast<uint32_t>(color_rgba.b * 255),
+                color_rgba.a
+            };
         }
     };
 
