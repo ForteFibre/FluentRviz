@@ -755,10 +755,10 @@ namespace marker {
                 if constexpr (internal::has_size_v<Iterable>) {
                     this->message.colors.reserve(iterable.size());
                 }
-
                 for (const auto &e : iterable) {
                     this->message.colors.push_back(util::convert<std_msgs::ColorRGBA>(e));
                 }
+                return this->derived();
             }
         };
 
@@ -770,10 +770,10 @@ namespace marker {
                 if constexpr (internal::has_size_v<Iterable>) {
                     this->message.points.reserve(iterable.size());
                 }
-
                 for (const auto &e : iterable) {
                     this->message.points.push_back(util::convert<geometry_msgs::Point>(e));
                 }
+                return this->derived();
             }
         };
 
