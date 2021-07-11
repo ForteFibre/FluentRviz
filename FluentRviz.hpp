@@ -335,6 +335,23 @@ namespace param {
         Color &blue(const double blue) noexcept { this->blue() = blue; return *this; }
         Color &green(const double green) noexcept { this->green() = green; return *this; }
         Color &alpha(const double alpha) noexcept { this->alpha() = alpha; return *this; }
+
+        static Color White()   noexcept { return { 1.00, 1.00, 1.00 }; }
+        static Color Silver()  noexcept { return { 0.75, 0.75, 0.75 }; }
+        static Color Gray()    noexcept { return { 0.50, 0.50, 0.50 }; }
+        static Color Black()   noexcept { return { 0.00, 0.00, 0.00 }; }
+        static Color Red()     noexcept { return { 1.00, 0.00, 0.00 }; }
+        static Color Maroon()  noexcept { return { 0.50, 0.00, 0.00 }; }
+        static Color Yellow()  noexcept { return { 1.00, 1.00, 0.00 }; }
+        static Color Olive()   noexcept { return { 0.50, 0.50, 0.00 }; }
+        static Color Lime()    noexcept { return { 0.00, 1.00, 0.00 }; }
+        static Color Green()   noexcept { return { 0.00, 0.50, 0.00 }; }
+        static Color Aqua()    noexcept { return { 0.00, 1.00, 1.00 }; }
+        static Color Teal()    noexcept { return { 0.00, 0.50, 0.50 }; }
+        static Color Blue()    noexcept { return { 0.00, 0.00, 1.00 }; }
+        static Color Navy()    noexcept { return { 0.00, 0.00, 0.50 }; }
+        static Color Fuchsia() noexcept { return { 1.00, 0.00, 1.00 }; }
+        static Color Purple()  noexcept { return { 0.50, 0.00, 0.50 }; }
     };
 
     struct RGBA
