@@ -663,7 +663,7 @@ struct Colors : Color<Derived, Base> {
     }
 
     template<class Iterable>
-    Derived &colors(const Iterable &iterable)
+    Derived &colors(const Iterable &iterable) noexcept
     {
         if constexpr (internal::has_size_v<Iterable>) {
             this->message.colors.reserve(iterable.size());
@@ -678,7 +678,7 @@ struct Colors : Color<Derived, Base> {
 template<class Derived, class Base>
 struct Points : Base {
     template<class Iterable>
-    Derived &points(const Iterable &iterable)
+    Derived &points(const Iterable &iterable) noexcept
     {
         if constexpr (internal::has_size_v<Iterable>) {
             this->message.points.reserve(iterable.size());
@@ -887,14 +887,14 @@ using TriangleListMarker = Add<
     Position, Orientation, Scale, Colors, Points>;
 
 class Rviz {
-    ros::NodeHandle _node_handler;
+    ros::NodeHandle _node_handle;
     ros::Publisher _publisher;
 
     std::string _frame_id;
 
 public:
     Rviz(const std::string &frame_id = "map", const std::string &topic = "visualization_marker")
-        : _publisher(_node_handler.advertise<visualization_msgs::Marker>(topic, 1))
+        : _publisher(_node_handle.advertise<visualization_msgs::Marker>(topic, 1))
         , _frame_id(frame_id) { }
 
     const Rviz &operator<<(const visualization_msgs::Marker &marker) const
