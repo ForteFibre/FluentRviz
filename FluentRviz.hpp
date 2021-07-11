@@ -356,29 +356,38 @@ namespace param {
 
     struct RGBA
         : util::Decorate<
-            RGBA, ColorValues<uint32_t, uint32_t, uint32_t, double>,
+            RGBA, ColorValues<double, double, double, double>,
             util::decorator::CRTPDecorator, util::decorator::CustomizableConversion
         > {
 
         RGBA() = default;
 
-        RGBA(const uint32_t red, const uint32_t green, const uint32_t blue, const double alpha = 1.0)
+        RGBA(const double red, const double green, const double blue, const double alpha = 1.0)
             : Decorate { std::forward_as_tuple(red, green, blue, alpha) } { }
 
-        uint32_t &red() noexcept { return get<0>(); }
-        uint32_t &green() noexcept { return get<1>(); }
-        uint32_t &blue() noexcept { return get<2>(); }
+        double &red() noexcept { return get<0>(); }
+        double &green() noexcept { return get<1>(); }
+        double &blue() noexcept { return get<2>(); }
         double &alpha() noexcept { return get<3>(); }
 
-        const uint32_t &red() const noexcept { return get<0>(); }
-        const uint32_t &green() const noexcept { return get<1>(); }
-        const uint32_t &blue() const noexcept { return get<2>(); }
+        const double &red() const noexcept { return get<0>(); }
+        const double &green() const noexcept { return get<1>(); }
+        const double &blue() const noexcept { return get<2>(); }
         const double &alpha() const noexcept { return get<3>(); }
 
-        RGBA &red(const uint32_t red) noexcept { this->red() = red; return *this; }
-        RGBA &blue(const uint32_t blue) noexcept { this->blue() = blue; return *this; }
-        RGBA &green(const uint32_t green) noexcept { this->green() = green; return *this; }
-        RGBA &alpha(const uint32_t alpha) noexcept { this->alpha() = alpha; return *this; }
+        RGBA &red(const double red) noexcept { this->red() = red; return *this; }
+        RGBA &blue(const double blue) noexcept { this->blue() = blue; return *this; }
+        RGBA &green(const double green) noexcept { this->green() = green; return *this; }
+        RGBA &alpha(const double alpha) noexcept { this->alpha() = alpha; return *this; }
+
+        static RGBA HexRGB(const uint32_t hex, const double alpha = 1.0) noexcept
+        {
+            return { (hex >> 16) & 0xff, (hex >> 8) & 0xff, hex & 0xff, alpha };
+        }
+        static RGBA HexRGBA(const uint32_t hex) noexcept
+        {
+            return { (hex >> 24) & 0xff, (hex >> 16) & 0xff, (hex >> 8) & 0xff, (hex & 0xff) / 255.0 };
+        }
     };
 
     struct HSLA
