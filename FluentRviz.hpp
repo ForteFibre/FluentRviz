@@ -43,26 +43,12 @@ namespace detail {
 
     template<class Type>
     struct converter<Type, Type> {
-        static void convert(const Type &value, Type &ret) { ret = value; };
-    };
-
-    template<class From, class T>
-    struct converter<From, std::vector<T>,
-        std::enable_if_t<!std::is_same_v<From, std::vector<T>>>> {
-
-        static void convert(const From &from, std::vector<T> &ret)
-        {
-            ret.resize(std::size(from));
-            auto retitr = std::begin(ret);
-            auto itr = std::begin(from);
-            auto end = std::end(from);
-            for (; itr != end; itr++, retitr++) convert(*itr, *retitr);
-        }
+        static const Type &convert(const Type &value) { return value; };
     };
 }
 
-template<class From, class To>
-void convert(const From &from, To &to) { detail::converter<From, To>::convert(from, to); }
+template<class To, class From>
+decltype(auto) convert(const From &from) { return detail::converter<From, To>::convert(from); }
 
 namespace internal {
     namespace detail {
@@ -77,7 +63,7 @@ namespace internal {
     constexpr inline bool is_detected_v = detail::detector<void, Op, Args...>::value;
 
     template<class From, class To>
-    using convert_type = decltype(convert(std::declval<From>(), std::declval<To &>()));
+    using convert_type = decltype(convert<To>(std::declval<From>()));
 
     template<class From, class To>
     constexpr inline bool is_convertible_v = is_detected_v<convert_type, From, To>;
@@ -89,11 +75,7 @@ struct CustomizableConversion : Base {
     Derived from(const From &from) { return convert<Derived>(from); }
 
     template<class To>
-    operator To() {
-        To ret;
-        convert(this->derived(), ret);
-        return ret;
-    }
+    operator To() { return convert<To>(this->derived()); }
 };
 
 template<class Derived, class Base>
@@ -210,33 +192,37 @@ struct Vector3
 namespace detail {
     template<>
     struct converter<Vector3, geometry_msgs::Vector3> {
-        static void convert(const Vector3 &vector, geometry_msgs::Vector3 &ret)
+        static geometry_msgs::Vector3 convert(const Vector3 &vector)
         {
+            geometry_msgs::Vector3 ret;
             ret.x = vector.x(), ret.y = vector.y(), ret.z = vector.z();
+            return ret;
         }
     };
 
     template<>
     struct converter<geometry_msgs::Vector3, Vector3> {
-        static void convert(const geometry_msgs::Vector3 &vector, Vector3 &ret)
+        static Vector3 convert(const geometry_msgs::Vector3 &vector)
         {
-            ret.x() = vector.x, ret.y() = vector.y, ret.z() = vector.z;
+            return { vector.x, vector.y, vector.z };
         }
     };
 
     template<>
     struct converter<Vector3, geometry_msgs::Point> {
-        static void convert(const Vector3 &vector, geometry_msgs::Point &ret)
+        static geometry_msgs::Point convert(const Vector3 &vector)
         {
+            geometry_msgs::Point ret;
             ret.x = vector.x(), ret.y = vector.y(), ret.z = vector.z();
+            return ret;
         }
     };
 
     template<>
     struct converter<geometry_msgs::Point, Vector3> {
-        static void convert(const geometry_msgs::Point &point, Vector3 &ret)
+        static Vector3 convert(const geometry_msgs::Point &point)
         {
-            ret.x() = point.x, ret.y() = point.y, ret.z() = point.z;
+            return { point.x, point.y, point.z };
         }
     };
 }
@@ -275,17 +261,19 @@ struct Quaternion
 namespace detail {
     template<>
     struct converter<Quaternion, geometry_msgs::Quaternion> {
-        static void convert(const Quaternion &quaternion, geometry_msgs::Quaternion &ret)
+        static geometry_msgs::Quaternion convert(const Quaternion &quaternion)
         {
+            geometry_msgs::Quaternion ret;
             ret.x = quaternion.x(), ret.y = quaternion.y(), ret.z = quaternion.z(), ret.w = quaternion.w();
+            return ret;
         }
     };
 
     template<>
     struct converter<geometry_msgs::Quaternion, Quaternion> {
-        static void convert(const geometry_msgs::Quaternion &quaternion, Quaternion &ret)
+        static Quaternion convert(const geometry_msgs::Quaternion &quaternion)
         {
-            ret.x() = quaternion.x, ret.y() = quaternion.y, ret.z() = quaternion.z, ret.w() = quaternion.w;
+            return { quaternion.x, quaternion.y, quaternion.z, quaternion.w };
         }
     };
 }
@@ -325,11 +313,9 @@ namespace detail {
             && internal::is_convertible_v<ColorA, std_msgs::ColorRGBA>
             && internal::is_convertible_v<std_msgs::ColorRGBA, ColorB>>> {
 
-        static void convert(const ColorA &color, ColorB &ret)
+        static ColorB convert(const ColorA &color)
         {
-            std_msgs::ColorRGBA tmp;
-            converter<ColorA, std_msgs::ColorRGBA>::convert(color, tmp);
-            converter<std_msgs::ColorRGBA, ColorB>::convert(tmp, ret);
+            return converter<std_msgs::ColorRGBA, ColorB>::convert(converter<ColorA, std_msgs::ColorRGBA>::convert(color));
         }
     };
 }
@@ -364,17 +350,19 @@ struct RGBA
 namespace detail {
     template<>
     struct converter<RGBA, std_msgs::ColorRGBA> {
-        static void convert(const RGBA &rgba, std_msgs::ColorRGBA &ret)
+        static std_msgs::ColorRGBA convert(const RGBA &rgba)
         {
+            std_msgs::ColorRGBA ret;
             ret.r = rgba.red(), ret.g = rgba.green(), ret.b = rgba.blue(), ret.a = rgba.alpha();
+            return ret;
         }
     };
 
     template<>
     struct converter<std_msgs::ColorRGBA, RGBA> {
-        static void convert(const std_msgs::ColorRGBA &color_rgba, RGBA &ret)
+        static RGBA convert(const std_msgs::ColorRGBA &color_rgba)
         {
-            ret.red() = color_rgba.r, ret.green() = color_rgba.g, ret.blue() = color_rgba.b, ret.alpha() = color_rgba.a;
+            return { color_rgba.r, color_rgba.g, color_rgba.b, color_rgba.a };
         }
     };
 }
@@ -409,7 +397,7 @@ struct HSLA
 namespace detail {
     template<>
     struct converter<HSLA, std_msgs::ColorRGBA> {
-        static void convert(const HSLA &hsla, std_msgs::ColorRGBA &ret)
+        static std_msgs::ColorRGBA convert(const HSLA &hsla)
         {
             const double h = hsla.hue() / 60, s = hsla.saturation() / 100, l = hsla.lightness() / 100, a = hsla.alpha();
 
@@ -428,13 +416,15 @@ namespace detail {
                 return 0.0;
             };
 
+            std_msgs::ColorRGBA ret;
             ret.r = m + f(c, x, 0, 0, x, c), ret.g = m + f(x, c, c, x, 0, 0), ret.b = m + f(0, 0, x, c, c, x), ret.a = a;
+            return ret;
         }
     };
 
     template<>
     struct converter<std_msgs::ColorRGBA, HSLA> {
-        static void convert(const std_msgs::ColorRGBA &color_rgba, HSLA &ret)
+        static HSLA convert(const std_msgs::ColorRGBA &color_rgba)
         {
             const double r = color_rgba.r, g = color_rgba.g, b = color_rgba.b, a = color_rgba.a;
 
@@ -454,7 +444,7 @@ namespace detail {
                 return c / (1 - std::abs(2 * l - 1));
             }();
 
-            ret.hue() = h, ret.saturation() = s, ret.lightness() = l, ret.alpha() = a;
+            return { h, s, l, a };
         }
     };
 }
@@ -474,11 +464,6 @@ T lerp(const T &a, const T &b, const double t) { return detail::lerp_impl(a, b, 
 
 template<class T>
 auto lerp_func(const T &a, const T &b) { return [=](const double t) { lerp(a, b, t); }; }
-
-struct AutoConverter {
-    template<typename From, typename To>
-    void operator()(const From &from, To &to) { return convert(from, to); };
-};
 
 class Indices {
     ssize_t _begin, _end, _step;
@@ -524,7 +509,7 @@ struct Position : Base {
     template<class T>
     Derived &position(const T &position) noexcept
     {
-        convert(position, this->message.pose.position);
+        this->message.pose.position = convert<geometry_msgs::Point>(position);
         return this->derived();
     }
 
@@ -544,7 +529,7 @@ struct Orientation : Base {
     template<class T>
     Derived &orientation(const T &orientation) noexcept
     {
-        convert(orientation, this->message.pose.orientation);
+        this->message.pose.orientation = convert<Quaternion>(orientation);
         return this->derived();
     }
 
@@ -638,7 +623,7 @@ struct Color : Base {
     template<class T>
     Derived &color(const T &color) noexcept
     {
-        convert(color, this->message.color);
+        this->message.color = convert<std_msgs::ColorRGBA>(color);
         return this->derived();
     }
 
@@ -653,10 +638,10 @@ struct Color : Base {
 };
 
 namespace internal {
-    template<typename T>
+    template<class T>
     using size_type = decltype(std::declval<T>().size());
 
-    template<typename T>
+    template<class T>
     constexpr inline bool has_size_v = is_detected_v<size_type, T>;
 }
 
@@ -677,30 +662,30 @@ struct Colors : Color<Derived, Base> {
         return Color<Derived, Base>::color(r, g, b, a);
     }
 
-    template<typename Iterable, typename MapFunc = AutoConverter>
-    Derived &colors(const Iterable &iterable, const MapFunc &func = MapFunc())
+    template<class Iterable>
+    Derived &colors(const Iterable &iterable)
     {
         if constexpr (internal::has_size_v<Iterable>) {
             this->message.colors.reserve(iterable.size());
         }
 
         for (const auto &e : iterable) {
-            this->message.colors.push_back(func(e));
+            this->message.colors.push_back(convert<std_msgs::ColorRGBA>(e));
         }
     }
 };
 
 template<class Derived, class Base>
 struct Points : Base {
-    template<typename Iterable, typename MapFunc = AutoConverter>
-    Derived &points(const Iterable &iterable, const MapFunc &func = MapFunc())
+    template<class Iterable>
+    Derived &points(const Iterable &iterable)
     {
         if constexpr (internal::has_size_v<Iterable>) {
             this->message.points.reserve(iterable.size());
         }
 
         for (const auto &e : iterable) {
-            this->message.points.push_back(func(e));
+            this->message.points.push_back(convert<geometry_msgs::Point>(e));
         }
     }
 };
@@ -725,7 +710,7 @@ private:
     template<class T>
     Derived &set(size_t index, const T &point) noexcept
     {
-        convert(point, this->message.points[index]);
+        this->message.points[index] = convert<geometry_msgs::Point>(point);
         return this->derived();
     }
 
@@ -772,7 +757,7 @@ protected:
     T message;
 };
 
-template<typename Derived, typename Base>
+template<class Derived, class Base>
 struct MessageConversion : Base {
     operator const typename Base::message_type &() { return this->message; }
 };
