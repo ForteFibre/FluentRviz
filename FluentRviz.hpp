@@ -72,7 +72,7 @@ namespace internal {
 template<class Derived, class Base>
 struct CustomizableConversion : Base {
     template<class From>
-    Derived from(const From &from) { return convert<Derived>(from); }
+    static Derived from(const From &from) { return convert<Derived>(from); }
 
     template<class To>
     operator To() { return convert<To>(this->derived()); }
