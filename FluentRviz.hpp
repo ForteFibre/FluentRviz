@@ -749,6 +749,57 @@ struct MeshResource : Base {
     }
 };
 
+template<template<class> class Element>
+struct Each {
+    template<class Derived, class Base>
+    struct Decorator : Base {
+        using Element = Element<Derived>;
+
+        template<class Iterable, class Func>
+        Derived &each(const Iterable &iterable, const Func &func)
+        {
+            Element element(this->derived());
+            for (const auto &e : iterable) func(e, element);
+            return this->derived();
+        }
+    };
+};
+
+template<class Marker>
+struct CommonElement {
+private:
+    Marker &_marker;
+
+public:
+    CommonElement(Marker &marker): _marker(marker) { }
+
+    template<typename T>
+    CommonElement &add_position(const T &position)
+    {
+        _marker.message.points.push_back(convert<geometry_msgs::Point>(position));
+    }
+
+    CommonElement &add_position(const double x, const double y, const double z)
+    {
+        geometry_msgs::Point point;
+        point.x = x, point.y = y, point.z = z;
+        _marker.message.points.push_back(point);
+    }
+
+    template<typename T>
+    CommonElement &add_color(const T &position)
+    {
+        _marker.message.colors.push_back(convert<std_msgs::ColorRGBA>(position));
+    }
+
+    CommonElement &add_color(const double r, const double g, const double b, const double a = 1.0)
+    {
+        std_msgs::ColorRGBA color;
+        color.r = r, color.g = g, color.b = b, color.a = a;
+        _marker.message.colors.push_back(color);
+    }
+};
+
 template<class T>
 struct MessageBase {
     using message_type = T;
@@ -849,26 +900,31 @@ using CylinderMarker = Add<
 using LineStripMarker = Add<
     visualization_msgs::Marker::LINE_STRIP,
     MessageConversion,
+    Each<CommonElement>::Decorator,
     Position, Orientation, LineScale, Color, Points>;
 
 using LineListMarker = Add<
     visualization_msgs::Marker::LINE_LIST,
     MessageConversion,
+    Each<CommonElement>::Decorator,
     Position, Orientation, LineScale, Colors, Points>;
 
 using CubeListMarker = Add<
     visualization_msgs::Marker::CUBE_LIST,
     MessageConversion,
+    Each<CommonElement>::Decorator,
     Position, Orientation, Scale, Colors, Points>;
 
 using SphereListMarker = Add<
     visualization_msgs::Marker::SPHERE_LIST,
     MessageConversion,
+    Each<CommonElement>::Decorator,
     Position, Orientation, Scale, Colors, Points>;
 
 using PointsMarker = Add<
     visualization_msgs::Marker::POINTS,
     MessageConversion,
+    Each<CommonElement>::Decorator,
     Position, Orientation, PointScale, Colors, Points>;
 
 using TextViewFacingMarker = Add<
@@ -884,6 +940,7 @@ using MeshResourceMarker = Add<
 using TriangleListMarker = Add<
     visualization_msgs::Marker::TRIANGLE_LIST,
     MessageConversion,
+    Each<CommonElement>::Decorator,
     Position, Orientation, Scale, Colors, Points>;
 
 class Rviz {

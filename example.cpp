@@ -9,6 +9,13 @@ int main(int argc, char **argv)
         .orientation(0, 0, 0, 0)
         .color(0, 0, 0);
 
+    rviz << flrv::LineListMarker(2)
+        .color(0, 0, 1)
+        .scale(0.05)
+        .each(flrv::Indices(10), [](size_t i, flrv::LineListMarker::Element &element) {
+            element.add_position(i, i, 0).add_position(i, -i, 0);
+        });
+
     flrv::Vector3 v = { 1, 2, 3 };
     flrv::Quaternion q = { 1, 0, 0, 0 };
 
