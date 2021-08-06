@@ -53,50 +53,9 @@ namespace util {
     struct Decorate<Derived, Base, Decorator, Decorators...>
         : Decorate<Derived, Decorator<Derived, Base>, Decorators...> { };
 
-    namespace detail {
-        template<class T, size_t ...Indices>
-        T lerp_impl(const T &a, const T &b, const double t, std::index_sequence<Indices...>)
-        {
-            T ret;
-            ((ret.template get<Indices>() = a.template get<Indices>() * (1 - t) + b.template get<Indices>() * t), ...);
-            return ret;
-        }
-    }
-
-    template<class T>
-    T lerp(const T &a, const T &b, const double t) { return detail::lerp_impl(a, b, t, std::make_index_sequence<T::dimension>()); }
-
-    template<class T>
-    auto lerp_func(const T &a, const T &b) { return [=](const double t) { lerp(a, b, t); }; }
-
-    class Indices {
-        ssize_t _begin, _end, _step;
-
-        class Cursol {
-            ssize_t _value, _step;
-
-        public:
-            Cursol() noexcept = default;
-            Cursol(ssize_t value, ssize_t step) noexcept : _value(value), _step(step) { }
-
-            ssize_t &operator*() noexcept { return _value; }
-            bool operator!=(const Cursol &rhs) const noexcept { return _value != rhs._value; }
-            Cursol &operator++() noexcept { _value += _step; return *this; }
-        };
-
-    public:
-        Indices(ssize_t begin, ssize_t end, ssize_t step = 1): _begin(begin), _end(end), _step(step) { }
-        Indices(ssize_t end): Indices(0, end) { }
-
-        Cursol begin() { return Cursol(_begin, _step); }
-        const Cursol begin() const { return Cursol(_begin, _step); }
-        Cursol end() { return Cursol(_end, _step); }
-        const Cursol end() const { return Cursol(_end, _step); }
-    };
-
     namespace decorator {
         template<class Derived, class Base>
-        struct CustomizableConversion : Base {
+        struct Conversion : Base {
             template<class From>
             static Derived from(const From &from) { return convert<Derived>(from); }
 
@@ -105,7 +64,7 @@ namespace util {
         };
 
         template<class Derived, class Base>
-        struct CRTPDecorator : Base {
+        struct CRTP : Base {
         protected:
             Derived &derived() noexcept { return static_cast<Derived &>(*this); }
             const Derived &derived() const noexcept { return static_cast<const Derived &>(*this); }
@@ -228,7 +187,7 @@ namespace param {
     struct Vector3
         : util::Decorate<
             Vector3, VectorValues<3>,
-            util::decorator::CRTPDecorator, util::decorator::CustomizableConversion,
+            util::decorator::CRTP, util::decorator::Conversion,
             decorator::VectorBase, decorator::VectorAccessX, decorator::VectorAccessY, decorator::VectorAccessZ
         > {
 
@@ -254,7 +213,7 @@ namespace param {
     struct Quaternion
         : util::Decorate<
             Quaternion, VectorValues<4>,
-            util::decorator::CRTPDecorator, util::decorator::CustomizableConversion,
+            util::decorator::CRTP, util::decorator::Conversion,
             decorator::VectorBase, decorator::VectorAccessX, decorator::VectorAccessY, decorator::VectorAccessZ, decorator::VectorAccessW
         > {
 
@@ -313,7 +272,7 @@ namespace param {
     struct Color
         : util::Decorate<
             Color, ColorValues<double, double, double, double>,
-            util::decorator::CRTPDecorator, util::decorator::CustomizableConversion
+            util::decorator::CRTP, util::decorator::Conversion
         > {
 
         Color() = default;
@@ -357,7 +316,7 @@ namespace param {
     struct RGBA
         : util::Decorate<
             RGBA, ColorValues<double, double, double, double>,
-            util::decorator::CRTPDecorator, util::decorator::CustomizableConversion
+            util::decorator::CRTP, util::decorator::Conversion
         > {
 
         RGBA() = default;
@@ -393,7 +352,7 @@ namespace param {
     struct HSLA
         : util::Decorate<
             HSLA, ColorValues<double, double, double, double>,
-            util::decorator::CRTPDecorator, util::decorator::CustomizableConversion
+            util::decorator::CRTP, util::decorator::Conversion
         > {
 
         HSLA() = default;
@@ -885,7 +844,7 @@ namespace marker {
         : util::Decorate<
             Add<Type, Decorators...>,
             MessageBase<visualization_msgs::Marker>,
-            util::decorator::CRTPDecorator,
+            util::decorator::CRTP,
             decorator::ActionType<visualization_msgs::Marker::ADD>::Decorator,
             decorator::MarkerType<Type>::template Decorator,
             Decorators...
