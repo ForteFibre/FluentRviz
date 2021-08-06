@@ -837,58 +837,6 @@ namespace marker {
         };
 
         template<class Derived, class Base>
-        struct Each : Base {
-            struct Manipulator;
-
-            template<class Iterable, class Func>
-            Derived &each(const Iterable &iterable, const Func &func)
-            {
-                Manipulator element(this->message);
-                for (const auto &e : iterable) func(e, element);
-                return this->derived();
-            }
-        };
-
-        template<class Derived, class Base>
-        struct Each<Derived, Base>::Manipulator {
-        private:
-            visualization_msgs::Marker &_marker;
-
-        public:
-            Manipulator(visualization_msgs::Marker &marker): _marker(marker) { }
-
-            template<typename T>
-            Manipulator &add_position(const T &position)
-            {
-                _marker.points.push_back(util::convert<geometry_msgs::Point>(position));
-                return *this;
-            }
-
-            Manipulator &add_position(const double x, const double y, const double z)
-            {
-                geometry_msgs::Point point;
-                point.x = x, point.y = y, point.z = z;
-                _marker.points.push_back(point);
-                return *this;
-            }
-
-            template<typename T>
-            Manipulator &add_color(const T &position)
-            {
-                _marker.colors.push_back(util::convert<std_msgs::ColorRGBA>(position));
-                return *this;
-            }
-
-            Manipulator &add_color(const double r, const double g, const double b, const double a = 1.0)
-            {
-                std_msgs::ColorRGBA color;
-                color.r = r, color.g = g, color.b = b, color.a = a;
-                _marker.colors.push_back(color);
-                return *this;
-            }
-        };
-
-        template<class Derived, class Base>
         struct MessageConversion : Base {
             operator const typename Base::message_type &() { return this->message; }
         };
@@ -989,27 +937,27 @@ namespace marker {
 
     using LineStrip = Add<
         visualization_msgs::Marker::LINE_STRIP,
-        decorator::MessageConversion, decorator::Each,
+        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::LineScale, decorator::Color, decorator::Points>;
 
     using LineList = Add<
         visualization_msgs::Marker::LINE_LIST,
-        decorator::MessageConversion, decorator::Each,
+        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::LineScale, decorator::Colors, decorator::Points>;
 
     using CubeList = Add<
         visualization_msgs::Marker::CUBE_LIST,
-        decorator::MessageConversion, decorator::Each,
+        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
 
     using SphereList = Add<
         visualization_msgs::Marker::SPHERE_LIST,
-        decorator::MessageConversion, decorator::Each,
+        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
 
     using Points = Add<
         visualization_msgs::Marker::POINTS,
-        decorator::MessageConversion, decorator::Each,
+        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::PointScale, decorator::Colors, decorator::Points>;
 
     using TextViewFacing = Add<
@@ -1024,7 +972,7 @@ namespace marker {
 
     using TriangleList = Add<
         visualization_msgs::Marker::TRIANGLE_LIST,
-        decorator::MessageConversion, decorator::Each,
+        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
 
 }
