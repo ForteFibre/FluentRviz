@@ -550,15 +550,19 @@ namespace conversion {
         }
     };
 
-    template<>
-    struct converter<geometry_msgs::Quaternion, param::Quaternion> {
-        static constexpr param::Quaternion convert(const geometry_msgs::Quaternion &quat)
+    template<class Quaternion>
+    struct converter<geometry_msgs::Quaternion, Quaternion,
+        std::enable_if_t<std::is_base_of_v<param::Quaternion, Quaternion>>> {
+
+        static constexpr Quaternion convert(const geometry_msgs::Quaternion &quat)
         { return { quat.w, quat.x, quat.y, quat.z }; }
     };
 
-    template<>
-    struct converter<param::Quaternion, geometry_msgs::Quaternion> {
-        static geometry_msgs::Quaternion convert(const param::Quaternion &quat)
+    template<class Quaternion>
+    struct converter<Quaternion, geometry_msgs::Quaternion,
+        std::enable_if_t<std::is_base_of_v<param::Quaternion, Quaternion>>> {
+
+        static geometry_msgs::Quaternion convert(const Quaternion &quat)
         {
             geometry_msgs::Quaternion ret;
             ret.w = quat[0], ret.x = quat[1], ret.y = quat[2], ret.z = quat[3];
