@@ -264,6 +264,10 @@ namespace param {
         constexpr Rotation(const double angle, const Axis &axis = Axis::Z()) noexcept
             : Quaternion { std::cos(angle / 2), (axis / norm(axis)) * std::sin(angle / 2) }
         { }
+
+        constexpr Rotation(const Quaternion &quat) noexcept
+            : Quaternion { quat / norm(quat) }
+        { }
     };
 
     constexpr double angle(const Rotation &r) noexcept { return std::acos(scalar(r)); }

@@ -20,14 +20,14 @@ int main(int argc, char **argv)
     constexpr auto a = 3 * i + 4 * j + 5 * k;
 
     auto q = flrv::param::Quaternion { 0, a };
-    auto r = q / norm(q);
+    auto r = q / flrv::param::norm(q);
 
     auto vector = flrv::util::convert<geometry_msgs::Vector3>(a);
     auto point = flrv::util::convert<geometry_msgs::Point>(a);
     auto quaternion = flrv::util::convert<geometry_msgs::Quaternion>(q);
 
     auto c = flrv::param::Color { 1, 0, 0 };
-    auto d = c | flrv::param::hsla::saturation(20) | flrv::param::rgba::red(100);
+    auto d = c | flrv::param::hsla::saturation(20) | flrv::param::rgba::red(100) | flrv::param::color::alpha(0.4);
 
     return 0;
 }
