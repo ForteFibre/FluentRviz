@@ -6,28 +6,28 @@ int main(int argc, char **argv)
     flrv::Rviz rviz;
     rviz << flrv::marker::Cube(0)
         .position(0, 0, 0)
-        .orientation(0, 0, 0, 0)
+        .orientation(flrv::param::Rotation(M_PI / 2))
         .color(0, 0, 0);
 
     rviz << flrv::marker::LineList(2)
         .color(0, 0, 1)
         .scale(0.05);
 
-    flrv::param::Vector3 v = { 1, 2, 3 };
-    flrv::param::Quaternion q = { 1, 0, 0, 0 };
+    constexpr auto i = flrv::param::Vector3 { 1, 0, 0 };
+    constexpr auto j = flrv::param::Vector3 { 0, 1, 0 };
+    constexpr auto k = flrv::param::Vector3 { 0, 0, 1 };
 
-    geometry_msgs::Vector3 vector = v;
-    geometry_msgs::Point point = v;
-    geometry_msgs::Quaternion quaternion = q;
+    constexpr auto a = 3 * i + 4 * j + 5 * k;
 
-    flrv::param::RGBA rgba = { 1, 1, 0 };
-    flrv::param::HSLA hsla = { 240, 100, 50 };
+    auto q = flrv::param::Quaternion { 0, a };
+    auto r = q / norm(q);
 
-    std_msgs::ColorRGBA color_rgba = rgba;
-    std_msgs::ColorRGBA color_hsla = hsla;
+    auto vector = flrv::util::convert<geometry_msgs::Vector3>(a);
+    auto point = flrv::util::convert<geometry_msgs::Point>(a);
+    auto quaternion = flrv::util::convert<geometry_msgs::Quaternion>(q);
 
-    flrv::param::RGBA rgba_hsla = hsla;
-    flrv::param::HSLA hsla_rgba = rgba;
+    auto c = flrv::param::Color { 1, 0, 0 };
+    auto d = c | flrv::param::hsla::saturation(20) | flrv::param::rgba::red(100);
 
     return 0;
 }
