@@ -247,12 +247,12 @@ namespace param {
     }
 
     struct Axis : public Vector3 {
-        constexpr Axis(const double x, const double y, const double z)
-            : Vector { x, y, z }
-        { (*this) /= norm(*this); }
-
         constexpr Axis(const Vector3 &v)
-            : Axis { v[0], v[1], v[2] }
+            : Vector3 { v / norm(v) }
+        { }
+
+        constexpr Axis(const double x, const double y, const double z)
+            : Axis { { x, y, z } }
         { }
 
         static constexpr Axis X() { return { 1, 0, 0 }; }
@@ -265,8 +265,8 @@ namespace param {
             : Quaternion { std::cos(angle / 2), (axis / norm(axis)) * std::sin(angle / 2) }
         { }
 
-        constexpr Rotation(const Quaternion &quat) noexcept
-            : Quaternion { quat / norm(quat) }
+        constexpr Rotation(const Quaternion &q) noexcept
+            : Quaternion { q / norm(q) }
         { }
     };
 
