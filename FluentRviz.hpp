@@ -15,7 +15,7 @@
 
 namespace flrv {
 
-namespace conversion {
+namespace traits {
 
     template<class From, class To, class Enabler = void>
     struct converter { };
@@ -25,12 +25,21 @@ namespace conversion {
         static constexpr const Type &convert(const Type &value) { return value; };
     };
 
+    template<class T, size_t I>
+    struct accessor { };
+
 }
 
 namespace util {
 
     template<class To, class From>
-    constexpr decltype(auto) convert(const From &from) { return conversion::converter<From, To>::convert(from); }
+    constexpr decltype(auto) convert(const From &from) { return traits::converter<From, To>::convert(from); }
+
+    template<size_t I, class T>
+    constexpr decltype(auto) get(const T &t) { return traits::accessor<T, I>::get(t); }
+
+    template<size_t I, class T, class Arg>
+    constexpr void set(T &t, Arg &&arg) { return traits::accessor<T, I>::set(t, std::forward<Arg>(arg)); };
 
     template<
         class Derived,
@@ -65,7 +74,7 @@ namespace util {
     constexpr inline bool is_detected_v = detail::is_detected_impl_v<void, Op, Args...>;
 
     template<class From, class To>
-    using convert_type = decltype(conversion::converter<From, To>::convert(std::declval<From>()));
+    using convert_type = decltype(traits::converter<From, To>::convert(std::declval<From>()));
 
     template<class From, class To>
     constexpr inline bool is_convertible_v = is_detected_v<convert_type, From, To>;
@@ -202,15 +211,11 @@ namespace param {
 
     template<size_t D, class Derived>
     constexpr double dot(const VectorBase<D, Derived> &lhs, const VectorBase<D, Derived> &rhs) noexcept
-    {
-        return std::inner_product(lhs.storage.begin(), lhs.storage.end(), rhs.storage.begin(), 0.0);
-    }
+    { return std::inner_product(lhs.storage.begin(), lhs.storage.end(), rhs.storage.begin(), 0.0); }
 
     template<size_t D, class Derived>
     constexpr double norm(const VectorBase<D, Derived> &v) noexcept
-    {
-        return std::sqrt(dot(v, v));
-    }
+    { return std::sqrt(dot(v, v)); }
 
     template<size_t D>
     struct Vector : VectorBase<D, Vector<D>> { };
@@ -298,92 +303,31 @@ namespace param {
         static constexpr Color Purple()  noexcept { return { 0.50, 0.00, 0.50 }; }
     };
 
+    namespace detail {
+        template<class T, size_t I>
+        struct ColorComponent {
+            template<class S, std::enable_if_t<util::is_convertible_v<S, T>, int> = 0>
+            static constexpr S process(const S &s, const double arg)
+            {
+                T tmp = util::convert<T>(s);
+                util::set<I>(tmp, arg);
+                return util::convert<S>(tmp);
+            }
+
+            template<class S, std::enable_if_t<util::is_convertible_v<S, T>, int> = 0>
+            static constexpr double process(const S &s)
+            {
+                T tmp = util::convert<T>(s);
+                return util::get<I>(tmp);
+            }
+        };
+    }
+
     namespace color {
-        namespace detail {
-            struct Red {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, Color>, int> = 0>
-                static constexpr C process(const C &c, const double r)
-                {
-                    Color tmp = util::convert<Color>(c);
-                    tmp.r = std::clamp(r, 0.0, 1.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, Color>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    Color tmp = util::convert<Color>(c);
-                    return tmp.r;
-                }
-            };
-        }
-
-        constexpr inline auto red = util::ExtensionAdapter<detail::Red>();
-
-        namespace detail {
-
-            struct Green {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, Color>, int> = 0>
-                static constexpr C process(const C &c, const double g)
-                {
-                    Color tmp = util::convert<Color>(c);
-                    tmp.g = std::clamp(g, 0.0, 1.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, Color>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    Color tmp = util::convert<Color>(c);
-                    return tmp.g;
-                }
-            };
-        }
-
-        constexpr inline auto green = util::ExtensionAdapter<detail::Green>();
-
-        namespace detail {
-            struct Blue {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, Color>, int> = 0>
-                static constexpr C process(const C &c, const double b)
-                {
-                    Color tmp = util::convert<Color>(c);
-                    tmp.b = std::clamp(b, 0.0, 1.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, Color>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    Color tmp = util::convert<Color>(c);
-                    return tmp.b;
-                }
-            };
-        }
-
-        constexpr inline auto blue = util::ExtensionAdapter<detail::Blue>();
-
-        namespace detail {
-            struct Alpha {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, Color>, int> = 0>
-                static constexpr C process(const C &c, const double a)
-                {
-                    Color tmp = util::convert<Color>(c);
-                    tmp.a = std::clamp(a, 0.0, 1.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, Color>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    Color tmp = util::convert<Color>(c);
-                    return tmp.a;
-                }
-            };
-        }
-
-        constexpr inline auto alpha = util::ExtensionAdapter<detail::Alpha>();
-
+        constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<Color, 0>>();
+        constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<Color, 1>>();
+        constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<Color, 2>>();
+        constexpr inline auto alpha = util::ExtensionAdapter<detail::ColorComponent<Color, 3>>();
     }
 
     struct RGBA {
@@ -391,69 +335,9 @@ namespace param {
     };
 
     namespace rgba {
-        namespace detail {
-            struct Red {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, RGBA>, int> = 0>
-                static constexpr C process(const C &c, const double r)
-                {
-                    RGBA tmp = util::convert<RGBA>(c);
-                    tmp.r = std::clamp(r, 0.0, 255.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, RGBA>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    RGBA tmp = util::convert<RGBA>(c);
-                    return tmp.r;
-                }
-            };
-        }
-
-        constexpr inline auto red = util::ExtensionAdapter<detail::Red>();
-
-        namespace detail {
-            struct Blue {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, RGBA>, int> = 0>
-                static constexpr C process(const C &c, const double b)
-                {
-                    RGBA tmp = util::convert<RGBA>(c);
-                    tmp.b = std::clamp(b, 0.0, 255.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, RGBA>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    RGBA tmp = util::convert<RGBA>(c);
-                    return tmp.b;
-                }
-            };
-        }
-
-        constexpr inline auto blue = util::ExtensionAdapter<detail::Blue>();
-
-        namespace detail {
-
-            struct Green {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, RGBA>, int> = 0>
-                static constexpr C process(const C &c, const double g)
-                {
-                    RGBA tmp = util::convert<RGBA>(c);
-                    tmp.g = std::clamp(g, 0.0, 255.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, RGBA>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    RGBA tmp = util::convert<RGBA>(c);
-                    return tmp.g;
-                }
-            };
-        }
-
-        constexpr inline auto green = util::ExtensionAdapter<detail::Green>();
+        constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<RGBA, 0>>();
+        constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<RGBA, 1>>();
+        constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<RGBA, 2>>();
     }
 
     struct HSLA {
@@ -461,74 +345,14 @@ namespace param {
     };
 
     namespace hsla {
-        namespace detail {
-            struct Hue {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, HSLA>, int> = 0>
-                static constexpr C process(const C &c, const double h)
-                {
-                    HSLA tmp = util::convert<HSLA>(c);
-                    tmp.h = std::clamp(h, 0.0, 360.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, HSLA>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    HSLA tmp = util::convert<HSLA>(c);
-                    return tmp.h;
-                }
-            };
-        }
-
-        constexpr inline auto hue = util::ExtensionAdapter<detail::Hue>();
-
-        namespace detail {
-            struct Saturation {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, HSLA>, int> = 0>
-                static constexpr C process(const C &c, const double s)
-                {
-                    HSLA tmp = util::convert<HSLA>(c);
-                    tmp.s = std::clamp(s, 0.0, 100.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, HSLA>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    HSLA tmp = util::convert<HSLA>(c);
-                    return tmp.s;
-                }
-            };
-        }
-
-        constexpr inline auto saturation = util::ExtensionAdapter<detail::Saturation>();
-
-        namespace detail {
-
-            struct Lightness {
-                template<class C, std::enable_if_t<util::is_convertible_v<C, HSLA>, int> = 0>
-                static constexpr C process(const C &c, const double l)
-                {
-                    HSLA tmp = util::convert<HSLA>(c);
-                    tmp.l = std::clamp(l, 0.0, 100.0);
-                    return util::convert<C>(tmp);
-                }
-
-                template<class C, std::enable_if_t<util::is_convertible_v<C, HSLA>, int> = 0>
-                static constexpr double process(const C &c)
-                {
-                    HSLA tmp = util::convert<HSLA>(c);
-                    return tmp.l;
-                }
-            };
-        }
-
-        constexpr inline auto lightness = util::ExtensionAdapter<detail::Lightness>();
+        constexpr inline auto hue        = util::ExtensionAdapter<detail::ColorComponent<HSLA, 0>>();
+        constexpr inline auto saturation = util::ExtensionAdapter<detail::ColorComponent<HSLA, 1>>();
+        constexpr inline auto lightness  = util::ExtensionAdapter<detail::ColorComponent<HSLA, 2>>();
     }
 
 }
 
-namespace conversion {
+namespace traits {
 
     template<class Vector3Like>
     struct converter<Vector3Like, param::Vector3,
@@ -688,6 +512,77 @@ namespace conversion {
         }
     };
 
+    template<>
+    struct accessor<param::Color, 0> {
+        static constexpr float get(const param::Color &c) { return c.r; }
+        static constexpr void set(param::Color &c, float arg) { c.r = arg; }
+    };
+
+    template<>
+    struct accessor<param::Color, 1> {
+        static constexpr float get(const param::Color &c) { return c.g; }
+        static constexpr void set(param::Color &c, float arg) { c.g = arg; }
+    };
+
+    template<>
+    struct accessor<param::Color, 2> {
+        static constexpr float get(const param::Color &c) { return c.b; }
+        static constexpr void set(param::Color &c, float arg) { c.b = arg; }
+    };
+
+    template<>
+    struct accessor<param::Color, 3> {
+        static constexpr float get(const param::Color &c) { return c.a; }
+        static constexpr void set(param::Color &c, float arg) { c.a = arg; }
+    };
+
+    template<>
+    struct accessor<param::RGBA, 0> {
+        static constexpr float get(const param::RGBA &c) { return c.r; }
+        static constexpr void set(param::RGBA &c, float arg) { c.r = arg; }
+    };
+
+    template<>
+    struct accessor<param::RGBA, 1> {
+        static constexpr float get(const param::RGBA &c) { return c.g; }
+        static constexpr void set(param::RGBA &c, float arg) { c.g = arg; }
+    };
+
+    template<>
+    struct accessor<param::RGBA, 2> {
+        static constexpr float get(const param::RGBA &c) { return c.b; }
+        static constexpr void set(param::RGBA &c, float arg) { c.b = arg; }
+    };
+
+    template<>
+    struct accessor<param::RGBA, 3> {
+        static constexpr float get(const param::RGBA &c) { return c.a; }
+        static constexpr void set(param::RGBA &c, float arg) { c.a = arg; }
+    };
+
+    template<>
+    struct accessor<param::HSLA, 0> {
+        static constexpr float get(const param::HSLA &c) { return c.h; }
+        static constexpr void set(param::HSLA &c, float arg) { c.h = arg; }
+    };
+
+    template<>
+    struct accessor<param::HSLA, 1> {
+        static constexpr float get(const param::HSLA &c) { return c.s; }
+        static constexpr void set(param::HSLA &c, float arg) { c.s = arg; }
+    };
+
+    template<>
+    struct accessor<param::HSLA, 2> {
+        static constexpr float get(const param::HSLA &c) { return c.l; }
+        static constexpr void set(param::HSLA &c, float arg) { c.l = arg; }
+    };
+
+    template<>
+    struct accessor<param::HSLA, 3> {
+        static constexpr float get(const param::HSLA &c) { return c.a; }
+        static constexpr void set(param::HSLA &c, float arg) { c.a = arg; }
+    };
 }
 
 namespace marker {
