@@ -315,7 +315,7 @@ namespace param {
             }
 
             template<class S, std::enable_if_t<util::is_convertible_v<S, T>, int> = 0>
-            static constexpr double process(const S &s)
+            static constexpr auto process(const S &s)
             {
                 T tmp = util::convert<T>(s);
                 return util::get<I>(tmp);
