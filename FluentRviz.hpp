@@ -282,27 +282,6 @@ namespace param {
     constexpr Derived rotate(const Vector3 &v, const Rotation &r) noexcept
     { return vector(r * Quaternion(0, v) * inverse(r)); }
 
-    struct Color {
-        float r, g, b, a;
-
-        static constexpr Color White()   noexcept { return { 1.00, 1.00, 1.00 }; }
-        static constexpr Color Silver()  noexcept { return { 0.75, 0.75, 0.75 }; }
-        static constexpr Color Gray()    noexcept { return { 0.50, 0.50, 0.50 }; }
-        static constexpr Color Black()   noexcept { return { 0.00, 0.00, 0.00 }; }
-        static constexpr Color Red()     noexcept { return { 1.00, 0.00, 0.00 }; }
-        static constexpr Color Maroon()  noexcept { return { 0.50, 0.00, 0.00 }; }
-        static constexpr Color Yellow()  noexcept { return { 1.00, 1.00, 0.00 }; }
-        static constexpr Color Olive()   noexcept { return { 0.50, 0.50, 0.00 }; }
-        static constexpr Color Lime()    noexcept { return { 0.00, 1.00, 0.00 }; }
-        static constexpr Color Green()   noexcept { return { 0.00, 0.50, 0.00 }; }
-        static constexpr Color Aqua()    noexcept { return { 0.00, 1.00, 1.00 }; }
-        static constexpr Color Teal()    noexcept { return { 0.00, 0.50, 0.50 }; }
-        static constexpr Color Blue()    noexcept { return { 0.00, 0.00, 1.00 }; }
-        static constexpr Color Navy()    noexcept { return { 0.00, 0.00, 0.50 }; }
-        static constexpr Color Fuchsia() noexcept { return { 1.00, 0.00, 1.00 }; }
-        static constexpr Color Purple()  noexcept { return { 0.50, 0.00, 0.50 }; }
-    };
-
     namespace detail {
         template<class T, size_t I>
         struct ColorComponent {
@@ -323,32 +302,47 @@ namespace param {
         };
     }
 
-    namespace color {
-        constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<Color, 0>>();
-        constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<Color, 1>>();
-        constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<Color, 2>>();
-        constexpr inline auto alpha = util::ExtensionAdapter<detail::ColorComponent<Color, 3>>();
-    }
+    struct Color {
+        float r, g, b, a;
+
+        static constexpr Color White()   noexcept { return { 1.00, 1.00, 1.00 }; }
+        static constexpr Color Silver()  noexcept { return { 0.75, 0.75, 0.75 }; }
+        static constexpr Color Gray()    noexcept { return { 0.50, 0.50, 0.50 }; }
+        static constexpr Color Black()   noexcept { return { 0.00, 0.00, 0.00 }; }
+        static constexpr Color Red()     noexcept { return { 1.00, 0.00, 0.00 }; }
+        static constexpr Color Maroon()  noexcept { return { 0.50, 0.00, 0.00 }; }
+        static constexpr Color Yellow()  noexcept { return { 1.00, 1.00, 0.00 }; }
+        static constexpr Color Olive()   noexcept { return { 0.50, 0.50, 0.00 }; }
+        static constexpr Color Lime()    noexcept { return { 0.00, 1.00, 0.00 }; }
+        static constexpr Color Green()   noexcept { return { 0.00, 0.50, 0.00 }; }
+        static constexpr Color Aqua()    noexcept { return { 0.00, 1.00, 1.00 }; }
+        static constexpr Color Teal()    noexcept { return { 0.00, 0.50, 0.50 }; }
+        static constexpr Color Blue()    noexcept { return { 0.00, 0.00, 1.00 }; }
+        static constexpr Color Navy()    noexcept { return { 0.00, 0.00, 0.50 }; }
+        static constexpr Color Fuchsia() noexcept { return { 1.00, 0.00, 1.00 }; }
+        static constexpr Color Purple()  noexcept { return { 0.50, 0.00, 0.50 }; }
+
+        static constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<Color, 0>>();
+        static constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<Color, 1>>();
+        static constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<Color, 2>>();
+        static constexpr inline auto alpha = util::ExtensionAdapter<detail::ColorComponent<Color, 3>>();
+    };
 
     struct RGBA {
         float r, g, b, a;
-    };
 
-    namespace rgba {
-        constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<RGBA, 0>>();
-        constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<RGBA, 1>>();
-        constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<RGBA, 2>>();
-    }
+        static constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<RGBA, 0>>();
+        static constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<RGBA, 1>>();
+        static constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<RGBA, 2>>();
+    };
 
     struct HSLA {
         float h, s, l, a;
-    };
 
-    namespace hsla {
-        constexpr inline auto hue        = util::ExtensionAdapter<detail::ColorComponent<HSLA, 0>>();
-        constexpr inline auto saturation = util::ExtensionAdapter<detail::ColorComponent<HSLA, 1>>();
-        constexpr inline auto lightness  = util::ExtensionAdapter<detail::ColorComponent<HSLA, 2>>();
-    }
+        static constexpr inline auto hue        = util::ExtensionAdapter<detail::ColorComponent<HSLA, 0>>();
+        static constexpr inline auto saturation = util::ExtensionAdapter<detail::ColorComponent<HSLA, 1>>();
+        static constexpr inline auto lightness  = util::ExtensionAdapter<detail::ColorComponent<HSLA, 2>>();
+    };
 
 }
 

@@ -7,7 +7,7 @@ int main(int argc, char **argv)
     rviz << flrv::marker::Cube(0)
         .position(0, 0, 0)
         .orientation(flrv::param::Rotation(M_PI / 2))
-        .color(0, 0, 0);
+        .color(flrv::param::Color::Aqua());
 
     rviz << flrv::marker::LineList(2)
         .color(0, 0, 1)
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     auto quaternion = flrv::util::convert<geometry_msgs::Quaternion>(q);
 
     auto c = flrv::param::Color { 1, 0, 0 };
-    auto d = c | flrv::param::hsla::saturation(20) | flrv::param::rgba::red(100) | flrv::param::color::alpha(0.4);
+    auto d = c | flrv::param::HSLA::saturation(20) | flrv::param::RGBA::red(100) | flrv::param::Color::alpha(0.4);
 
     return 0;
 }
