@@ -848,16 +848,11 @@ namespace marker {
             }
         };
 
-        template<class Derived, class Base>
-        struct MessageConversion : Base {
-            operator const typename Base::message_type &() { return this->message; }
-        };
-
     }
 
     template<class T>
     struct MessageBase {
-        using message_type = T;
+        operator const T &() { return this->message; }
 
     protected:
         T message;
@@ -924,67 +919,54 @@ namespace marker {
 
     using PoseArrow = Add<
         visualization_msgs::Marker::ARROW,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::PoseArrowScale, decorator::Color>;
 
     using VectorArrow = Add<
         visualization_msgs::Marker::ARROW,
-        decorator::MessageConversion,
         decorator::VectorArrowScale, decorator::Color, decorator::ArrowPoints>;
 
     using Cube = Add<
         visualization_msgs::Marker::CUBE,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Color>;
 
     using Sphere = Add<
         visualization_msgs::Marker::SPHERE,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Color>;
 
     using Cylinder = Add<
         visualization_msgs::Marker::CYLINDER,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Color>;
 
     using LineStrip = Add<
         visualization_msgs::Marker::LINE_STRIP,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::LineScale, decorator::Color, decorator::Points>;
 
     using LineList = Add<
         visualization_msgs::Marker::LINE_LIST,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::LineScale, decorator::Colors, decorator::Points>;
 
     using CubeList = Add<
         visualization_msgs::Marker::CUBE_LIST,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
 
     using SphereList = Add<
         visualization_msgs::Marker::SPHERE_LIST,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
 
     using Points = Add<
         visualization_msgs::Marker::POINTS,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::PointScale, decorator::Colors, decorator::Points>;
 
     using TextViewFacing = Add<
         visualization_msgs::Marker::TEXT_VIEW_FACING,
-        decorator::MessageConversion,
         decorator::Position, decorator::TextScale, decorator::Color, decorator::Text>;
 
     using MeshResource = Add<
         visualization_msgs::Marker::MESH_RESOURCE,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Color, decorator::MeshResource>;
 
     using TriangleList = Add<
         visualization_msgs::Marker::TRIANGLE_LIST,
-        decorator::MessageConversion,
         decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
 
 }
