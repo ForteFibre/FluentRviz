@@ -685,7 +685,10 @@ namespace marker {
 
         template<class Derived, class Base>
         struct PointScale : Base {
-            PointScale() noexcept { scale(0.05, 0.05); }
+            PointScale() noexcept { scale(0.05); }
+
+            Derived &scale(const double width) noexcept
+            { return scale(width, width); }
 
             Derived &scale(const double width, const double height) noexcept
             {
