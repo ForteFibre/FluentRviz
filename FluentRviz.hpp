@@ -305,6 +305,10 @@ namespace param {
     struct Color {
         float r, g, b, a;
 
+        constexpr Color(const float red, const float green, const float blue, const float alpha = 1.0f)
+            : r(red), g(green), b(blue), a(alpha)
+        { }
+
         static constexpr Color White()   noexcept { return { 1.00, 1.00, 1.00 }; }
         static constexpr Color Silver()  noexcept { return { 0.75, 0.75, 0.75 }; }
         static constexpr Color Gray()    noexcept { return { 0.50, 0.50, 0.50 }; }
@@ -331,6 +335,10 @@ namespace param {
     struct RGBA {
         float r, g, b, a;
 
+        constexpr RGBA(const float red, const float green, const float blue, const float alpha = 1.0f)
+            : r(red), g(green), b(blue), a(alpha)
+        { }
+
         static constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<RGBA, 0>>();
         static constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<RGBA, 1>>();
         static constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<RGBA, 2>>();
@@ -338,6 +346,10 @@ namespace param {
 
     struct HSLA {
         float h, s, l, a;
+
+        constexpr HSLA(const float hue, const float saturation = 100.0f, const float lightness = 50.0f, const float alpha = 1.0f)
+            : h(hue), s(saturation), l(lightness), a(alpha)
+        { }
 
         static constexpr inline auto hue        = util::ExtensionAdapter<detail::ColorComponent<HSLA, 0>>();
         static constexpr inline auto saturation = util::ExtensionAdapter<detail::ColorComponent<HSLA, 1>>();
