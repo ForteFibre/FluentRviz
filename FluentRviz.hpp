@@ -18,7 +18,7 @@ namespace flrv {
 namespace traits {
 
     template<class From, class To, class Enabler = void>
-    struct converter { };
+    struct converter;
 
     template<class Type>
     struct converter<Type, Type> {
@@ -26,7 +26,7 @@ namespace traits {
     };
 
     template<class T, size_t I>
-    struct accessor { };
+    struct accessor;
 
 }
 
@@ -111,27 +111,23 @@ namespace util {
     { return ExtensionChain(std::forward<Extension0>(ex0), std::forward<Extension1>(ex1)); }
 
     template<class T, class ...Args>
-    using process_type = decltype(T::process(std::declval<Args>()...));
+    using invoke_type = decltype(std::declval<T>()(std::declval<Args>()...));
 
     template<class T, class ...Args>
-    constexpr inline bool is_process_invokable_v = is_detected_v<process_type, T, Args...>;
+    constexpr inline bool is_invokable_v = is_detected_v<invoke_type, T, Args...>;
 
     template<class T>
-    struct ExtensionAdapter {
+    struct ExtensionAdapter : T {
+        using T::operator();
+
         template<
             class ...Args,
-            std::enable_if_t<!is_process_invokable_v<T, Args...>, int> = 0>
+            std::enable_if_t<!is_invokable_v<T, Args...>, int> = 0>
         constexpr auto operator()(Args &&...args) const
         { return ExtensionClosure<T, Args...>(std::forward<Args>(args)...); }
-
-        template<
-            class ...Args,
-            std::enable_if_t<is_process_invokable_v<T, Args...>, int> = 0>
-        constexpr decltype(auto) operator()(Args &&...args) const
-        { return T::process(std::forward<Args>(args)...); }
     };
 
-    template<class Derived, class ...Args>
+    template<class T, class ...Args>
     class ExtensionClosure : Extension {
         std::tuple<Args...> _args;
 
@@ -144,7 +140,7 @@ namespace util {
         constexpr decltype(auto) operator()(Self &&self) const
         {
             return std::apply([&self](const auto &...args) -> decltype(auto) {
-                return Derived::process(std::forward<Self>(self), args...);
+                return T{}(std::forward<Self>(self), args...);
             }, _args);
         }
     };
@@ -286,7 +282,7 @@ namespace param {
         template<class T, size_t I>
         struct ColorComponent {
             template<class S, std::enable_if_t<util::is_convertible_v<S, T>, int> = 0>
-            static constexpr S process(const S &s, const double arg)
+            constexpr S operator()(const S &s, const double arg) const
             {
                 T tmp = util::convert<T>(s);
                 util::set<I>(tmp, arg);
@@ -294,7 +290,7 @@ namespace param {
             }
 
             template<class S, std::enable_if_t<util::is_convertible_v<S, T>, int> = 0>
-            static constexpr auto process(const S &s)
+            constexpr auto operator()(const S &s) const
             {
                 T tmp = util::convert<T>(s);
                 return util::get<I>(tmp);
@@ -502,19 +498,19 @@ namespace traits {
             const float min = std::min({ r, g, b });
             const float c = max - min;
 
-            const float h = 60.0f * [&] {
-                if (c != 0) return 0.0f;
+            const float h = [&] {
+                if (c == 0.0f) return 0.0f;
                 if (max == g) return 2.0f + (b - r) / c;
                 if (max == b) return 4.0f + (r - g) / c;
                 return std::remainder(6.0f + (g - b) / c, 6.0f);
             }();
-            const float l = 100.0f * ((max + min) / 2.0f);
-            const float s = 100.0f * [&] {
+            const float l = ((max + min) / 2.0f);
+            const float s = [&] {
                 if (l == 0.0f || l == 1.0f) return 0.0f;
                 return c / (1.0f - std::abs(2.0f * l - 1.0f));
             }();
 
-            return { h, s, l, a };
+            return { h * 60.0f, s * 100.0f, l * 100.0f, a };
         }
     };
 
