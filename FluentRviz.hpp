@@ -44,23 +44,25 @@ namespace util {
     template<
         class Derived,
         class Base,
-        template<class, class> class ...Decorators>
-    struct Decorate : Base { };
+        template<class, class> class ...Features>
+    struct chain {
+        using type = Base;
+    };
 
     template<
         class Derived,
         class Base,
-        template<class, class> class Decorator>
-    struct Decorate<Derived, Base, Decorator>
-        : Decorator<Derived, Base> { };
+        template<class, class> class Feature,
+        template<class, class> class ...Features>
+    struct chain<Derived, Base, Feature, Features...> {
+        using type = typename chain<Derived, Feature<Derived, Base>, Features...>::type;
+    };
 
     template<
         class Derived,
         class Base,
-        template<class, class> class Decorator,
-        template<class, class> class ...Decorators>
-    struct Decorate<Derived, Base, Decorator, Decorators...>
-        : Decorate<Derived, Decorator<Derived, Base>, Decorators...> { };
+        template<class, class> class ...Features>
+    using chained = typename chain<Derived, Base, Features...>::type;
 
     namespace detail {
         template<class AlwaysVoid, template<class...> class Op, class... Args>
@@ -589,7 +591,7 @@ namespace traits {
 
 namespace marker {
 
-    namespace decorator {
+    namespace feature {
         template<class Derived, class Base>
         struct CRTP : Base {
         protected:
@@ -600,16 +602,16 @@ namespace marker {
         template<int32_t Type>
         struct ActionType {
             template<class Derived, class Base>
-            struct Decorator : Base {
-                Decorator() noexcept { this->message.action = Type; }
+            struct Feature : Base {
+                Feature() noexcept { this->message.action = Type; }
             };
         };
 
         template<int32_t Type>
         struct MarkerType {
             template<class Derived, class Base>
-            struct Decorator : Base {
-                Decorator() noexcept { this->message.type = Type; }
+            struct Feature : Base {
+                Feature() noexcept { this->message.type = Type; }
             };
         };
 
@@ -795,30 +797,30 @@ namespace marker {
         };
 
         template<class Derived, class Base>
-        struct ArrowPoints : Base {
-            ArrowPoints() noexcept
+        struct LinePoints : Base {
+            LinePoints() noexcept
             {
                 this->message.points.resize(2);
                 end(1, 0, 0);
             }
 
             template<class T>
-            Derived &start(const T &point) noexcept { return set(0, point); }
-            Derived &start(const double x, const double y, const double z) noexcept { return set(0, x, y, z); }
+            Derived &start(const T &point) noexcept { return this->point(0, point); }
+            Derived &start(const double x, const double y, const double z) noexcept { return this->point(0, x, y, z); }
 
             template<class T>
-            Derived &end(const T &point) noexcept { return set(1, point); }
-            Derived &end(const double x, const double y, const double z) noexcept { return set(1, x, y, z); }
+            Derived &end(const T &point) noexcept { return this->point(1, point); }
+            Derived &end(const double x, const double y, const double z) noexcept { return this->point(1, x, y, z); }
 
         private:
             template<class T>
-            Derived &set(size_t index, const T &point) noexcept
+            Derived &point(size_t index, const T &point) noexcept
             {
                 this->message.points[index] = util::convert<geometry_msgs::Point>(point);
                 return this->derived();
             }
 
-            Derived &set(size_t index, const double x, const double y, const double z) noexcept
+            Derived &point(size_t index, const double x, const double y, const double z) noexcept
             {
                 this->message.points[index].x = x;
                 this->message.points[index].y = y;
@@ -855,19 +857,17 @@ namespace marker {
 
     }
 
-    template<class T>
-    struct MessageBase {
-        operator const T &() { return this->message; }
+    struct MarkerWrapper {
+        operator const auto &() { return this->message; }
 
     protected:
-        T message;
+        visualization_msgs::Marker message;
     };
 
     struct DeleteAll
-        : util::Decorate<
-            DeleteAll,
-            MessageBase<visualization_msgs::Marker>,
-            decorator::ActionType<visualization_msgs::Marker::DELETEALL>::Decorator
+        : util::chained<
+            DeleteAll, MarkerWrapper,
+            feature::ActionType<visualization_msgs::Marker::DELETEALL>::Feature
         > {
 
         DeleteAll(const std::string &ns = "")
@@ -877,10 +877,9 @@ namespace marker {
     };
 
     struct Delete
-        : util::Decorate<
-            Delete,
-            MessageBase<visualization_msgs::Marker>,
-            decorator::ActionType<visualization_msgs::Marker::DELETE>::Decorator
+        : util::chained<
+            Delete, MarkerWrapper,
+            feature::ActionType<visualization_msgs::Marker::DELETE>::Feature
         > {
 
         Delete(const int32_t id, const std::string &ns = "")
@@ -892,15 +891,14 @@ namespace marker {
 
     template<
         int32_t Type,
-        template<class, class> class ...Decorators>
+        template<class, class> class ...Features>
     struct Add
-        : util::Decorate<
-            Add<Type, Decorators...>,
-            MessageBase<visualization_msgs::Marker>,
-            decorator::CRTP,
-            decorator::ActionType<visualization_msgs::Marker::ADD>::Decorator,
-            decorator::MarkerType<Type>::template Decorator,
-            Decorators...
+        : util::chained<
+            Add<Type, Features...>, MarkerWrapper,
+            feature::CRTP,
+            feature::ActionType<visualization_msgs::Marker::ADD>::Feature,
+            feature::MarkerType<Type>::template Feature,
+            Features...
         > {
 
         Add(const int32_t id, const std::string &ns = "")
@@ -924,55 +922,55 @@ namespace marker {
 
     using PoseArrow = Add<
         visualization_msgs::Marker::ARROW,
-        decorator::Position, decorator::Orientation, decorator::PoseArrowScale, decorator::Color>;
+        feature::Position, feature::Orientation, feature::PoseArrowScale, feature::Color>;
 
-    using VectorArrow = Add<
+    using LineArrow = Add<
         visualization_msgs::Marker::ARROW,
-        decorator::VectorArrowScale, decorator::Color, decorator::ArrowPoints>;
+        feature::VectorArrowScale, feature::Color, feature::LinePoints>;
 
     using Cube = Add<
         visualization_msgs::Marker::CUBE,
-        decorator::Position, decorator::Orientation, decorator::Scale, decorator::Color>;
+        feature::Position, feature::Orientation, feature::Scale, feature::Color>;
 
     using Sphere = Add<
         visualization_msgs::Marker::SPHERE,
-        decorator::Position, decorator::Orientation, decorator::Scale, decorator::Color>;
+        feature::Position, feature::Orientation, feature::Scale, feature::Color>;
 
     using Cylinder = Add<
         visualization_msgs::Marker::CYLINDER,
-        decorator::Position, decorator::Orientation, decorator::Scale, decorator::Color>;
+        feature::Position, feature::Orientation, feature::Scale, feature::Color>;
 
     using LineStrip = Add<
         visualization_msgs::Marker::LINE_STRIP,
-        decorator::Position, decorator::Orientation, decorator::LineScale, decorator::Color, decorator::Points>;
+        feature::Position, feature::Orientation, feature::LineScale, feature::Color, feature::Points>;
 
     using LineList = Add<
         visualization_msgs::Marker::LINE_LIST,
-        decorator::Position, decorator::Orientation, decorator::LineScale, decorator::Colors, decorator::Points>;
+        feature::Position, feature::Orientation, feature::LineScale, feature::Colors, feature::Points>;
 
     using CubeList = Add<
         visualization_msgs::Marker::CUBE_LIST,
-        decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
+        feature::Position, feature::Orientation, feature::Scale, feature::Colors, feature::Points>;
 
     using SphereList = Add<
         visualization_msgs::Marker::SPHERE_LIST,
-        decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
+        feature::Position, feature::Orientation, feature::Scale, feature::Colors, feature::Points>;
 
     using Points = Add<
         visualization_msgs::Marker::POINTS,
-        decorator::Position, decorator::Orientation, decorator::PointScale, decorator::Colors, decorator::Points>;
+        feature::Position, feature::Orientation, feature::PointScale, feature::Colors, feature::Points>;
 
     using TextViewFacing = Add<
         visualization_msgs::Marker::TEXT_VIEW_FACING,
-        decorator::Position, decorator::TextScale, decorator::Color, decorator::Text>;
+        feature::Position, feature::TextScale, feature::Color, feature::Text>;
 
     using MeshResource = Add<
         visualization_msgs::Marker::MESH_RESOURCE,
-        decorator::Position, decorator::Orientation, decorator::Scale, decorator::Color, decorator::MeshResource>;
+        feature::Position, feature::Orientation, feature::Scale, feature::Color, feature::MeshResource>;
 
     using TriangleList = Add<
         visualization_msgs::Marker::TRIANGLE_LIST,
-        decorator::Position, decorator::Orientation, decorator::Scale, decorator::Colors, decorator::Points>;
+        feature::Position, feature::Orientation, feature::Scale, feature::Colors, feature::Points>;
 
 }
 
