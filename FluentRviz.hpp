@@ -165,7 +165,7 @@ namespace util {
 
 }
 
-namespace param {
+namespace math {
 
     template<size_t D, class Derived>
     struct VectorBase {
@@ -279,7 +279,9 @@ namespace param {
     template<class Derived>
     constexpr Derived rotate(const Vector3 &v, const Rotation &r) noexcept
     { return vector(r * Quaternion(0, v) * inverse(r)); }
+}
 
+namespace color {
     namespace detail {
         template<class T, size_t I>
         struct ColorComponent {
@@ -359,22 +361,22 @@ namespace param {
 namespace traits {
 
     template<class Vector3Like>
-    struct converter<Vector3Like, param::Vector3,
+    struct converter<Vector3Like, math::Vector3,
         std::enable_if_t<
             std::is_same_v<Vector3Like, geometry_msgs::Vector3>
             || std::is_same_v<Vector3Like, geometry_msgs::Point>>> {
 
-        static constexpr param::Vector3 convert(const Vector3Like &vec)
+        static constexpr math::Vector3 convert(const Vector3Like &vec)
         { return { vec.x, vec.y, vec.z }; }
     };
 
     template<class Vector3Like>
-    struct converter<param::Vector3, Vector3Like,
+    struct converter<math::Vector3, Vector3Like,
         std::enable_if_t<
             std::is_same_v<Vector3Like, geometry_msgs::Vector3>
             || std::is_same_v<Vector3Like, geometry_msgs::Point>>> {
 
-        static Vector3Like convert(const param::Vector3 &vec)
+        static Vector3Like convert(const math::Vector3 &vec)
         {
             Vector3Like ret;
             ret.x = vec[0], ret.y = vec[1], ret.z = vec[2];
@@ -384,7 +386,7 @@ namespace traits {
 
     template<class Quaternion>
     struct converter<geometry_msgs::Quaternion, Quaternion,
-        std::enable_if_t<std::is_base_of_v<param::Quaternion, Quaternion>>> {
+        std::enable_if_t<std::is_base_of_v<math::Quaternion, Quaternion>>> {
 
         static constexpr Quaternion convert(const geometry_msgs::Quaternion &quat)
         { return { quat.w, quat.x, quat.y, quat.z }; }
@@ -392,7 +394,7 @@ namespace traits {
 
     template<class Quaternion>
     struct converter<Quaternion, geometry_msgs::Quaternion,
-        std::enable_if_t<std::is_base_of_v<param::Quaternion, Quaternion>>> {
+        std::enable_if_t<std::is_base_of_v<math::Quaternion, Quaternion>>> {
 
         static geometry_msgs::Quaternion convert(const Quaternion &quat)
         {
@@ -406,16 +408,16 @@ namespace traits {
     struct converter<ColorA, ColorB,
         std::enable_if_t<
             !std::is_same_v<ColorA, ColorB>
-            && util::is_convertible_v<ColorA, param::Color>
-            && util::is_convertible_v<param::Color, ColorB>>> {
+            && util::is_convertible_v<ColorA, color::Color>
+            && util::is_convertible_v<color::Color, ColorB>>> {
 
         static constexpr ColorB convert(const ColorA &color)
-        { return converter<param::Color, ColorB>::convert(converter<ColorA, param::Color>::convert(color)); }
+        { return converter<color::Color, ColorB>::convert(converter<ColorA, color::Color>::convert(color)); }
     };
 
     template<>
-    struct converter<std_msgs::ColorRGBA, param::Color> {
-        static constexpr param::Color convert(const std_msgs::ColorRGBA &color) noexcept
+    struct converter<std_msgs::ColorRGBA, color::Color> {
+        static constexpr color::Color convert(const std_msgs::ColorRGBA &color) noexcept
         {
             return {
                 std::clamp(color.r, 0.0f, 1.0f),
@@ -427,8 +429,8 @@ namespace traits {
     };
 
     template<>
-    struct converter<param::Color, std_msgs::ColorRGBA> {
-        static std_msgs::ColorRGBA convert(const param::Color &color) noexcept
+    struct converter<color::Color, std_msgs::ColorRGBA> {
+        static std_msgs::ColorRGBA convert(const color::Color &color) noexcept
         {
             std_msgs::ColorRGBA ret;
             ret.r = std::clamp(color.r, 0.0f, 1.0f);
@@ -440,8 +442,8 @@ namespace traits {
     };
 
     template<>
-    struct converter<param::RGBA, param::Color> {
-        static constexpr param::Color convert(const param::RGBA &color) noexcept
+    struct converter<color::RGBA, color::Color> {
+        static constexpr color::Color convert(const color::RGBA &color) noexcept
         {
             return {
                 std::clamp(color.r / 255.0f, 0.0f, 1.0f),
@@ -453,8 +455,8 @@ namespace traits {
     };
 
     template<>
-    struct converter<param::Color, param::RGBA> {
-        static constexpr param::RGBA convert(const param::Color &color) noexcept
+    struct converter<color::Color, color::RGBA> {
+        static constexpr color::RGBA convert(const color::Color &color) noexcept
         {
             return {
                 std::clamp(color.r, 0.0f, 1.0f) * 255.0f,
@@ -466,8 +468,8 @@ namespace traits {
     };
 
     template<>
-    struct converter<param::HSLA, param::Color> {
-        static constexpr param::Color convert(const param::HSLA &hsla) noexcept
+    struct converter<color::HSLA, color::Color> {
+        static constexpr color::Color convert(const color::HSLA &hsla) noexcept
         {
             const float h = std::remainder(hsla.h / 60.0f + 6.0f, 6.0f);
             const float s = std::clamp(hsla.s / 100.0f, 0.0f, 1.0f);
@@ -488,8 +490,8 @@ namespace traits {
     };
 
     template<>
-    struct converter<param::Color, param::HSLA> {
-        static constexpr param::HSLA convert(const param::Color &color) noexcept
+    struct converter<color::Color, color::HSLA> {
+        static constexpr color::HSLA convert(const color::Color &color) noexcept
         {
             const float r = std::clamp(color.r, 0.0f, 1.0f);
             const float g = std::clamp(color.g, 0.0f, 1.0f);
@@ -517,75 +519,75 @@ namespace traits {
     };
 
     template<>
-    struct accessor<param::Color, 0> {
-        static constexpr float get(const param::Color &c) { return c.r; }
-        static constexpr void set(param::Color &c, float arg) { c.r = arg; }
+    struct accessor<color::Color, 0> {
+        static constexpr float get(const color::Color &c) { return c.r; }
+        static constexpr void set(color::Color &c, float arg) { c.r = arg; }
     };
 
     template<>
-    struct accessor<param::Color, 1> {
-        static constexpr float get(const param::Color &c) { return c.g; }
-        static constexpr void set(param::Color &c, float arg) { c.g = arg; }
+    struct accessor<color::Color, 1> {
+        static constexpr float get(const color::Color &c) { return c.g; }
+        static constexpr void set(color::Color &c, float arg) { c.g = arg; }
     };
 
     template<>
-    struct accessor<param::Color, 2> {
-        static constexpr float get(const param::Color &c) { return c.b; }
-        static constexpr void set(param::Color &c, float arg) { c.b = arg; }
+    struct accessor<color::Color, 2> {
+        static constexpr float get(const color::Color &c) { return c.b; }
+        static constexpr void set(color::Color &c, float arg) { c.b = arg; }
     };
 
     template<>
-    struct accessor<param::Color, 3> {
-        static constexpr float get(const param::Color &c) { return c.a; }
-        static constexpr void set(param::Color &c, float arg) { c.a = arg; }
+    struct accessor<color::Color, 3> {
+        static constexpr float get(const color::Color &c) { return c.a; }
+        static constexpr void set(color::Color &c, float arg) { c.a = arg; }
     };
 
     template<>
-    struct accessor<param::RGBA, 0> {
-        static constexpr float get(const param::RGBA &c) { return c.r; }
-        static constexpr void set(param::RGBA &c, float arg) { c.r = arg; }
+    struct accessor<color::RGBA, 0> {
+        static constexpr float get(const color::RGBA &c) { return c.r; }
+        static constexpr void set(color::RGBA &c, float arg) { c.r = arg; }
     };
 
     template<>
-    struct accessor<param::RGBA, 1> {
-        static constexpr float get(const param::RGBA &c) { return c.g; }
-        static constexpr void set(param::RGBA &c, float arg) { c.g = arg; }
+    struct accessor<color::RGBA, 1> {
+        static constexpr float get(const color::RGBA &c) { return c.g; }
+        static constexpr void set(color::RGBA &c, float arg) { c.g = arg; }
     };
 
     template<>
-    struct accessor<param::RGBA, 2> {
-        static constexpr float get(const param::RGBA &c) { return c.b; }
-        static constexpr void set(param::RGBA &c, float arg) { c.b = arg; }
+    struct accessor<color::RGBA, 2> {
+        static constexpr float get(const color::RGBA &c) { return c.b; }
+        static constexpr void set(color::RGBA &c, float arg) { c.b = arg; }
     };
 
     template<>
-    struct accessor<param::RGBA, 3> {
-        static constexpr float get(const param::RGBA &c) { return c.a; }
-        static constexpr void set(param::RGBA &c, float arg) { c.a = arg; }
+    struct accessor<color::RGBA, 3> {
+        static constexpr float get(const color::RGBA &c) { return c.a; }
+        static constexpr void set(color::RGBA &c, float arg) { c.a = arg; }
     };
 
     template<>
-    struct accessor<param::HSLA, 0> {
-        static constexpr float get(const param::HSLA &c) { return c.h; }
-        static constexpr void set(param::HSLA &c, float arg) { c.h = arg; }
+    struct accessor<color::HSLA, 0> {
+        static constexpr float get(const color::HSLA &c) { return c.h; }
+        static constexpr void set(color::HSLA &c, float arg) { c.h = arg; }
     };
 
     template<>
-    struct accessor<param::HSLA, 1> {
-        static constexpr float get(const param::HSLA &c) { return c.s; }
-        static constexpr void set(param::HSLA &c, float arg) { c.s = arg; }
+    struct accessor<color::HSLA, 1> {
+        static constexpr float get(const color::HSLA &c) { return c.s; }
+        static constexpr void set(color::HSLA &c, float arg) { c.s = arg; }
     };
 
     template<>
-    struct accessor<param::HSLA, 2> {
-        static constexpr float get(const param::HSLA &c) { return c.l; }
-        static constexpr void set(param::HSLA &c, float arg) { c.l = arg; }
+    struct accessor<color::HSLA, 2> {
+        static constexpr float get(const color::HSLA &c) { return c.l; }
+        static constexpr void set(color::HSLA &c, float arg) { c.l = arg; }
     };
 
     template<>
-    struct accessor<param::HSLA, 3> {
-        static constexpr float get(const param::HSLA &c) { return c.a; }
-        static constexpr void set(param::HSLA &c, float arg) { c.a = arg; }
+    struct accessor<color::HSLA, 3> {
+        static constexpr float get(const color::HSLA &c) { return c.a; }
+        static constexpr void set(color::HSLA &c, float arg) { c.a = arg; }
     };
 }
 

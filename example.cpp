@@ -2,32 +2,34 @@
 
 int main(int argc, char **argv)
 {
+    using namespace flrv;
     ros::init(argc, argv, "fluent_rviz_example");
-    flrv::Rviz rviz;
-    rviz << flrv::marker::Cube(0)
-        .position(0, 0, 0)
-        .orientation(flrv::param::Rotation(M_PI / 2))
-        .color(flrv::param::Color::Aqua());
 
-    rviz << flrv::marker::LineList(2)
+    Rviz rviz;
+    rviz << marker::Cube(0)
+        .position(0, 0, 0)
+        .orientation(math::Rotation(M_PI / 2))
+        .color(color::Color::Aqua());
+
+    rviz << marker::LineList(2)
         .color(0, 0, 1)
         .scale(0.05);
 
-    constexpr auto i = flrv::param::Vector3 { 1, 0, 0 };
-    constexpr auto j = flrv::param::Vector3 { 0, 1, 0 };
-    constexpr auto k = flrv::param::Vector3 { 0, 0, 1 };
+    constexpr auto i = math::Vector3 { 1, 0, 0 };
+    constexpr auto j = math::Vector3 { 0, 1, 0 };
+    constexpr auto k = math::Vector3 { 0, 0, 1 };
 
     constexpr auto a = 3 * i + 4 * j + 5 * k;
 
-    auto q = flrv::param::Quaternion { 0, a };
-    auto r = q / flrv::param::norm(q);
+    auto q = math::Quaternion { 0, a };
+    auto r = q / math::norm(q);
 
-    auto vector = flrv::util::convert<geometry_msgs::Vector3>(a);
-    auto point = flrv::util::convert<geometry_msgs::Point>(a);
-    auto quaternion = flrv::util::convert<geometry_msgs::Quaternion>(q);
+    auto vector = util::convert<geometry_msgs::Vector3>(a);
+    auto point = util::convert<geometry_msgs::Point>(a);
+    auto quaternion = util::convert<geometry_msgs::Quaternion>(q);
 
-    auto c = flrv::param::Color { 1, 0, 0 };
-    auto d = c | flrv::param::HSLA::saturation(20) | flrv::param::RGBA::red(100) | flrv::param::Color::alpha(0.4);
+    auto c = color::Color { 1, 0, 0 };
+    auto d = c | color::HSLA::saturation(20) | color::RGBA::red(100) | color::Color::alpha(0.4);
 
     return 0;
 }
