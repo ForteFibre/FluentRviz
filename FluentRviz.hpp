@@ -33,30 +33,30 @@ namespace traits {
 namespace util {
 
     template<class To, class From>
-    constexpr decltype(auto) convert(const From &from) { return traits::converter<From, To>::convert(from); }
+    constexpr decltype(auto) convert(const From &from)
+    { return traits::converter<From, To>::convert(from); }
 
     template<size_t I, class T>
-    constexpr decltype(auto) get(const T &t) { return traits::accessor<T, I>::get(t); }
+    constexpr decltype(auto) get(const T &t)
+    { return traits::accessor<T, I>::get(t); }
 
     template<size_t I, class T, class Arg>
-    constexpr void set(T &t, Arg &&arg) { return traits::accessor<T, I>::set(t, std::forward<Arg>(arg)); };
+    constexpr void set(T &t, Arg &&arg)
+    { return traits::accessor<T, I>::set(t, std::forward<Arg>(arg)); };
 
     template<
         class Derived,
         class Base,
         template<class, class> class ...Features>
-    struct chain {
-        using type = Base;
-    };
+    struct chain { using type = Base; };
 
     template<
         class Derived,
         class Base,
         template<class, class> class Feature,
         template<class, class> class ...Features>
-    struct chain<Derived, Base, Feature, Features...> {
-        using type = typename chain<Derived, Feature<Derived, Base>, Features...>::type;
-    };
+    struct chain<Derived, Base, Feature, Features...>
+        : chain<Derived, Feature<Derived, Base>, Features...> { };
 
     template<
         class Derived,
