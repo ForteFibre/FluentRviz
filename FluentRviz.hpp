@@ -118,6 +118,10 @@ namespace param {
 
         constexpr double norm() const noexcept
         { return std::sqrt(dot(this->derived())); }
+
+        template<class T>
+        operator T() const noexcept
+        { return util::convert<T>(derived()); }
     };
 
     template<size_t D>
@@ -188,6 +192,10 @@ namespace param {
         static constexpr Color Navy(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 0.50, alpha }; }
         static constexpr Color Fuchsia(const float alpha = 1.0f) noexcept { return { 1.00, 0.00, 1.00, alpha }; }
         static constexpr Color Purple(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.50, alpha }; }
+
+        template<class T>
+        operator T() const noexcept
+        { return util::convert<T>(*this); }
     };
 
 }

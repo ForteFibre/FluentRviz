@@ -24,5 +24,9 @@ int main(int argc, char **argv)
     param::Quaternion q = { 0, a };
     param::Quaternion r = q / q.norm();
 
+    geometry_msgs::Quaternion quat = q;
+    geometry_msgs::Vector3 vector = a;
+    geometry_msgs::Point point = a;
+
     return 0;
 }
