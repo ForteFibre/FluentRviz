@@ -271,28 +271,12 @@ namespace traits {
 
 namespace marker {
 
-    namespace feature {
+    namespace attr {
         template<class Derived, class Base>
         struct CRTP : Base {
         protected:
             Derived &derived() noexcept { return static_cast<Derived &>(*this); }
             const Derived &derived() const noexcept { return static_cast<const Derived &>(*this); }
-        };
-
-        template<int32_t Type>
-        struct ActionType {
-            template<class Derived, class Base>
-            struct Feature : Base {
-                Feature() noexcept { this->message.action = Type; }
-            };
-        };
-
-        template<int32_t Type>
-        struct MarkerType {
-            template<class Derived, class Base>
-            struct Feature : Base {
-                Feature() noexcept { this->message.type = Type; }
-            };
         };
 
         template<class Derived, class Base>
@@ -538,32 +522,24 @@ namespace marker {
     }
 
     struct MarkerWrapper {
-        operator const auto &() { return this->message; }
+        operator const visualization_msgs::Marker &() { return this->message; }
 
     protected:
         visualization_msgs::Marker message;
     };
 
-    struct DeleteAll
-        : util::chained<
-            DeleteAll, MarkerWrapper,
-            feature::ActionType<visualization_msgs::Marker::DELETEALL>::Feature
-        > {
-
+    struct DeleteAll : MarkerWrapper {
         DeleteAll(const std::string &ns = "")
         {
+            this->message.action = visualization_msgs::Marker::DELETEALL;
             this->message.ns = ns;
         }
     };
 
-    struct Delete
-        : util::chained<
-            Delete, MarkerWrapper,
-            feature::ActionType<visualization_msgs::Marker::DELETE>::Feature
-        > {
-
+    struct Delete : MarkerWrapper {
         Delete(const int32_t id, const std::string &ns = "")
         {
+            this->message.action = visualization_msgs::Marker::DELETE;
             this->message.id = id;
             this->message.ns = ns;
         }
@@ -572,17 +548,11 @@ namespace marker {
     template<
         int32_t Type,
         template<class, class> class ...Features>
-    struct Add
-        : util::chained<
-            Add<Type, Features...>, MarkerWrapper,
-            feature::CRTP,
-            feature::ActionType<visualization_msgs::Marker::ADD>::Feature,
-            feature::MarkerType<Type>::template Feature,
-            Features...
-        > {
-
+    struct Add : util::chained<Add<Type, Features...>, MarkerWrapper, attr::CRTP, Features...> {
         Add(const int32_t id, const std::string &ns = "")
         {
+            this->message.action = visualization_msgs::Marker::DELETEALL;
+            this->message.type = Type;
             this->message.id = id;
             this->message.ns = ns;
         }
@@ -602,55 +572,55 @@ namespace marker {
 
     using PoseArrow = Add<
         visualization_msgs::Marker::ARROW,
-        feature::Position, feature::Orientation, feature::PoseArrowScale, feature::Color>;
+        attr::Position, attr::Orientation, attr::PoseArrowScale, attr::Color>;
 
     using LineArrow = Add<
         visualization_msgs::Marker::ARROW,
-        feature::VectorArrowScale, feature::Color, feature::LinePoints>;
+        attr::VectorArrowScale, attr::Color, attr::LinePoints>;
 
     using Cube = Add<
         visualization_msgs::Marker::CUBE,
-        feature::Position, feature::Orientation, feature::Scale, feature::Color>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Color>;
 
     using Sphere = Add<
         visualization_msgs::Marker::SPHERE,
-        feature::Position, feature::Orientation, feature::Scale, feature::Color>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Color>;
 
     using Cylinder = Add<
         visualization_msgs::Marker::CYLINDER,
-        feature::Position, feature::Orientation, feature::Scale, feature::Color>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Color>;
 
     using LineStrip = Add<
         visualization_msgs::Marker::LINE_STRIP,
-        feature::Position, feature::Orientation, feature::LineScale, feature::Color, feature::Points>;
+        attr::Position, attr::Orientation, attr::LineScale, attr::Color, attr::Points>;
 
     using LineList = Add<
         visualization_msgs::Marker::LINE_LIST,
-        feature::Position, feature::Orientation, feature::LineScale, feature::Colors, feature::Points>;
+        attr::Position, attr::Orientation, attr::LineScale, attr::Colors, attr::Points>;
 
     using CubeList = Add<
         visualization_msgs::Marker::CUBE_LIST,
-        feature::Position, feature::Orientation, feature::Scale, feature::Colors, feature::Points>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
 
     using SphereList = Add<
         visualization_msgs::Marker::SPHERE_LIST,
-        feature::Position, feature::Orientation, feature::Scale, feature::Colors, feature::Points>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
 
     using Points = Add<
         visualization_msgs::Marker::POINTS,
-        feature::Position, feature::Orientation, feature::PointScale, feature::Colors, feature::Points>;
+        attr::Position, attr::Orientation, attr::PointScale, attr::Colors, attr::Points>;
 
     using TextViewFacing = Add<
         visualization_msgs::Marker::TEXT_VIEW_FACING,
-        feature::Position, feature::TextScale, feature::Color, feature::Text>;
+        attr::Position, attr::TextScale, attr::Color, attr::Text>;
 
     using MeshResource = Add<
         visualization_msgs::Marker::MESH_RESOURCE,
-        feature::Position, feature::Orientation, feature::Scale, feature::Color, feature::MeshResource>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Color, attr::MeshResource>;
 
     using TriangleList = Add<
         visualization_msgs::Marker::TRIANGLE_LIST,
-        feature::Position, feature::Orientation, feature::Scale, feature::Colors, feature::Points>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
 
 }
 
