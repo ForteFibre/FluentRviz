@@ -25,9 +25,6 @@ namespace traits {
         static constexpr const Type &convert(const Type &value) { return value; };
     };
 
-    template<class T, size_t I>
-    struct accessor;
-
 }
 
 namespace util {
@@ -35,14 +32,6 @@ namespace util {
     template<class To, class From>
     constexpr decltype(auto) convert(const From &from)
     { return traits::converter<From, To>::convert(from); }
-
-    template<size_t I, class T>
-    constexpr decltype(auto) get(const T &t)
-    { return traits::accessor<T, I>::get(t); }
-
-    template<size_t I, class T, class Arg>
-    constexpr void set(T &t, Arg &&arg)
-    { return traits::accessor<T, I>::set(t, std::forward<Arg>(arg)); };
 
     template<
         class Derived,
@@ -86,116 +75,34 @@ namespace util {
 
     template<class T>
     constexpr inline bool has_size_v = is_detected_v<size_type, T>;
-
-    template<class Derived, class ...Args>
-    class ExtensionClosure;
-
-    template<class Extension0, class Extension1>
-    class ExtensionChain;
-
-    struct Extension { };
-
-    template<class T>
-    static constexpr bool is_extension_v = std::is_base_of_v<Extension, std::remove_reference_t<T>>;
-
-    template<
-        class Self,
-        class Extension,
-        std::enable_if_t<!is_extension_v<Self> && is_extension_v<Extension>, int> = 0>
-    constexpr decltype(auto) operator|(Self &&self, Extension &&ex)
-    { return std::forward<Extension>(ex)(std::forward<Self>(self)); }
-
-    template<
-        class Extension0,
-        class Extension1,
-        std::enable_if_t<is_extension_v<Extension0> && is_extension_v<Extension1>, int> = 0>
-    constexpr auto operator|(Extension0 &&ex0, Extension1 &&ex1)
-    { return ExtensionChain(std::forward<Extension0>(ex0), std::forward<Extension1>(ex1)); }
-
-    template<class T, class ...Args>
-    using invoke_type = decltype(std::declval<T>()(std::declval<Args>()...));
-
-    template<class T, class ...Args>
-    constexpr inline bool is_invokable_v = is_detected_v<invoke_type, T, Args...>;
-
-    template<class T>
-    struct ExtensionAdapter : T {
-        using T::operator();
-
-        template<
-            class ...Args,
-            std::enable_if_t<!is_invokable_v<T, Args...>, int> = 0>
-        constexpr auto operator()(Args &&...args) const
-        { return ExtensionClosure<T, Args...>(std::forward<Args>(args)...); }
-    };
-
-    template<class T, class ...Args>
-    class ExtensionClosure : Extension {
-        std::tuple<Args...> _args;
-
-    public:
-        constexpr ExtensionClosure(Args ...args)
-            : _args(args...)
-        { }
-
-        template<class Self>
-        constexpr decltype(auto) operator()(Self &&self) const
-        {
-            return std::apply([&self](const auto &...args) -> decltype(auto) {
-                return T{}(std::forward<Self>(self), args...);
-            }, _args);
-        }
-    };
-
-    template<class Extension0, class Extension1>
-    class ExtensionChain : Extension {
-        Extension0 _ex0;
-        Extension1 _ex1;
-
-    public:
-        constexpr ExtensionChain(const Extension0 &ex0, const Extension1 &ex1)
-            : _ex0(ex0)
-            , _ex1(ex1)
-        { }
-
-        template<class Self>
-        constexpr decltype(auto) operator()(Self &&self) const
-        { return std::forward<Self>(self) | _ex0 | _ex1; }
-    };
-
 }
 
-namespace math {
+namespace param {
 
     template<size_t D, class Derived>
     struct VectorBase {
         std::array<double, D> storage;
 
-        constexpr double &operator[](ssize_t i) noexcept { return storage[i]; }
-        constexpr const double &operator[](ssize_t i) const noexcept { return storage[i]; }
+        constexpr Derived &derived() noexcept { return static_cast<Derived &>(*this); }
+        constexpr const Derived &derived() const noexcept { return static_cast<const Derived &>(*this); }
 
-        template<class Op>
-        static constexpr Derived &apply(Derived &lhs, const Derived &rhs, const Op &op = Op()) noexcept
+        constexpr double &operator[](const ssize_t i) noexcept { return storage[i]; }
+        constexpr const double &operator[](const ssize_t i) const noexcept { return storage[i]; }
+
+        template<class Op, class T>
+        constexpr Derived &apply(const T &rhs, const Op &op = Op()) noexcept
         {
-            for (size_t i = 0; i < D; i++) lhs[i] = op(lhs[i], rhs[i]);
-            return lhs;
+            for (size_t i = 0; i < D; i++) {
+                if constexpr (std::is_same_v<T, Derived>) (*this)[i] = op((*this)[i], rhs[i]);
+                else (*this)[i] = op((*this)[i], rhs);
+            }
+            return this->derived();
         }
 
-        template<class Op>
-        static constexpr Derived &apply(Derived &lhs, const double rhs, const Op &op = Op()) noexcept
-        {
-            for (size_t i = 0; i < D; i++) lhs[i] = op(lhs[i], rhs);
-            return lhs;
-        }
-
-        friend constexpr Derived &operator+=(Derived &lhs, const Derived &rhs) noexcept { return apply(lhs, rhs, std::plus<double>()); };
-        friend constexpr Derived &operator+=(Derived &&lhs, const Derived &rhs) noexcept { return apply(lhs, rhs, std::plus<double>()); };
-        friend constexpr Derived &operator-=(Derived &lhs, const Derived &rhs) noexcept { return apply(lhs, rhs, std::minus<double>()); };
-        friend constexpr Derived &operator-=(Derived &&lhs, const Derived &rhs) noexcept { return apply(lhs, rhs, std::minus<double>()); };
-        friend constexpr Derived &operator*=(Derived &lhs, const double &rhs) noexcept { return apply(lhs, rhs, std::multiplies<double>()); };
-        friend constexpr Derived &operator*=(Derived &&lhs, const double &rhs) noexcept { return apply(lhs, rhs, std::multiplies<double>()); };
-        friend constexpr Derived &operator/=(Derived &lhs, const double &rhs) noexcept { return apply(lhs, rhs, std::divides<double>()); };
-        friend constexpr Derived &operator/=(Derived &&lhs, const double &rhs) noexcept { return apply(lhs, rhs, std::divides<double>()); };
+        constexpr Derived &operator+=(const Derived &rhs) noexcept { return apply(rhs, std::plus<double>()); };
+        constexpr Derived &operator-=(const Derived &rhs) noexcept { return apply(rhs, std::minus<double>()); };
+        constexpr Derived &operator*=(const double &rhs) noexcept { return apply(rhs, std::multiplies<double>()); };
+        constexpr Derived &operator/=(const double &rhs) noexcept { return apply(rhs, std::divides<double>()); };
 
         friend constexpr Derived operator+(const Derived &lhs, const Derived &rhs) noexcept { return Derived(lhs) += rhs; }
         friend constexpr Derived operator-(const Derived &lhs, const Derived &rhs) noexcept { return Derived(lhs) -= rhs; }
@@ -205,102 +112,58 @@ namespace math {
 
         friend constexpr Derived operator+(const Derived &s) noexcept { return s; }
         friend constexpr Derived operator-(const Derived &s) noexcept { return s * -1; }
+
+        constexpr double dot(const Derived &rhs) const noexcept
+        { return std::inner_product(storage.begin(), storage.end(), rhs.storage.begin(), 0.0); }
+
+        constexpr double norm() const noexcept
+        { return std::sqrt(dot(this->derived())); }
     };
 
-    template<size_t D, class Derived>
-    constexpr double dot(const VectorBase<D, Derived> &lhs, const VectorBase<D, Derived> &rhs) noexcept
-    { return std::inner_product(lhs.storage.begin(), lhs.storage.end(), rhs.storage.begin(), 0.0); }
-
-    template<size_t D, class Derived>
-    constexpr double norm(const VectorBase<D, Derived> &v) noexcept
-    { return std::sqrt(dot(v, v)); }
-
     template<size_t D>
-    struct Vector : VectorBase<D, Vector<D>> { };
+    struct Vector : public VectorBase<D, Vector<D>> { };
+
+    template<>
+    struct Vector<3> : public VectorBase<3, Vector<3>> {
+        constexpr Vector<3> cross(const Vector<3> &rhs) const noexcept
+        {
+            auto [ lx, ly, lz ] = this->storage;
+            auto [ rx, ry, rz ] = rhs.storage;
+            return { ly * rz - lz * ry, lz * rx - lx * rz, lx * ry - ly * rx };
+        }
+
+        static constexpr Vector<3> UnitX() noexcept { return { 1, 0, 0 }; }
+        static constexpr Vector<3> UnitY() noexcept { return { 0, 1, 0 }; }
+        static constexpr Vector<3> UnitZ() noexcept { return { 0, 0, 1 }; }
+    };
 
     using Vector3 = Vector<3>;
 
-    constexpr Vector3 cross(const Vector3 &lhs, const Vector3 &rhs) noexcept
-    {
-        auto [ lx, ly, lz ] = lhs.storage;
-        auto [ rx, ry, rz ] = rhs.storage;
-        return { ly * rz - lz * ry, lz * rx - lx * rz, lx * ry - ly * rx };
-    }
-
     struct Quaternion : public VectorBase<4, Quaternion> {
         constexpr Quaternion(const double w, const double x, const double y, const double z) noexcept
-            : VectorBase { w, x, y, z }
-        { }
+            : VectorBase { w, x, y, z } { }
 
         constexpr Quaternion(const double scalar, const Vector3 &vector) noexcept
-            : Quaternion { scalar, vector[0], vector[1], vector[2] }
-        { }
+            : VectorBase { scalar, vector[0], vector[1], vector[2] } { }
+
+        constexpr double scalar() const noexcept { return (*this)[0]; }
+        constexpr Vector3 vector() const noexcept { return { (*this)[1], (*this)[2], (*this)[3] }; }
+        constexpr Quaternion conjugate() const noexcept { return { scalar(), -vector() }; }
+        constexpr Quaternion inverse() const noexcept { return conjugate() / norm(); }
+
+        constexpr Quaternion operator*(const Quaternion &rhs) const noexcept
+        {
+            double lsc = scalar(), rsc = rhs.scalar();
+            Vector3 lvec = vector(), rvec = rhs.vector();
+            return { lsc * rsc - lvec.dot(rvec), lsc * rvec + rsc * lvec + lvec.cross(rvec) };
+        }
+
+        constexpr Vector3 operator*(const Vector3 &rhs) const noexcept
+        { return ((*this) * Quaternion(0, rhs) * inverse()).vector(); }
+
+        static constexpr Quaternion AngleAxis(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
+        { return Quaternion(std::cos(angle / 2), axis * std::sin(angle / 2)); }
     };
-
-    constexpr double scalar(const Quaternion &q) noexcept { return q[0]; }
-    constexpr Vector3 vector(const Quaternion &q) noexcept { return { q[1], q[2], q[3] }; }
-    constexpr Quaternion conjugate(const Quaternion &q) noexcept { return { scalar(q), -vector(q) }; }
-    constexpr Quaternion inverse(const Quaternion &q) noexcept { return conjugate(q) / norm(q); }
-
-    constexpr Quaternion operator*(const Quaternion &lhs, const Quaternion &rhs) noexcept
-    {
-        double lsc = scalar(lhs), rsc = scalar(rhs);
-        Vector3 lvec = vector(lhs), rvec = vector(rhs);
-        return { lsc * rsc - dot(lvec, rvec), lsc * rvec + rsc * lvec + cross(lvec, rvec) };
-    }
-
-    struct Axis : public Vector3 {
-        constexpr Axis(const Vector3 &v)
-            : Vector3 { v / norm(v) }
-        { }
-
-        constexpr Axis(const double x, const double y, const double z)
-            : Axis { { x, y, z } }
-        { }
-
-        static constexpr Axis X() { return { 1, 0, 0 }; }
-        static constexpr Axis Y() { return { 0, 1, 0 }; }
-        static constexpr Axis Z() { return { 0, 0, 1 }; }
-    };
-
-    struct Rotation : public Quaternion {
-        constexpr Rotation(const double angle, const Axis &axis = Axis::Z()) noexcept
-            : Quaternion { std::cos(angle / 2), (axis / norm(axis)) * std::sin(angle / 2) }
-        { }
-
-        constexpr Rotation(const Quaternion &q) noexcept
-            : Quaternion { q / norm(q) }
-        { }
-    };
-
-    constexpr double angle(const Rotation &r) noexcept { return std::acos(scalar(r)); }
-    constexpr Axis axis(const Rotation &r) noexcept { return vector(r) / std::sin(angle(r) / 2); }
-
-    template<class Derived>
-    constexpr Derived rotate(const Vector3 &v, const Rotation &r) noexcept
-    { return vector(r * Quaternion(0, v) * inverse(r)); }
-}
-
-namespace color {
-    namespace detail {
-        template<class T, size_t I>
-        struct ColorComponent {
-            template<class S, std::enable_if_t<util::is_convertible_v<S, T>, int> = 0>
-            constexpr S operator()(const S &s, const double arg) const
-            {
-                T tmp = util::convert<T>(s);
-                util::set<I>(tmp, arg);
-                return util::convert<S>(tmp);
-            }
-
-            template<class S, std::enable_if_t<util::is_convertible_v<S, T>, int> = 0>
-            constexpr auto operator()(const S &s) const
-            {
-                T tmp = util::convert<T>(s);
-                return util::get<I>(tmp);
-            }
-        };
-    }
 
     struct Color {
         float r, g, b, a;
@@ -309,94 +172,68 @@ namespace color {
             : r(red), g(green), b(blue), a(alpha)
         { }
 
-        static constexpr Color White()   noexcept { return { 1.00, 1.00, 1.00 }; }
-        static constexpr Color Silver()  noexcept { return { 0.75, 0.75, 0.75 }; }
-        static constexpr Color Gray()    noexcept { return { 0.50, 0.50, 0.50 }; }
-        static constexpr Color Black()   noexcept { return { 0.00, 0.00, 0.00 }; }
-        static constexpr Color Red()     noexcept { return { 1.00, 0.00, 0.00 }; }
-        static constexpr Color Maroon()  noexcept { return { 0.50, 0.00, 0.00 }; }
-        static constexpr Color Yellow()  noexcept { return { 1.00, 1.00, 0.00 }; }
-        static constexpr Color Olive()   noexcept { return { 0.50, 0.50, 0.00 }; }
-        static constexpr Color Lime()    noexcept { return { 0.00, 1.00, 0.00 }; }
-        static constexpr Color Green()   noexcept { return { 0.00, 0.50, 0.00 }; }
-        static constexpr Color Aqua()    noexcept { return { 0.00, 1.00, 1.00 }; }
-        static constexpr Color Teal()    noexcept { return { 0.00, 0.50, 0.50 }; }
-        static constexpr Color Blue()    noexcept { return { 0.00, 0.00, 1.00 }; }
-        static constexpr Color Navy()    noexcept { return { 0.00, 0.00, 0.50 }; }
-        static constexpr Color Fuchsia() noexcept { return { 1.00, 0.00, 1.00 }; }
-        static constexpr Color Purple()  noexcept { return { 0.50, 0.00, 0.50 }; }
-
-        static constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<Color, 0>>();
-        static constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<Color, 1>>();
-        static constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<Color, 2>>();
-        static constexpr inline auto alpha = util::ExtensionAdapter<detail::ColorComponent<Color, 3>>();
-    };
-
-    struct RGBA {
-        float r, g, b, a;
-
-        constexpr RGBA(const float red, const float green, const float blue, const float alpha = 1.0f)
-            : r(red), g(green), b(blue), a(alpha)
-        { }
-
-        static constexpr inline auto red   = util::ExtensionAdapter<detail::ColorComponent<RGBA, 0>>();
-        static constexpr inline auto blue  = util::ExtensionAdapter<detail::ColorComponent<RGBA, 1>>();
-        static constexpr inline auto green = util::ExtensionAdapter<detail::ColorComponent<RGBA, 2>>();
-    };
-
-    struct HSLA {
-        float h, s, l, a;
-
-        constexpr HSLA(const float hue, const float saturation = 100.0f, const float lightness = 50.0f, const float alpha = 1.0f)
-            : h(hue), s(saturation), l(lightness), a(alpha)
-        { }
-
-        static constexpr inline auto hue        = util::ExtensionAdapter<detail::ColorComponent<HSLA, 0>>();
-        static constexpr inline auto saturation = util::ExtensionAdapter<detail::ColorComponent<HSLA, 1>>();
-        static constexpr inline auto lightness  = util::ExtensionAdapter<detail::ColorComponent<HSLA, 2>>();
+        static constexpr Color White(const float alpha = 1.0f)   noexcept { return { 1.00, 1.00, 1.00, alpha }; }
+        static constexpr Color Silver(const float alpha = 1.0f)  noexcept { return { 0.75, 0.75, 0.75, alpha }; }
+        static constexpr Color Gray(const float alpha = 1.0f)    noexcept { return { 0.50, 0.50, 0.50, alpha }; }
+        static constexpr Color Black(const float alpha = 1.0f)   noexcept { return { 0.00, 0.00, 0.00, alpha }; }
+        static constexpr Color Red(const float alpha = 1.0f)     noexcept { return { 1.00, 0.00, 0.00, alpha }; }
+        static constexpr Color Maroon(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.00, alpha }; }
+        static constexpr Color Yellow(const float alpha = 1.0f)  noexcept { return { 1.00, 1.00, 0.00, alpha }; }
+        static constexpr Color Olive(const float alpha = 1.0f)   noexcept { return { 0.50, 0.50, 0.00, alpha }; }
+        static constexpr Color Lime(const float alpha = 1.0f)    noexcept { return { 0.00, 1.00, 0.00, alpha }; }
+        static constexpr Color Green(const float alpha = 1.0f)   noexcept { return { 0.00, 0.50, 0.00, alpha }; }
+        static constexpr Color Aqua(const float alpha = 1.0f)    noexcept { return { 0.00, 1.00, 1.00, alpha }; }
+        static constexpr Color Teal(const float alpha = 1.0f)    noexcept { return { 0.00, 0.50, 0.50, alpha }; }
+        static constexpr Color Blue(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 1.00, alpha }; }
+        static constexpr Color Navy(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 0.50, alpha }; }
+        static constexpr Color Fuchsia(const float alpha = 1.0f) noexcept { return { 1.00, 0.00, 1.00, alpha }; }
+        static constexpr Color Purple(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.50, alpha }; }
     };
 
 }
 
 namespace traits {
-
-    template<class Vector3Like>
-    struct converter<Vector3Like, math::Vector3,
-        std::enable_if_t<
-            std::is_same_v<Vector3Like, geometry_msgs::Vector3>
-            || std::is_same_v<Vector3Like, geometry_msgs::Point>>> {
-
-        static constexpr math::Vector3 convert(const Vector3Like &vec)
+    template<>
+    struct converter<geometry_msgs::Vector3, param::Vector3> {
+        static constexpr param::Vector3 convert(const geometry_msgs::Vector3 &vec)
         { return { vec.x, vec.y, vec.z }; }
     };
 
-    template<class Vector3Like>
-    struct converter<math::Vector3, Vector3Like,
-        std::enable_if_t<
-            std::is_same_v<Vector3Like, geometry_msgs::Vector3>
-            || std::is_same_v<Vector3Like, geometry_msgs::Point>>> {
-
-        static Vector3Like convert(const math::Vector3 &vec)
+    template<>
+    struct converter<param::Vector3, geometry_msgs::Vector3> {
+        static geometry_msgs::Vector3 convert(const param::Vector3 &vec)
         {
-            Vector3Like ret;
+            geometry_msgs::Vector3 ret;
             ret.x = vec[0], ret.y = vec[1], ret.z = vec[2];
             return ret;
         }
     };
 
-    template<class Quaternion>
-    struct converter<geometry_msgs::Quaternion, Quaternion,
-        std::enable_if_t<std::is_base_of_v<math::Quaternion, Quaternion>>> {
+    template<>
+    struct converter<geometry_msgs::Point, param::Vector3> {
+        static constexpr param::Vector3 convert(const geometry_msgs::Point &vec)
+        { return { vec.x, vec.y, vec.z }; }
+    };
 
-        static constexpr Quaternion convert(const geometry_msgs::Quaternion &quat)
+    template<>
+    struct converter<param::Vector3, geometry_msgs::Point> {
+        static geometry_msgs::Point convert(const param::Vector3 &vec)
+        {
+            geometry_msgs::Point ret;
+            ret.x = vec[0], ret.y = vec[1], ret.z = vec[2];
+            return ret;
+        }
+    };
+
+    template<>
+    struct converter<geometry_msgs::Quaternion, param::Quaternion> {
+        static constexpr param::Quaternion convert(const geometry_msgs::Quaternion &quat)
         { return { quat.w, quat.x, quat.y, quat.z }; }
     };
 
-    template<class Quaternion>
-    struct converter<Quaternion, geometry_msgs::Quaternion,
-        std::enable_if_t<std::is_base_of_v<math::Quaternion, Quaternion>>> {
-
-        static geometry_msgs::Quaternion convert(const Quaternion &quat)
+    template<>
+    struct converter<param::Quaternion, geometry_msgs::Quaternion> {
+        static geometry_msgs::Quaternion convert(const param::Quaternion &quat)
         {
             geometry_msgs::Quaternion ret;
             ret.w = quat[0], ret.x = quat[1], ret.y = quat[2], ret.z = quat[3];
@@ -404,20 +241,9 @@ namespace traits {
         }
     };
 
-    template<class ColorA, class ColorB>
-    struct converter<ColorA, ColorB,
-        std::enable_if_t<
-            !std::is_same_v<ColorA, ColorB>
-            && util::is_convertible_v<ColorA, color::Color>
-            && util::is_convertible_v<color::Color, ColorB>>> {
-
-        static constexpr ColorB convert(const ColorA &color)
-        { return converter<color::Color, ColorB>::convert(converter<ColorA, color::Color>::convert(color)); }
-    };
-
     template<>
-    struct converter<std_msgs::ColorRGBA, color::Color> {
-        static constexpr color::Color convert(const std_msgs::ColorRGBA &color) noexcept
+    struct converter<std_msgs::ColorRGBA, param::Color> {
+        static constexpr param::Color convert(const std_msgs::ColorRGBA &color) noexcept
         {
             return {
                 std::clamp(color.r, 0.0f, 1.0f),
@@ -429,8 +255,8 @@ namespace traits {
     };
 
     template<>
-    struct converter<color::Color, std_msgs::ColorRGBA> {
-        static std_msgs::ColorRGBA convert(const color::Color &color) noexcept
+    struct converter<param::Color, std_msgs::ColorRGBA> {
+        static std_msgs::ColorRGBA convert(const param::Color &color) noexcept
         {
             std_msgs::ColorRGBA ret;
             ret.r = std::clamp(color.r, 0.0f, 1.0f);
@@ -441,154 +267,6 @@ namespace traits {
         }
     };
 
-    template<>
-    struct converter<color::RGBA, color::Color> {
-        static constexpr color::Color convert(const color::RGBA &color) noexcept
-        {
-            return {
-                std::clamp(color.r / 255.0f, 0.0f, 1.0f),
-                std::clamp(color.g / 255.0f, 0.0f, 1.0f),
-                std::clamp(color.b / 255.0f, 0.0f, 1.0f),
-                std::clamp(color.a, 0.0f, 1.0f),
-            };
-        }
-    };
-
-    template<>
-    struct converter<color::Color, color::RGBA> {
-        static constexpr color::RGBA convert(const color::Color &color) noexcept
-        {
-            return {
-                std::clamp(color.r, 0.0f, 1.0f) * 255.0f,
-                std::clamp(color.g, 0.0f, 1.0f) * 255.0f,
-                std::clamp(color.b, 0.0f, 1.0f) * 255.0f,
-                std::clamp(color.a, 0.0f, 1.0f),
-            };
-        }
-    };
-
-    template<>
-    struct converter<color::HSLA, color::Color> {
-        static constexpr color::Color convert(const color::HSLA &hsla) noexcept
-        {
-            const float h = std::remainder(hsla.h / 60.0f + 6.0f, 6.0f);
-            const float s = std::clamp(hsla.s / 100.0f, 0.0f, 1.0f);
-            const float l = std::clamp(hsla.l / 100.0f, 0.0f, 1.0f);
-            const float a = std::clamp(hsla.a, 0.0f, 1.0f);
-
-            const float c = (1.0f - std::abs(2.0f * l - 1.0f)) * s;
-            const float x = c * (1.0f - std::abs(std::remainder(h, 2.0f) - 1.0f));
-            const float m = l - c / 2.0f;
-
-            if (h < 1.0f) return { m + c, m + x, m     };
-            if (h < 2.0f) return { m + x, m + c, m     };
-            if (h < 3.0f) return { m    , m + c, m + x };
-            if (h < 4.0f) return { m    , m + x, m + c };
-            if (h < 5.0f) return { m + x, m    , m + c };
-                          return { m + c, m    , m + x };
-        }
-    };
-
-    template<>
-    struct converter<color::Color, color::HSLA> {
-        static constexpr color::HSLA convert(const color::Color &color) noexcept
-        {
-            const float r = std::clamp(color.r, 0.0f, 1.0f);
-            const float g = std::clamp(color.g, 0.0f, 1.0f);
-            const float b = std::clamp(color.b, 0.0f, 1.0f);
-            const float a = std::clamp(color.a, 0.0f, 1.0f);
-
-            const float max = std::max({ r, g, b });
-            const float min = std::min({ r, g, b });
-            const float c = max - min;
-
-            const float h = [&] {
-                if (c == 0.0f) return 0.0f;
-                if (max == g) return 2.0f + (b - r) / c;
-                if (max == b) return 4.0f + (r - g) / c;
-                return std::remainder(6.0f + (g - b) / c, 6.0f);
-            }();
-            const float l = ((max + min) / 2.0f);
-            const float s = [&] {
-                if (l == 0.0f || l == 1.0f) return 0.0f;
-                return c / (1.0f - std::abs(2.0f * l - 1.0f));
-            }();
-
-            return { h * 60.0f, s * 100.0f, l * 100.0f, a };
-        }
-    };
-
-    template<>
-    struct accessor<color::Color, 0> {
-        static constexpr float get(const color::Color &c) { return c.r; }
-        static constexpr void set(color::Color &c, float arg) { c.r = arg; }
-    };
-
-    template<>
-    struct accessor<color::Color, 1> {
-        static constexpr float get(const color::Color &c) { return c.g; }
-        static constexpr void set(color::Color &c, float arg) { c.g = arg; }
-    };
-
-    template<>
-    struct accessor<color::Color, 2> {
-        static constexpr float get(const color::Color &c) { return c.b; }
-        static constexpr void set(color::Color &c, float arg) { c.b = arg; }
-    };
-
-    template<>
-    struct accessor<color::Color, 3> {
-        static constexpr float get(const color::Color &c) { return c.a; }
-        static constexpr void set(color::Color &c, float arg) { c.a = arg; }
-    };
-
-    template<>
-    struct accessor<color::RGBA, 0> {
-        static constexpr float get(const color::RGBA &c) { return c.r; }
-        static constexpr void set(color::RGBA &c, float arg) { c.r = arg; }
-    };
-
-    template<>
-    struct accessor<color::RGBA, 1> {
-        static constexpr float get(const color::RGBA &c) { return c.g; }
-        static constexpr void set(color::RGBA &c, float arg) { c.g = arg; }
-    };
-
-    template<>
-    struct accessor<color::RGBA, 2> {
-        static constexpr float get(const color::RGBA &c) { return c.b; }
-        static constexpr void set(color::RGBA &c, float arg) { c.b = arg; }
-    };
-
-    template<>
-    struct accessor<color::RGBA, 3> {
-        static constexpr float get(const color::RGBA &c) { return c.a; }
-        static constexpr void set(color::RGBA &c, float arg) { c.a = arg; }
-    };
-
-    template<>
-    struct accessor<color::HSLA, 0> {
-        static constexpr float get(const color::HSLA &c) { return c.h; }
-        static constexpr void set(color::HSLA &c, float arg) { c.h = arg; }
-    };
-
-    template<>
-    struct accessor<color::HSLA, 1> {
-        static constexpr float get(const color::HSLA &c) { return c.s; }
-        static constexpr void set(color::HSLA &c, float arg) { c.s = arg; }
-    };
-
-    template<>
-    struct accessor<color::HSLA, 2> {
-        static constexpr float get(const color::HSLA &c) { return c.l; }
-        static constexpr void set(color::HSLA &c, float arg) { c.l = arg; }
-    };
-
-    template<>
-    struct accessor<color::HSLA, 3> {
-        static constexpr float get(const color::HSLA &c) { return c.a; }
-        static constexpr void set(color::HSLA &c, float arg) { c.a = arg; }
-    };
 }
 
 namespace marker {
