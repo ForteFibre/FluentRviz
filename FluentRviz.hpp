@@ -123,6 +123,27 @@ namespace param {
     -> std::enable_if_t<is_accessible_v<T>, detail::const_ref_type<T, I>>
     { return detail::access<T>::template ref<I>(t); }
 
+    namespace detail {
+        template<class T, class Enabler = void>
+        struct construct;
+
+        template<class T, class Seq>
+        struct construct_accessible;
+
+        template<class T, size_t ...Is>
+        struct construct_accessible<T, std::index_sequence<Is...>> {
+            static T from(detail::const_ref_type<T, Is> ...args) {
+                T ret;
+                ((ref<Is>(ret) = args), ...);
+                return ret;
+            }
+        };
+
+        template<class T>
+        struct construct<T, std::enable_if_t<is_accessible_v<T> && std::is_default_constructible_v<T>>>
+            : construct_accessible<T, std::make_index_sequence<detail::access<T>::size>> { };
+    }
+
     struct Vector3 : geometry_msgs::Vector3 {
         Vector3() = default;
 
@@ -133,24 +154,13 @@ namespace param {
             : geometry_msgs::Vector3(vector3) { }
 
         template<class Return = Vector3>
-        static Return From(
-            const detail::elem_type<Return, 0> t0,
-            const detail::elem_type<Return, 1> t1,
-            const detail::elem_type<Return, 2> t2) noexcept
-        {
-            Return ret;
-            ref<0>(ret) = t0, ref<1>(ret) = t1, ref<2>(ret) = t2;
-            return ret;
-        }
+        static Vector3 UnitX() noexcept { return detail::construct<Return>::from(1, 0, 0); }
 
         template<class Return = Vector3>
-        static Vector3 UnitX() noexcept { return From<Return>(1, 0, 0); }
+        static Vector3 UnitY() noexcept { return detail::construct<Return>::from(0, 1, 0); }
 
         template<class Return = Vector3>
-        static Vector3 UnitY() noexcept { return From<Return>(0, 1, 0); }
-
-        template<class Return = Vector3>
-        static Vector3 UnitZ() noexcept { return From<Return>(0, 0, 1); }
+        static Vector3 UnitZ() noexcept { return detail::construct<Return>::from(0, 0, 1); }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
@@ -186,17 +196,6 @@ namespace param {
 
         Point(const geometry_msgs::Point &point)
             : geometry_msgs::Point(point) { }
-
-        template<class Return = Point>
-        static Return From(
-            const detail::elem_type<Return, 0> t0,
-            const detail::elem_type<Return, 1> t1,
-            const detail::elem_type<Return, 2> t2) noexcept
-        {
-            Return ret;
-            ref<0>(ret) = t0, ref<1>(ret) = t1, ref<2>(ret) = t2;
-            return ret;
-        }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
@@ -333,7 +332,7 @@ namespace param {
     auto cross(const S &lhs, const T &rhs) noexcept
     -> std::enable_if_t<is_vec3_compat_v<S> && is_vec3_compat_v<T>, S>
     {
-        return Vector3::From<S>(
+        return detail::construct<S>::from(
             ref<1>(lhs) * ref<2>(rhs) - ref<2>(lhs) * ref<1>(rhs),
             ref<2>(lhs) * ref<0>(rhs) - ref<0>(lhs) * ref<2>(rhs),
             ref<0>(lhs) * ref<1>(rhs) - ref<1>(lhs) * ref<0>(rhs));
@@ -360,22 +359,10 @@ namespace param {
         Quaternion(const geometry_msgs::Quaternion &quaternion) noexcept
             : geometry_msgs::Quaternion(quaternion) { }
 
-        template<class Return = Quaternion>
-        static Return From(
-            const detail::elem_type<Return, 0> t0,
-            const detail::elem_type<Return, 1> t1,
-            const detail::elem_type<Return, 2> t2,
-            const detail::elem_type<Return, 3> t3) noexcept
-        {
-            Return ret;
-            ref<0>(ret) = t0, ref<1>(ret) = t1, ref<2>(ret) = t2, ref<3>(ret) = t3;
-            return ret;
-        }
-
         template<class Return = Quaternion, class T>
         static auto ScalarVector(const double scalar, const T &vector) noexcept
         -> std::enable_if_t<is_vec3_compat_v<T>, Return>
-        { return From<Return>(scalar, ref<0>(vector), ref<1>(vector), ref<2>(vector)); }
+        { return detail::construct<Return>::from(scalar, ref<0>(vector), ref<1>(vector), ref<2>(vector)); }
 
         template<class Return = Quaternion, class T = Vector3>
         static auto AngleAxis(const double angle, const T &axis = Vector3::UnitZ<T>()) noexcept
@@ -418,7 +405,7 @@ namespace param {
     template<class Return = Vector3, class T>
     auto vector(const T &t) noexcept
     -> std::enable_if_t<is_quat_compat_v<T>, Return>
-    { return Vector3::From<Return>(ref<1>(t), ref<2>(t), ref<3>(t)); }
+    { return detail::construct<Return>::from(ref<1>(t), ref<2>(t), ref<3>(t)); }
 
     template<class T>
     auto conjugate(const T &t) noexcept
@@ -467,64 +454,52 @@ namespace param {
         { this->r = r, this->g = g, this->b = b, this->a = a; }
 
         template<class Return = Color>
-        static Color From(
-            detail::elem_type<Return, 0> t0,
-            detail::elem_type<Return, 1> t1,
-            detail::elem_type<Return, 2> t2,
-            detail::elem_type<Return, 3> t3) noexcept
-        {
-            Return ret;
-            ref<0>(ret) = t0, ref<1>(ret) = t1, ref<2>(ret) = t2, ref<3>(ret) = t3;
-            return ret;
-        }
+        static Color White(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(1.00, 1.00, 1.00, alpha); }
 
         template<class Return = Color>
-        static Color White(const float alpha = 1.0f) noexcept { return From<Return>(1.00, 1.00, 1.00, alpha); }
+        static Color Silver(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.75, 0.75, 0.75, alpha); }
 
         template<class Return = Color>
-        static Color Silver(const float alpha = 1.0f) noexcept { return From<Return>(0.75, 0.75, 0.75, alpha); }
+        static Color Gray(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.50, 0.50, 0.50, alpha); }
 
         template<class Return = Color>
-        static Color Gray(const float alpha = 1.0f) noexcept { return From<Return>(0.50, 0.50, 0.50, alpha); }
+        static Color Black(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Black(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.00, 0.00, alpha); }
+        static Color Red(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(1.00, 0.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Red(const float alpha = 1.0f) noexcept { return From<Return>(1.00, 0.00, 0.00, alpha); }
+        static Color Maroon(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.50, 0.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Maroon(const float alpha = 1.0f) noexcept { return From<Return>(0.50, 0.00, 0.00, alpha); }
+        static Color Yellow(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(1.00, 1.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Yellow(const float alpha = 1.0f) noexcept { return From<Return>(1.00, 1.00, 0.00, alpha); }
+        static Color Olive(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.50, 0.50, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Olive(const float alpha = 1.0f) noexcept { return From<Return>(0.50, 0.50, 0.00, alpha); }
+        static Color Lime(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 1.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Lime(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 1.00, 0.00, alpha); }
+        static Color Green(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.50, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Green(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.50, 0.00, alpha); }
+        static Color Aqua(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 1.00, 1.00, alpha); }
 
         template<class Return = Color>
-        static Color Aqua(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 1.00, 1.00, alpha); }
+        static Color Teal(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.50, 0.50, alpha); }
 
         template<class Return = Color>
-        static Color Teal(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.50, 0.50, alpha); }
+        static Color Blue(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.00, 1.00, alpha); }
 
         template<class Return = Color>
-        static Color Blue(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.00, 1.00, alpha); }
+        static Color Navy(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.00, 0.50, alpha); }
 
         template<class Return = Color>
-        static Color Navy(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.00, 0.50, alpha); }
+        static Color Fuchsia(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(1.00, 0.00, 1.00, alpha); }
 
         template<class Return = Color>
-        static Color Fuchsia(const float alpha = 1.0f) noexcept { return From<Return>(1.00, 0.00, 1.00, alpha); }
-
-        template<class Return = Color>
-        static Color Purple(const float alpha = 1.0f) noexcept { return From<Return>(0.50, 0.00, 0.50, alpha); }
+        static Color Purple(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.50, 0.00, 0.50, alpha); }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
@@ -533,7 +508,7 @@ namespace param {
     namespace detail {
         template<class T>
         struct access<T, std::enable_if_t<std::is_base_of_v<std_msgs::ColorRGBA, T>>> {
-            static constexpr size_t size = 3;
+            static constexpr size_t size = 4;
 
             template<size_t I>
             static float &ref(std_msgs::ColorRGBA &t) noexcept
