@@ -330,10 +330,17 @@ namespace param {
         Quaternion(const geometry_msgs::Quaternion &quaternion) noexcept
             : geometry_msgs::Quaternion(quaternion) { }
 
-        template<class T>
+        template<class S = Quaternion, class T>
         static auto ScalarVector(const double scalar, const T &vector) noexcept
-        -> std::enable_if_t<is_vec3_compat_v<T>, Quaternion>
-        { return { scalar, ref<0>(vector), ref<1>(vector), ref<2>(vector) }; }
+        -> std::enable_if_t<is_vec3_compat_v<T>, S>
+        {
+            S ret;
+            ref<0>(ret) = scalar;
+            ref<1>(ret) = ref<0>(vector);
+            ref<2>(ret) = ref<1>(vector);
+            ref<3>(ret) = ref<2>(vector);
+            return ret;
+        }
 
         template<class T = Vector3>
         static auto AngleAxis(const double angle, const T &axis = Vector3::UnitZ()) noexcept
@@ -387,7 +394,7 @@ namespace param {
     template<class T>
     auto conjugate(const T &t) noexcept
     -> std::enable_if_t<is_quat_compat_v<T>, T>
-    { return Quaternion::ScalarVector(scalar(t), -vector(t)); }
+    { return Quaternion::ScalarVector<T>(scalar(t), -vector(t)); }
 
     template<class T>
     auto inverse(const T &t) noexcept
@@ -398,7 +405,7 @@ namespace param {
     auto operator*(const S &lhs, const T &rhs) noexcept
     -> std::enable_if_t<is_quat_compat_v<S> && is_quat_compat_v<T>, S>
     {
-        return Quaternion::ScalarVector(
+        return Quaternion::ScalarVector<T>(
             scalar(lhs) * scalar(rhs) - dot(vector(lhs), vector(rhs)),
             scalar(lhs) * vector(rhs) + scalar(rhs) * vector(lhs) + cross(vector(lhs), vector(rhs))
         );
