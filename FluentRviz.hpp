@@ -461,25 +461,70 @@ namespace param {
     }
 
     struct Color : std_msgs::ColorRGBA {
+        Color() = default;
+
         Color(const float r, const float g, const float b, const float a = 1.0f) noexcept
         { this->r = r, this->g = g, this->b = b, this->a = a; }
 
-        static Color White(const float alpha = 1.0f)   noexcept { return { 1.00, 1.00, 1.00, alpha }; }
-        static Color Silver(const float alpha = 1.0f)  noexcept { return { 0.75, 0.75, 0.75, alpha }; }
-        static Color Gray(const float alpha = 1.0f)    noexcept { return { 0.50, 0.50, 0.50, alpha }; }
-        static Color Black(const float alpha = 1.0f)   noexcept { return { 0.00, 0.00, 0.00, alpha }; }
-        static Color Red(const float alpha = 1.0f)     noexcept { return { 1.00, 0.00, 0.00, alpha }; }
-        static Color Maroon(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.00, alpha }; }
-        static Color Yellow(const float alpha = 1.0f)  noexcept { return { 1.00, 1.00, 0.00, alpha }; }
-        static Color Olive(const float alpha = 1.0f)   noexcept { return { 0.50, 0.50, 0.00, alpha }; }
-        static Color Lime(const float alpha = 1.0f)    noexcept { return { 0.00, 1.00, 0.00, alpha }; }
-        static Color Green(const float alpha = 1.0f)   noexcept { return { 0.00, 0.50, 0.00, alpha }; }
-        static Color Aqua(const float alpha = 1.0f)    noexcept { return { 0.00, 1.00, 1.00, alpha }; }
-        static Color Teal(const float alpha = 1.0f)    noexcept { return { 0.00, 0.50, 0.50, alpha }; }
-        static Color Blue(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 1.00, alpha }; }
-        static Color Navy(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 0.50, alpha }; }
-        static Color Fuchsia(const float alpha = 1.0f) noexcept { return { 1.00, 0.00, 1.00, alpha }; }
-        static Color Purple(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.50, alpha }; }
+        template<class Return = Color>
+        static Color From(
+            detail::elem_type<Return, 0> t0,
+            detail::elem_type<Return, 1> t1,
+            detail::elem_type<Return, 2> t2,
+            detail::elem_type<Return, 3> t3) noexcept
+        {
+            Return ret;
+            ref<0>(ret) = t0, ref<1>(ret) = t1, ref<2>(ret) = t2, ref<3>(ret) = t3;
+            return ret;
+        }
+
+        template<class Return = Color>
+        static Color White(const float alpha = 1.0f) noexcept { return From<Return>(1.00, 1.00, 1.00, alpha); }
+
+        template<class Return = Color>
+        static Color Silver(const float alpha = 1.0f) noexcept { return From<Return>(0.75, 0.75, 0.75, alpha); }
+
+        template<class Return = Color>
+        static Color Gray(const float alpha = 1.0f) noexcept { return From<Return>(0.50, 0.50, 0.50, alpha); }
+
+        template<class Return = Color>
+        static Color Black(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.00, 0.00, alpha); }
+
+        template<class Return = Color>
+        static Color Red(const float alpha = 1.0f) noexcept { return From<Return>(1.00, 0.00, 0.00, alpha); }
+
+        template<class Return = Color>
+        static Color Maroon(const float alpha = 1.0f) noexcept { return From<Return>(0.50, 0.00, 0.00, alpha); }
+
+        template<class Return = Color>
+        static Color Yellow(const float alpha = 1.0f) noexcept { return From<Return>(1.00, 1.00, 0.00, alpha); }
+
+        template<class Return = Color>
+        static Color Olive(const float alpha = 1.0f) noexcept { return From<Return>(0.50, 0.50, 0.00, alpha); }
+
+        template<class Return = Color>
+        static Color Lime(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 1.00, 0.00, alpha); }
+
+        template<class Return = Color>
+        static Color Green(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.50, 0.00, alpha); }
+
+        template<class Return = Color>
+        static Color Aqua(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 1.00, 1.00, alpha); }
+
+        template<class Return = Color>
+        static Color Teal(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.50, 0.50, alpha); }
+
+        template<class Return = Color>
+        static Color Blue(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.00, 1.00, alpha); }
+
+        template<class Return = Color>
+        static Color Navy(const float alpha = 1.0f) noexcept { return From<Return>(0.00, 0.00, 0.50, alpha); }
+
+        template<class Return = Color>
+        static Color Fuchsia(const float alpha = 1.0f) noexcept { return From<Return>(1.00, 0.00, 1.00, alpha); }
+
+        template<class Return = Color>
+        static Color Purple(const float alpha = 1.0f) noexcept { return From<Return>(0.50, 0.00, 0.50, alpha); }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
