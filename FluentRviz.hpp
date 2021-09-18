@@ -109,6 +109,9 @@ namespace param {
     template<class T>
     constexpr inline bool is_quat_compat_v = detail::access<T>::size == 4;
 
+    template<class T>
+    constexpr inline bool is_rgba_compat_v = detail::access<T>::size == 4;
+
     template<class S, class T>
     constexpr inline bool is_same_size_v = is_accessible_v<S> && is_accessible_v<T>
         && detail::access<S>::size == detail::access<T>::size;
@@ -154,13 +157,19 @@ namespace param {
             : geometry_msgs::Vector3(vector3) { }
 
         template<class Return = Vector3>
-        static Vector3 UnitX() noexcept { return detail::construct<Return>::from(1, 0, 0); }
+        static auto UnitX() noexcept
+        -> std::enable_if_t<is_vec3_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(1, 0, 0); }
 
         template<class Return = Vector3>
-        static Vector3 UnitY() noexcept { return detail::construct<Return>::from(0, 1, 0); }
+        static auto UnitY() noexcept
+        -> std::enable_if_t<is_vec3_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0, 1, 0); }
 
         template<class Return = Vector3>
-        static Vector3 UnitZ() noexcept { return detail::construct<Return>::from(0, 0, 1); }
+        static auto UnitZ() noexcept
+        -> std::enable_if_t<is_vec3_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0, 0, 1); }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
@@ -361,12 +370,12 @@ namespace param {
 
         template<class Return = Quaternion, class T>
         static auto ScalarVector(const double scalar, const T &vector) noexcept
-        -> std::enable_if_t<is_vec3_compat_v<T>, Return>
+        -> std::enable_if_t<is_vec3_compat_v<T> && is_quat_compat_v<Return>, Return>
         { return detail::construct<Return>::from(scalar, ref<0>(vector), ref<1>(vector), ref<2>(vector)); }
 
         template<class Return = Quaternion, class T = Vector3>
         static auto AngleAxis(const double angle, const T &axis = Vector3::UnitZ<T>()) noexcept
-        -> std::enable_if_t<is_vec3_compat_v<T>, Return>
+        -> std::enable_if_t<is_vec3_compat_v<T> && is_quat_compat_v<Return>, Return>
         { return ScalarVector<Return>(std::cos(angle / 2.0), axis * std::sin(angle / 2.0)); }
 
         template<class T>
@@ -454,52 +463,84 @@ namespace param {
         { this->r = r, this->g = g, this->b = b, this->a = a; }
 
         template<class Return = Color>
-        static Color White(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(1.00, 1.00, 1.00, alpha); }
+        static auto White(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(1.00, 1.00, 1.00, alpha); }
 
         template<class Return = Color>
-        static Color Silver(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.75, 0.75, 0.75, alpha); }
+        static auto Silver(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.75, 0.75, 0.75, alpha); }
 
         template<class Return = Color>
-        static Color Gray(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.50, 0.50, 0.50, alpha); }
+        static auto Gray(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.50, 0.50, 0.50, alpha); }
 
         template<class Return = Color>
-        static Color Black(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.00, 0.00, alpha); }
+        static auto Black(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.00, 0.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Red(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(1.00, 0.00, 0.00, alpha); }
+        static auto Red(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(1.00, 0.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Maroon(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.50, 0.00, 0.00, alpha); }
+        static auto Maroon(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.50, 0.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Yellow(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(1.00, 1.00, 0.00, alpha); }
+        static auto Yellow(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(1.00, 1.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Olive(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.50, 0.50, 0.00, alpha); }
+        static auto Olive(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.50, 0.50, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Lime(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 1.00, 0.00, alpha); }
+        static auto Lime(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.00, 1.00, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Green(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.50, 0.00, alpha); }
+        static auto Green(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.00, 0.50, 0.00, alpha); }
 
         template<class Return = Color>
-        static Color Aqua(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 1.00, 1.00, alpha); }
+        static auto Aqua(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.00, 1.00, 1.00, alpha); }
 
         template<class Return = Color>
-        static Color Teal(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.50, 0.50, alpha); }
+        static auto Teal(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.00, 0.50, 0.50, alpha); }
 
         template<class Return = Color>
-        static Color Blue(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.00, 1.00, alpha); }
+        static auto Blue(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.00, 0.00, 1.00, alpha); }
 
         template<class Return = Color>
-        static Color Navy(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.00, 0.00, 0.50, alpha); }
+        static auto Navy(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.00, 0.00, 0.50, alpha); }
 
         template<class Return = Color>
-        static Color Fuchsia(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(1.00, 0.00, 1.00, alpha); }
+        static auto Fuchsia(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(1.00, 0.00, 1.00, alpha); }
 
         template<class Return = Color>
-        static Color Purple(const float alpha = 1.0f) noexcept { return detail::construct<Return>::from(0.50, 0.00, 0.50, alpha); }
+        static auto Purple(const float alpha = 1.0f) noexcept
+        -> std::enable_if_t<is_rgba_compat_v<Return>, Return>
+        { return detail::construct<Return>::from(0.50, 0.00, 0.50, alpha); }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
