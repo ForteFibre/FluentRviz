@@ -399,7 +399,7 @@ namespace param {
 
     template<class T>
     auto scalar(const T &t) noexcept
-    -> std::enable_if_t<is_quat_compat_v<T>, std::remove_reference_t<decltype(ref<0>(t))>>
+    -> std::enable_if_t<is_quat_compat_v<T>, detail::elem_type<T, 0>>
     { return ref<0>(t); }
 
     template<class Return = Vector3, class T>
