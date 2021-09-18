@@ -89,16 +89,11 @@ namespace param {
         struct access {
             static constexpr size_t size = 0;
         };
-
-        template<class T, size_t I>
-        using ref_type = decltype(access<T>::template ref<I>(std::declval<T &>()));
-
-        template<class T, size_t I>
-        using elem_type = std::remove_reference_t<ref_type<T, I>>;
-
-        template<class T, size_t I>
-        using const_ref_type = const elem_type<T, I> &;
     }
+
+    template<class T, size_t I>
+    using elem_type = std::remove_const_t<std::remove_reference_t<
+        decltype(detail::access<T>::template get<I>(std::declval<T &>()))>>;
 
     template<class T>
     constexpr inline bool is_accessible_v = detail::access<T>::size > 0;
@@ -117,14 +112,14 @@ namespace param {
         && detail::access<S>::size == detail::access<T>::size;
 
     template<size_t I, class T>
-    auto ref(T &t)
-    -> std::enable_if_t<is_accessible_v<T>, detail::ref_type<T, I>>
-    { return detail::access<T>::template ref<I>(t); }
+    auto get(const T &t)
+    -> std::enable_if_t<is_accessible_v<T>, elem_type<T, I>>
+    { return detail::access<T>::template get<I>(t); }
 
     template<size_t I, class T>
-    auto ref(const T &t)
-    -> std::enable_if_t<is_accessible_v<T>, detail::const_ref_type<T, I>>
-    { return detail::access<T>::template ref<I>(t); }
+    auto set(T &t, const elem_type<T, I> &value)
+    -> std::enable_if_t<is_accessible_v<T>>
+    { return detail::access<T>::template set<I>(t, value); }
 
     namespace detail {
         template<class T, class Enabler = void>
@@ -135,9 +130,9 @@ namespace param {
 
         template<class T, size_t ...Is>
         struct construct_accessible<T, std::index_sequence<Is...>> {
-            static T from(detail::const_ref_type<T, Is> ...args) {
+            static T from(const elem_type<T, Is> &...args) {
                 T ret;
-                ((ref<Is>(ret) = args), ...);
+                (set<Is>(ret, args), ...);
                 return ret;
             }
         };
@@ -181,18 +176,18 @@ namespace param {
             static constexpr size_t size = 3;
 
             template<size_t I>
-            static double &ref(geometry_msgs::Vector3 &t) noexcept
+            static double get(const geometry_msgs::Vector3 &t) noexcept
             {
                 if constexpr (I == 0) return t.x;
                 if constexpr (I == 1) return t.y;
                 if constexpr (I == 2) return t.z;
             }
             template<size_t I>
-            static const double &ref(const geometry_msgs::Vector3 &t) noexcept
+            static void set(geometry_msgs::Vector3 &t, double value) noexcept
             {
-                if constexpr (I == 0) return t.x;
-                if constexpr (I == 1) return t.y;
-                if constexpr (I == 2) return t.z;
+                if constexpr (I == 0) t.x = value;
+                if constexpr (I == 1) t.y = value;
+                if constexpr (I == 2) t.z = value;
             }
         };
     }
@@ -216,18 +211,18 @@ namespace param {
             static constexpr size_t size = 3;
 
             template<size_t I>
-            static double &ref(geometry_msgs::Point &t) noexcept
+            static double get(const geometry_msgs::Point &t) noexcept
             {
                 if constexpr (I == 0) return t.x;
                 if constexpr (I == 1) return t.y;
                 if constexpr (I == 2) return t.z;
             }
             template<size_t I>
-            static const double &ref(const geometry_msgs::Point &t) noexcept
+            static void set(geometry_msgs::Point &t, double value) noexcept
             {
-                if constexpr (I == 0) return t.x;
-                if constexpr (I == 1) return t.y;
-                if constexpr (I == 2) return t.z;
+                if constexpr (I == 0) t.x = value;
+                if constexpr (I == 1) t.y = value;
+                if constexpr (I == 2) t.z = value;
             }
         };
     }
@@ -236,12 +231,12 @@ namespace param {
         template<class S, class T, class F, size_t ...Is>
         auto apply_impl(S &lhs, const T &rhs, const F &f, std::index_sequence<Is...>)
         -> std::enable_if_t<is_same_size_v<S, T>>
-        { ((ref<Is>(lhs) = f(ref<Is>(lhs), ref<Is>(rhs))), ...); }
+        { (set<Is>(lhs, f(get<Is>(lhs), get<Is>(rhs))), ...); }
 
         template<class S, class T, class F, size_t ...Is>
         auto apply_impl(S &lhs, T rhs, const F &f, std::index_sequence<Is...>)
         -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>>
-        { ((ref<Is>(lhs) = f(ref<Is>(lhs), rhs)), ...); }
+        { (set<Is>(lhs, f(get<Is>(lhs), rhs)), ...); }
     }
 
     template<class S, class T, class F>
@@ -319,7 +314,7 @@ namespace param {
         template<class S, class T, size_t ...Is>
         auto dot_impl(const S &lhs, const T &rhs, std::index_sequence<Is...>) noexcept
         -> std::enable_if_t<is_same_size_v<S, T>, double>
-        { return ((ref<Is>(lhs) * ref<Is>(rhs)) + ...); }
+        { return ((get<Is>(lhs) * get<Is>(rhs)) + ...); }
     }
 
     template<class S, class T>
@@ -342,16 +337,16 @@ namespace param {
     -> std::enable_if_t<is_vec3_compat_v<S> && is_vec3_compat_v<T>, S>
     {
         return detail::construct<S>::from(
-            ref<1>(lhs) * ref<2>(rhs) - ref<2>(lhs) * ref<1>(rhs),
-            ref<2>(lhs) * ref<0>(rhs) - ref<0>(lhs) * ref<2>(rhs),
-            ref<0>(lhs) * ref<1>(rhs) - ref<1>(lhs) * ref<0>(rhs));
+            get<1>(lhs) * get<2>(rhs) - get<2>(lhs) * get<1>(rhs),
+            get<2>(lhs) * get<0>(rhs) - get<0>(lhs) * get<2>(rhs),
+            get<0>(lhs) * get<1>(rhs) - get<1>(lhs) * get<0>(rhs));
     }
 
     namespace detail {
         template<class T, size_t ...Is>
         auto print_impl(std::ostream &os, const T &s, std::index_sequence<Is...>) noexcept
         -> std::enable_if_t<is_accessible_v<T>, std::ostream &>
-        { return ((os << (Is != 0 ? ", " : "") << ref<Is>(s)), ...); }
+        { return ((os << (Is != 0 ? ", " : "") << get<Is>(s)), ...); }
     }
 
     template<class T>
@@ -371,7 +366,7 @@ namespace param {
         template<class Return = Quaternion, class T>
         static auto ScalarVector(const double scalar, const T &vector) noexcept
         -> std::enable_if_t<is_vec3_compat_v<T> && is_quat_compat_v<Return>, Return>
-        { return detail::construct<Return>::from(scalar, ref<0>(vector), ref<1>(vector), ref<2>(vector)); }
+        { return detail::construct<Return>::from(scalar, get<0>(vector), get<1>(vector), get<2>(vector)); }
 
         template<class Return = Quaternion, class T = Vector3>
         static auto AngleAxis(const double angle, const T &axis = Vector3::UnitZ<T>()) noexcept
@@ -388,7 +383,7 @@ namespace param {
             static constexpr size_t size = 4;
 
             template<size_t I>
-            static double &ref(geometry_msgs::Quaternion &t) noexcept
+            static double get(const geometry_msgs::Quaternion &t) noexcept
             {
                 if constexpr (I == 0) return t.w;
                 if constexpr (I == 1) return t.x;
@@ -396,25 +391,25 @@ namespace param {
                 if constexpr (I == 3) return t.z;
             }
             template<size_t I>
-            static const double &ref(const geometry_msgs::Quaternion &t) noexcept
+            static void set(geometry_msgs::Quaternion &t, double value) noexcept
             {
-                if constexpr (I == 0) return t.w;
-                if constexpr (I == 1) return t.x;
-                if constexpr (I == 2) return t.y;
-                if constexpr (I == 3) return t.z;
+                if constexpr (I == 0) t.w = value;
+                if constexpr (I == 1) t.x = value;
+                if constexpr (I == 2) t.y = value;
+                if constexpr (I == 3) t.z = value;
             }
         };
     }
 
     template<class T>
     auto scalar(const T &t) noexcept
-    -> std::enable_if_t<is_quat_compat_v<T>, detail::elem_type<T, 0>>
-    { return ref<0>(t); }
+    -> std::enable_if_t<is_quat_compat_v<T>, elem_type<T, 0>>
+    { return get<0>(t); }
 
     template<class Return = Vector3, class T>
     auto vector(const T &t) noexcept
     -> std::enable_if_t<is_quat_compat_v<T>, Return>
-    { return detail::construct<Return>::from(ref<1>(t), ref<2>(t), ref<3>(t)); }
+    { return detail::construct<Return>::from(get<1>(t), get<2>(t), get<3>(t)); }
 
     template<class T>
     auto conjugate(const T &t) noexcept
@@ -552,7 +547,7 @@ namespace param {
             static constexpr size_t size = 4;
 
             template<size_t I>
-            static float &ref(std_msgs::ColorRGBA &t) noexcept
+            static float get(const std_msgs::ColorRGBA &t) noexcept
             {
                 if constexpr (I == 0) return t.r;
                 if constexpr (I == 1) return t.g;
@@ -560,12 +555,12 @@ namespace param {
                 if constexpr (I == 3) return t.a;
             }
             template<size_t I>
-            static const float &ref(const std_msgs::ColorRGBA &t) noexcept
+            static void set(std_msgs::ColorRGBA &t, float value) noexcept
             {
-                if constexpr (I == 0) return t.r;
-                if constexpr (I == 1) return t.g;
-                if constexpr (I == 2) return t.b;
-                if constexpr (I == 3) return t.a;
+                if constexpr (I == 0) t.r = value;
+                if constexpr (I == 1) t.g = value;
+                if constexpr (I == 2) t.b = value;
+                if constexpr (I == 3) t.a = value;
             }
         };
     }
