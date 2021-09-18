@@ -83,6 +83,7 @@ namespace util {
 }
 
 namespace param {
+
     namespace detail {
         template<class T, class Enabler = void>
         struct access {
@@ -93,7 +94,10 @@ namespace param {
         using ref_type = decltype(access<T>::template ref<I>(std::declval<T &>()));
 
         template<class T, size_t I>
-        using const_ref_type = decltype(access<T>::template ref<I>(std::declval<const T &>()));
+        using elem_type = std::remove_reference_t<ref_type<T, I>>;
+
+        template<class T, size_t I>
+        using const_ref_type = const elem_type<T, I> &;
     }
 
     template<class T>
@@ -128,9 +132,25 @@ namespace param {
         Vector3(const geometry_msgs::Vector3 &vector3) noexcept
             : geometry_msgs::Vector3(vector3) { }
 
-        static Vector3 UnitX() noexcept { return { 1, 0, 0 }; }
-        static Vector3 UnitY() noexcept { return { 0, 1, 0 }; }
-        static Vector3 UnitZ() noexcept { return { 0, 0, 1 }; }
+        template<class Return = Vector3>
+        static Return From(
+            const detail::elem_type<Return, 0> t0,
+            const detail::elem_type<Return, 1> t1,
+            const detail::elem_type<Return, 2> t2) noexcept
+        {
+            Return ret;
+            ref<0>(ret) = t0, ref<1>(ret) = t1, ref<2>(ret) = t2;
+            return ret;
+        }
+
+        template<class Return = Vector3>
+        static Vector3 UnitX() noexcept { return From<Return>(1, 0, 0); }
+
+        template<class Return = Vector3>
+        static Vector3 UnitY() noexcept { return From<Return>(0, 1, 0); }
+
+        template<class Return = Vector3>
+        static Vector3 UnitZ() noexcept { return From<Return>(0, 0, 1); }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
@@ -166,6 +186,17 @@ namespace param {
 
         Point(const geometry_msgs::Point &point)
             : geometry_msgs::Point(point) { }
+
+        template<class Return = Point>
+        static Return From(
+            const detail::elem_type<Return, 0> t0,
+            const detail::elem_type<Return, 1> t1,
+            const detail::elem_type<Return, 2> t2) noexcept
+        {
+            Return ret;
+            ref<0>(ret) = t0, ref<1>(ret) = t1, ref<2>(ret) = t2;
+            return ret;
+        }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
@@ -302,11 +333,10 @@ namespace param {
     auto cross(const S &lhs, const T &rhs) noexcept
     -> std::enable_if_t<is_vec3_compat_v<S> && is_vec3_compat_v<T>, S>
     {
-        S ret;
-        ref<0>(ret) = ref<1>(lhs) * ref<2>(rhs) - ref<2>(lhs) * ref<1>(rhs);
-        ref<1>(ret) = ref<2>(lhs) * ref<0>(rhs) - ref<0>(lhs) * ref<2>(rhs);
-        ref<2>(ret) = ref<0>(lhs) * ref<1>(rhs) - ref<1>(lhs) * ref<0>(rhs);
-        return ret;
+        return Vector3::From<S>(
+            ref<1>(lhs) * ref<2>(rhs) - ref<2>(lhs) * ref<1>(rhs),
+            ref<2>(lhs) * ref<0>(rhs) - ref<0>(lhs) * ref<2>(rhs),
+            ref<0>(lhs) * ref<1>(rhs) - ref<1>(lhs) * ref<0>(rhs));
     }
 
     namespace detail {
@@ -330,22 +360,27 @@ namespace param {
         Quaternion(const geometry_msgs::Quaternion &quaternion) noexcept
             : geometry_msgs::Quaternion(quaternion) { }
 
-        template<class S = Quaternion, class T>
-        static auto ScalarVector(const double scalar, const T &vector) noexcept
-        -> std::enable_if_t<is_vec3_compat_v<T>, S>
+        template<class Return = Quaternion>
+        static Return From(
+            const detail::elem_type<Return, 0> t0,
+            const detail::elem_type<Return, 1> t1,
+            const detail::elem_type<Return, 2> t2,
+            const detail::elem_type<Return, 3> t3) noexcept
         {
-            S ret;
-            ref<0>(ret) = scalar;
-            ref<1>(ret) = ref<0>(vector);
-            ref<2>(ret) = ref<1>(vector);
-            ref<3>(ret) = ref<2>(vector);
+            Return ret;
+            ref<0>(ret) = t0, ref<1>(ret) = t1, ref<2>(ret) = t2, ref<3>(ret) = t3;
             return ret;
         }
 
-        template<class T = Vector3>
-        static auto AngleAxis(const double angle, const T &axis = Vector3::UnitZ()) noexcept
-        -> std::enable_if_t<is_vec3_compat_v<T>, Quaternion>
-        { return ScalarVector(std::cos(angle / 2.0), axis * std::sin(angle / 2.0)); }
+        template<class Return = Quaternion, class T>
+        static auto ScalarVector(const double scalar, const T &vector) noexcept
+        -> std::enable_if_t<is_vec3_compat_v<T>, Return>
+        { return From<Return>(scalar, ref<0>(vector), ref<1>(vector), ref<2>(vector)); }
+
+        template<class Return = Quaternion, class T = Vector3>
+        static auto AngleAxis(const double angle, const T &axis = Vector3::UnitZ<T>()) noexcept
+        -> std::enable_if_t<is_vec3_compat_v<T>, Return>
+        { return ScalarVector<Return>(std::cos(angle / 2.0), axis * std::sin(angle / 2.0)); }
 
         template<class T>
         operator T() { return util::convert<T>(*this); }
@@ -380,16 +415,10 @@ namespace param {
     -> std::enable_if_t<is_quat_compat_v<T>, std::remove_reference_t<decltype(ref<0>(t))>>
     { return ref<0>(t); }
 
-    template<class S = Vector3, class T>
+    template<class Return = Vector3, class T>
     auto vector(const T &t) noexcept
-    -> std::enable_if_t<is_quat_compat_v<T>, S>
-    {
-        S ret;
-        ref<0>(ret) = ref<1>(t);
-        ref<1>(ret) = ref<2>(t);
-        ref<2>(ret) = ref<3>(t);
-        return ret;
-    }
+    -> std::enable_if_t<is_quat_compat_v<T>, Return>
+    { return Vector3::From<Return>(ref<1>(t), ref<2>(t), ref<3>(t)); }
 
     template<class T>
     auto conjugate(const T &t) noexcept
