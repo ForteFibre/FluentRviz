@@ -20,9 +20,14 @@ namespace traits {
     template<class From, class To, class Enabler = void>
     struct converter;
 
-    template<class Type>
-    struct converter<Type, Type> {
-        static constexpr const Type &convert(const Type &value) { return value; };
+    template<class T>
+    struct converter<T, T> {
+        static constexpr const T &convert(const T &value) { return value; };
+    };
+
+    template<class From, class To>
+    struct converter<From, To, std::enable_if_t<std::is_convertible_v<From, To>>> {
+        static constexpr const To &convert(const To &value) { return value; }
     };
 
 }
@@ -78,202 +83,395 @@ namespace util {
 }
 
 namespace param {
+    namespace detail {
+        template<class T, class Enabler = void>
+        struct access {
+            static constexpr size_t size = 0;
+        };
 
-    template<size_t D, class Derived>
-    struct VectorBase {
-        std::array<double, D> storage;
+        template<class T, size_t I>
+        using ref_type = decltype(access<T>::template ref<I>(std::declval<T &>()));
 
-        constexpr Derived &derived() noexcept { return static_cast<Derived &>(*this); }
-        constexpr const Derived &derived() const noexcept { return static_cast<const Derived &>(*this); }
+        template<class T, size_t I>
+        using const_ref_type = decltype(access<T>::template ref<I>(std::declval<const T &>()));
+    }
 
-        constexpr double &operator[](const ssize_t i) noexcept { return storage[i]; }
-        constexpr const double &operator[](const ssize_t i) const noexcept { return storage[i]; }
+    template<class T>
+    constexpr inline bool is_accessible_v = detail::access<T>::size > 0;
 
-        template<class Op, class T>
-        constexpr Derived &apply(const T &rhs, const Op &op = Op()) noexcept
-        {
-            for (size_t i = 0; i < D; i++) {
-                if constexpr (std::is_same_v<T, Derived>) (*this)[i] = op((*this)[i], rhs[i]);
-                else (*this)[i] = op((*this)[i], rhs);
+    template<class T>
+    constexpr inline bool is_vec3_compat_v = detail::access<T>::size == 3;
+
+    template<class T>
+    constexpr inline bool is_quat_compat_v = detail::access<T>::size == 4;
+
+    template<class S, class T>
+    constexpr inline bool is_same_size_v = is_accessible_v<S> && is_accessible_v<T>
+        && detail::access<S>::size == detail::access<T>::size;
+
+    template<size_t I, class T>
+    auto ref(T &t)
+    -> std::enable_if_t<is_accessible_v<T>, detail::ref_type<T, I>>
+    { return detail::access<T>::template ref<I>(t); }
+
+    template<size_t I, class T>
+    auto ref(const T &t)
+    -> std::enable_if_t<is_accessible_v<T>, detail::const_ref_type<T, I>>
+    { return detail::access<T>::template ref<I>(t); }
+
+    struct Vector3 : geometry_msgs::Vector3 {
+        Vector3() = default;
+
+        Vector3(const double x, const double y, const double z) noexcept
+        { this->x = x, this->y = y, this->z = z; }
+
+        Vector3(const geometry_msgs::Vector3 &vector3) noexcept
+            : geometry_msgs::Vector3(vector3) { }
+
+        static Vector3 UnitX() noexcept { return { 1, 0, 0 }; }
+        static Vector3 UnitY() noexcept { return { 0, 1, 0 }; }
+        static Vector3 UnitZ() noexcept { return { 0, 0, 1 }; }
+
+        template<class T>
+        operator T() { return util::convert<T>(*this); }
+    };
+
+    namespace detail {
+        template<class T>
+        struct access<T, std::enable_if_t<std::is_base_of_v<geometry_msgs::Vector3, T>>> {
+            static constexpr size_t size = 3;
+
+            template<size_t I>
+            static double &ref(geometry_msgs::Vector3 &t) noexcept
+            {
+                if constexpr (I == 0) return t.x;
+                if constexpr (I == 1) return t.y;
+                if constexpr (I == 2) return t.z;
             }
-            return this->derived();
-        }
+            template<size_t I>
+            static const double &ref(const geometry_msgs::Vector3 &t) noexcept
+            {
+                if constexpr (I == 0) return t.x;
+                if constexpr (I == 1) return t.y;
+                if constexpr (I == 2) return t.z;
+            }
+        };
+    }
 
-        constexpr Derived &operator+=(const Derived &rhs) noexcept { return apply(rhs, std::plus<double>()); };
-        constexpr Derived &operator-=(const Derived &rhs) noexcept { return apply(rhs, std::minus<double>()); };
-        constexpr Derived &operator*=(const double &rhs) noexcept { return apply(rhs, std::multiplies<double>()); };
-        constexpr Derived &operator/=(const double &rhs) noexcept { return apply(rhs, std::divides<double>()); };
+    struct Point : geometry_msgs::Point {
+        Point() = default;
 
-        friend constexpr Derived operator+(const Derived &lhs, const Derived &rhs) noexcept { return Derived(lhs) += rhs; }
-        friend constexpr Derived operator-(const Derived &lhs, const Derived &rhs) noexcept { return Derived(lhs) -= rhs; }
-        friend constexpr Derived operator*(const Derived &lhs, const double &rhs) noexcept { return Derived(lhs) *= rhs; }
-        friend constexpr Derived operator*(const double &lhs, const Derived &rhs) noexcept { return Derived(rhs) *= lhs; }
-        friend constexpr Derived operator/(const Derived &lhs, const double &rhs) noexcept { return Derived(lhs) /= rhs; }
+        Point(const double x, const double y, const double z) noexcept
+        { this->x = x, this->y = y, this->z = z; }
 
-        friend constexpr Derived operator+(const Derived &s) noexcept { return s; }
-        friend constexpr Derived operator-(const Derived &s) noexcept { return s * -1; }
-
-        constexpr double dot(const Derived &rhs) const noexcept
-        { return std::inner_product(storage.begin(), storage.end(), rhs.storage.begin(), 0.0); }
-
-        constexpr double norm() const noexcept
-        { return std::sqrt(dot(this->derived())); }
+        Point(const geometry_msgs::Point &point)
+            : geometry_msgs::Point(point) { }
 
         template<class T>
-        operator T() const noexcept
-        { return util::convert<T>(derived()); }
+        operator T() { return util::convert<T>(*this); }
     };
 
-    template<size_t D>
-    struct Vector : public VectorBase<D, Vector<D>> { };
+    namespace detail {
+        template<class T>
+        struct access<T, std::enable_if_t<std::is_base_of_v<geometry_msgs::Point, T>>> {
+            static constexpr size_t size = 3;
 
-    template<>
-    struct Vector<3> : public VectorBase<3, Vector<3>> {
-        constexpr Vector<3> cross(const Vector<3> &rhs) const noexcept
-        {
-            auto [ lx, ly, lz ] = this->storage;
-            auto [ rx, ry, rz ] = rhs.storage;
-            return { ly * rz - lz * ry, lz * rx - lx * rz, lx * ry - ly * rx };
-        }
+            template<size_t I>
+            static double &ref(geometry_msgs::Point &t) noexcept
+            {
+                if constexpr (I == 0) return t.x;
+                if constexpr (I == 1) return t.y;
+                if constexpr (I == 2) return t.z;
+            }
+            template<size_t I>
+            static const double &ref(const geometry_msgs::Point &t) noexcept
+            {
+                if constexpr (I == 0) return t.x;
+                if constexpr (I == 1) return t.y;
+                if constexpr (I == 2) return t.z;
+            }
+        };
+    }
 
-        static constexpr Vector<3> UnitX() noexcept { return { 1, 0, 0 }; }
-        static constexpr Vector<3> UnitY() noexcept { return { 0, 1, 0 }; }
-        static constexpr Vector<3> UnitZ() noexcept { return { 0, 0, 1 }; }
-    };
+    namespace detail {
+        template<class S, class T, class F, size_t ...Is>
+        auto apply_impl(S &lhs, const T &rhs, const F &f, std::index_sequence<Is...>)
+        -> std::enable_if_t<is_same_size_v<S, T>>
+        { ((ref<Is>(lhs) = f(ref<Is>(lhs), ref<Is>(rhs))), ...); }
 
-    using Vector3 = Vector<3>;
+        template<class S, class T, class F, size_t ...Is>
+        auto apply_impl(S &lhs, T rhs, const F &f, std::index_sequence<Is...>)
+        -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>>
+        { ((ref<Is>(lhs) = f(ref<Is>(lhs), rhs)), ...); }
+    }
 
-    struct Quaternion : public VectorBase<4, Quaternion> {
-        constexpr Quaternion(const double w, const double x, const double y, const double z) noexcept
-            : VectorBase { w, x, y, z } { }
+    template<class S, class T, class F>
+    auto apply(S &lhs, const T &rhs, const F &f) noexcept
+    -> std::enable_if_t<is_same_size_v<S, T>, S &>
+    {
+        detail::apply_impl(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>());
+        return lhs;
+    }
 
-        constexpr Quaternion(const double scalar, const Vector3 &vector) noexcept
-            : VectorBase { scalar, vector[0], vector[1], vector[2] } { }
+    template<class S, class T, class F>
+    auto apply(S &lhs, T rhs, const F &f) noexcept
+    -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S &>
+    {
+        detail::apply_impl(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>());
+        return lhs;
+    }
 
-        constexpr double scalar() const noexcept { return (*this)[0]; }
-        constexpr Vector3 vector() const noexcept { return { (*this)[1], (*this)[2], (*this)[3] }; }
-        constexpr Quaternion conjugate() const noexcept { return { scalar(), -vector() }; }
-        constexpr Quaternion inverse() const noexcept { return conjugate() / norm(); }
+    template<class S, class T>
+    auto operator+=(S &lhs, const T &rhs) noexcept
+    -> std::enable_if_t<is_same_size_v<S, T>, S &>
+    { return apply(lhs, rhs, std::plus<>()); }
 
-        constexpr Quaternion operator*(const Quaternion &rhs) const noexcept
-        {
-            double lsc = scalar(), rsc = rhs.scalar();
-            Vector3 lvec = vector(), rvec = rhs.vector();
-            return { lsc * rsc - lvec.dot(rvec), lsc * rvec + rsc * lvec + lvec.cross(rvec) };
-        }
+    template<class S, class T>
+    auto operator-=(S &lhs, const T &rhs) noexcept
+    -> std::enable_if_t<is_same_size_v<S, T>, S &>
+    { return apply(lhs, rhs, std::minus<>()); }
 
-        constexpr Vector3 operator*(const Vector3 &rhs) const noexcept
-        { return ((*this) * Quaternion(0, rhs) * inverse()).vector(); }
+    template<class S, class T>
+    auto operator*=(S &lhs, T rhs) noexcept
+    -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S &>
+    { return apply(lhs, rhs, std::multiplies<>()); }
 
-        static constexpr Quaternion AngleAxis(const double angle, const Vector3 &axis = Vector3::UnitZ()) noexcept
-        { return Quaternion(std::cos(angle / 2), axis * std::sin(angle / 2)); }
-    };
+    template<class S, class T>
+    auto operator/=(S &lhs, T rhs) noexcept
+    -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S &>
+    { return apply(lhs, rhs, std::divides<>()); }
 
-    struct Color {
-        float r, g, b, a;
+    template<class S, class T>
+    auto operator+(S lhs, const T &rhs) noexcept
+    -> std::enable_if_t<is_same_size_v<S, T>, S>
+    { return lhs += rhs; }
 
-        constexpr Color(const float red, const float green, const float blue, const float alpha = 1.0f)
-            : r(red), g(green), b(blue), a(alpha)
-        { }
+    template<class S, class T>
+    auto operator-(S lhs, const T &rhs) noexcept
+    -> std::enable_if_t<is_same_size_v<S, T>, S>
+    { return lhs -= rhs; }
 
-        static constexpr Color White(const float alpha = 1.0f)   noexcept { return { 1.00, 1.00, 1.00, alpha }; }
-        static constexpr Color Silver(const float alpha = 1.0f)  noexcept { return { 0.75, 0.75, 0.75, alpha }; }
-        static constexpr Color Gray(const float alpha = 1.0f)    noexcept { return { 0.50, 0.50, 0.50, alpha }; }
-        static constexpr Color Black(const float alpha = 1.0f)   noexcept { return { 0.00, 0.00, 0.00, alpha }; }
-        static constexpr Color Red(const float alpha = 1.0f)     noexcept { return { 1.00, 0.00, 0.00, alpha }; }
-        static constexpr Color Maroon(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.00, alpha }; }
-        static constexpr Color Yellow(const float alpha = 1.0f)  noexcept { return { 1.00, 1.00, 0.00, alpha }; }
-        static constexpr Color Olive(const float alpha = 1.0f)   noexcept { return { 0.50, 0.50, 0.00, alpha }; }
-        static constexpr Color Lime(const float alpha = 1.0f)    noexcept { return { 0.00, 1.00, 0.00, alpha }; }
-        static constexpr Color Green(const float alpha = 1.0f)   noexcept { return { 0.00, 0.50, 0.00, alpha }; }
-        static constexpr Color Aqua(const float alpha = 1.0f)    noexcept { return { 0.00, 1.00, 1.00, alpha }; }
-        static constexpr Color Teal(const float alpha = 1.0f)    noexcept { return { 0.00, 0.50, 0.50, alpha }; }
-        static constexpr Color Blue(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 1.00, alpha }; }
-        static constexpr Color Navy(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 0.50, alpha }; }
-        static constexpr Color Fuchsia(const float alpha = 1.0f) noexcept { return { 1.00, 0.00, 1.00, alpha }; }
-        static constexpr Color Purple(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.50, alpha }; }
+    template<class S, class T>
+    auto operator*(S lhs, T rhs) noexcept
+    -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S>
+    { return lhs *= rhs; }
+
+    template<class S, class T>
+    auto operator*(S lhs, T rhs) noexcept
+    -> std::enable_if_t<std::is_scalar_v<S> && is_accessible_v<T>, T>
+    { return rhs *= lhs; }
+
+    template<class S, class T>
+    auto operator/(S lhs, T rhs) noexcept
+    -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S>
+    { return lhs /= rhs; }
+
+    template<class T>
+    auto operator+(const T &s) noexcept
+    -> std::enable_if_t<is_accessible_v<T>, T>
+    { return s; }
+
+    template<class T>
+    auto operator-(const T &s) noexcept
+    -> std::enable_if_t<is_accessible_v<T>, T>
+    { return -1 * s; }
+
+    namespace detail {
+        template<class S, class T, size_t ...Is>
+        auto dot_impl(const S &lhs, const T &rhs, std::index_sequence<Is...>) noexcept
+        -> std::enable_if_t<is_same_size_v<S, T>, double>
+        { return ((ref<Is>(lhs) * ref<Is>(rhs)) + ...); }
+    }
+
+    template<class S, class T>
+    auto dot(const S &lhs, const T &rhs) noexcept
+    -> std::enable_if_t<is_same_size_v<S, T>, double>
+    { return detail::dot_impl(lhs, rhs, std::make_index_sequence<detail::access<S>::size>()); }
+
+    template<class T>
+    auto squared_norm(const T &s) noexcept
+    -> std::enable_if_t<is_accessible_v<T>, double>
+    { return dot(s, s); }
+
+    template<class T>
+    auto norm(const T &s) noexcept
+    -> std::enable_if_t<is_accessible_v<T>, double>
+    { return std::sqrt(squared_norm(s)); }
+
+    template<class S, class T>
+    auto cross(const S &lhs, const T &rhs) noexcept
+    -> std::enable_if_t<is_vec3_compat_v<S> && is_vec3_compat_v<T>, S>
+    {
+        S ret;
+        ref<0>(ret) = ref<1>(lhs) * ref<2>(rhs) - ref<2>(lhs) * ref<1>(rhs);
+        ref<1>(ret) = ref<2>(lhs) * ref<0>(rhs) - ref<0>(lhs) * ref<2>(rhs);
+        ref<2>(ret) = ref<0>(lhs) * ref<1>(rhs) - ref<1>(lhs) * ref<0>(rhs);
+        return ret;
+    }
+
+    namespace detail {
+        template<class T, size_t ...Is>
+        auto print_impl(std::ostream &os, const T &s, std::index_sequence<Is...>) noexcept
+        -> std::enable_if_t<is_accessible_v<T>, std::ostream &>
+        { return ((os << (Is != 0 ? ", " : "") << ref<Is>(s)), ...); }
+    }
+
+    template<class T>
+    auto operator<<(std::ostream &os, const T &s) noexcept
+    -> std::enable_if_t<is_accessible_v<T>, std::ostream &>
+    { return detail::print_impl(os, s, std::make_index_sequence<detail::access<T>::size>()); }
+
+    struct Quaternion : geometry_msgs::Quaternion {
+        Quaternion() = default;
+
+        Quaternion(const double w, const double x, const double y, const double z) noexcept
+        { this->w = w, this->x = x, this->y = y, this->z = z; }
+
+        Quaternion(const geometry_msgs::Quaternion &quaternion) noexcept
+            : geometry_msgs::Quaternion(quaternion) { }
 
         template<class T>
-        operator T() const noexcept
-        { return util::convert<T>(*this); }
+        static auto ScalarVector(const double scalar, const T &vector) noexcept
+        -> std::enable_if_t<is_vec3_compat_v<T>, Quaternion>
+        { return { scalar, ref<0>(vector), ref<1>(vector), ref<2>(vector) }; }
+
+        template<class T = Vector3>
+        static auto AngleAxis(const double angle, const T &axis = Vector3::UnitZ()) noexcept
+        -> std::enable_if_t<is_vec3_compat_v<T>, Quaternion>
+        { return ScalarVector(std::cos(angle / 2.0), axis * std::sin(angle / 2.0)); }
+
+        template<class T>
+        operator T() { return util::convert<T>(*this); }
     };
 
-}
+    namespace detail {
+        template<class T>
+        struct access<T, std::enable_if_t<std::is_base_of_v<geometry_msgs::Quaternion, T>>> {
+            static constexpr size_t size = 4;
 
-namespace traits {
-    template<>
-    struct converter<geometry_msgs::Vector3, param::Vector3> {
-        static constexpr param::Vector3 convert(const geometry_msgs::Vector3 &vec)
-        { return { vec.x, vec.y, vec.z }; }
+            template<size_t I>
+            static double &ref(geometry_msgs::Quaternion &t) noexcept
+            {
+                if constexpr (I == 0) return t.w;
+                if constexpr (I == 1) return t.x;
+                if constexpr (I == 2) return t.y;
+                if constexpr (I == 3) return t.z;
+            }
+            template<size_t I>
+            static const double &ref(const geometry_msgs::Quaternion &t) noexcept
+            {
+                if constexpr (I == 0) return t.w;
+                if constexpr (I == 1) return t.x;
+                if constexpr (I == 2) return t.y;
+                if constexpr (I == 3) return t.z;
+            }
+        };
+    }
+
+    template<class T>
+    auto scalar(const T &t) noexcept
+    -> std::enable_if_t<is_quat_compat_v<T>, std::remove_reference_t<decltype(ref<0>(t))>>
+    { return ref<0>(t); }
+
+    template<class S = Vector3, class T>
+    auto vector(const T &t) noexcept
+    -> std::enable_if_t<is_quat_compat_v<T>, S>
+    {
+        S ret;
+        ref<0>(ret) = ref<1>(t);
+        ref<1>(ret) = ref<2>(t);
+        ref<2>(ret) = ref<3>(t);
+        return ret;
+    }
+
+    template<class T>
+    auto conjugate(const T &t) noexcept
+    -> std::enable_if_t<is_quat_compat_v<T>, T>
+    { return Quaternion::ScalarVector(scalar(t), -vector(t)); }
+
+    template<class T>
+    auto inverse(const T &t) noexcept
+    -> std::enable_if_t<is_quat_compat_v<T>, T>
+    { return conjugate(t) / squared_norm(t); }
+
+    template<class S, class T>
+    auto operator*(const S &lhs, const T &rhs) noexcept
+    -> std::enable_if_t<is_quat_compat_v<S> && is_quat_compat_v<T>, S>
+    {
+        return Quaternion::ScalarVector(
+            scalar(lhs) * scalar(rhs) - dot(vector(lhs), vector(rhs)),
+            scalar(lhs) * vector(rhs) + scalar(rhs) * vector(lhs) + cross(vector(lhs), vector(rhs))
+        );
+    }
+
+    template<class S, class T>
+    auto operator*(const S &lhs, const T &rhs) noexcept
+    -> std::enable_if_t<is_quat_compat_v<S> && is_vec3_compat_v<T>, T>
+    { return vector<T>(lhs * Quaternion::ScalarVector(0, rhs) * inverse(lhs)); }
+
+    template<class S, class T>
+    auto lerp(const S &a, const T &b, double t) noexcept
+    -> std::enable_if_t<is_same_size_v<S, T>, S>
+    { return a + t * (b - a); }
+
+    template<class S, class T>
+    auto slerp(const S &a, const T &b, double t) noexcept
+    -> std::enable_if_t<is_quat_compat_v<S> && is_quat_compat_v<T>, S>
+    {
+        double dot = dot(a, b);
+        double theta = std::acos(dot);
+        return std::sin((1 - t) * theta) / std::sin(theta) * a
+            + std::sin(t * theta) / std::sin(theta) * (dot < 0 ? -b : b);
+    }
+
+    struct Color : std_msgs::ColorRGBA {
+        Color(const float r, const float g, const float b, const float a = 1.0f) noexcept
+        { this->r = r, this->g = g, this->b = b, this->a = a; }
+
+        static Color White(const float alpha = 1.0f)   noexcept { return { 1.00, 1.00, 1.00, alpha }; }
+        static Color Silver(const float alpha = 1.0f)  noexcept { return { 0.75, 0.75, 0.75, alpha }; }
+        static Color Gray(const float alpha = 1.0f)    noexcept { return { 0.50, 0.50, 0.50, alpha }; }
+        static Color Black(const float alpha = 1.0f)   noexcept { return { 0.00, 0.00, 0.00, alpha }; }
+        static Color Red(const float alpha = 1.0f)     noexcept { return { 1.00, 0.00, 0.00, alpha }; }
+        static Color Maroon(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.00, alpha }; }
+        static Color Yellow(const float alpha = 1.0f)  noexcept { return { 1.00, 1.00, 0.00, alpha }; }
+        static Color Olive(const float alpha = 1.0f)   noexcept { return { 0.50, 0.50, 0.00, alpha }; }
+        static Color Lime(const float alpha = 1.0f)    noexcept { return { 0.00, 1.00, 0.00, alpha }; }
+        static Color Green(const float alpha = 1.0f)   noexcept { return { 0.00, 0.50, 0.00, alpha }; }
+        static Color Aqua(const float alpha = 1.0f)    noexcept { return { 0.00, 1.00, 1.00, alpha }; }
+        static Color Teal(const float alpha = 1.0f)    noexcept { return { 0.00, 0.50, 0.50, alpha }; }
+        static Color Blue(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 1.00, alpha }; }
+        static Color Navy(const float alpha = 1.0f)    noexcept { return { 0.00, 0.00, 0.50, alpha }; }
+        static Color Fuchsia(const float alpha = 1.0f) noexcept { return { 1.00, 0.00, 1.00, alpha }; }
+        static Color Purple(const float alpha = 1.0f)  noexcept { return { 0.50, 0.00, 0.50, alpha }; }
+
+        template<class T>
+        operator T() { return util::convert<T>(*this); }
     };
 
-    template<>
-    struct converter<param::Vector3, geometry_msgs::Vector3> {
-        static geometry_msgs::Vector3 convert(const param::Vector3 &vec)
-        {
-            geometry_msgs::Vector3 ret;
-            ret.x = vec[0], ret.y = vec[1], ret.z = vec[2];
-            return ret;
-        }
-    };
+    namespace detail {
+        template<class T>
+        struct access<T, std::enable_if_t<std::is_base_of_v<std_msgs::ColorRGBA, T>>> {
+            static constexpr size_t size = 3;
 
-    template<>
-    struct converter<geometry_msgs::Point, param::Vector3> {
-        static constexpr param::Vector3 convert(const geometry_msgs::Point &vec)
-        { return { vec.x, vec.y, vec.z }; }
-    };
-
-    template<>
-    struct converter<param::Vector3, geometry_msgs::Point> {
-        static geometry_msgs::Point convert(const param::Vector3 &vec)
-        {
-            geometry_msgs::Point ret;
-            ret.x = vec[0], ret.y = vec[1], ret.z = vec[2];
-            return ret;
-        }
-    };
-
-    template<>
-    struct converter<geometry_msgs::Quaternion, param::Quaternion> {
-        static constexpr param::Quaternion convert(const geometry_msgs::Quaternion &quat)
-        { return { quat.w, quat.x, quat.y, quat.z }; }
-    };
-
-    template<>
-    struct converter<param::Quaternion, geometry_msgs::Quaternion> {
-        static geometry_msgs::Quaternion convert(const param::Quaternion &quat)
-        {
-            geometry_msgs::Quaternion ret;
-            ret.w = quat[0], ret.x = quat[1], ret.y = quat[2], ret.z = quat[3];
-            return ret;
-        }
-    };
-
-    template<>
-    struct converter<std_msgs::ColorRGBA, param::Color> {
-        static constexpr param::Color convert(const std_msgs::ColorRGBA &color) noexcept
-        {
-            return {
-                std::clamp(color.r, 0.0f, 1.0f),
-                std::clamp(color.g, 0.0f, 1.0f),
-                std::clamp(color.b, 0.0f, 1.0f),
-                std::clamp(color.a, 0.0f, 1.0f),
-            };
-        }
-    };
-
-    template<>
-    struct converter<param::Color, std_msgs::ColorRGBA> {
-        static std_msgs::ColorRGBA convert(const param::Color &color) noexcept
-        {
-            std_msgs::ColorRGBA ret;
-            ret.r = std::clamp(color.r, 0.0f, 1.0f);
-            ret.g = std::clamp(color.g, 0.0f, 1.0f);
-            ret.b = std::clamp(color.b, 0.0f, 1.0f);
-            ret.a = std::clamp(color.a, 0.0f, 1.0f);
-            return ret;
-        }
-    };
+            template<size_t I>
+            static float &ref(std_msgs::ColorRGBA &t) noexcept
+            {
+                if constexpr (I == 0) return t.r;
+                if constexpr (I == 1) return t.g;
+                if constexpr (I == 2) return t.b;
+                if constexpr (I == 3) return t.a;
+            }
+            template<size_t I>
+            static const float &ref(const std_msgs::ColorRGBA &t) noexcept
+            {
+                if constexpr (I == 0) return t.r;
+                if constexpr (I == 1) return t.g;
+                if constexpr (I == 2) return t.b;
+                if constexpr (I == 3) return t.a;
+            }
+        };
+    }
 
 }
 
