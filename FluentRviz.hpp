@@ -80,6 +80,40 @@ namespace util {
 
     template<class T>
     constexpr inline bool has_size_v = is_detected_v<size_type, T>;
+
+    class Indices {
+        ssize_t _start, _end;
+
+    public:
+        Indices(ssize_t start, ssize_t end)
+            : _start(start), _end(end) { }
+
+        Indices(ssize_t end)
+            : Indices(0, end) { }
+
+        class iterator {
+            ssize_t _index;
+
+        public:
+            iterator(ssize_t index)
+                : _index(index) { }
+
+            iterator &operator++() noexcept
+            { ++_index; return *this; }
+
+            ssize_t operator*() const noexcept
+            { return _index; }
+
+            bool operator!=(iterator &rhs) const noexcept
+            { return _index != rhs._index; }
+        };
+
+        iterator begin() const noexcept
+        { return iterator { _start }; }
+
+        iterator end() const noexcept
+        { return iterator { _end }; }
+    };
 }
 
 namespace param {
@@ -569,6 +603,15 @@ namespace param {
 
 namespace marker {
 
+    namespace detail {
+        template<class Dest, class Src, class Enabler = void>
+        struct merger;
+    }
+
+    template<class Dest, class Src>
+    void merge(Dest &dest, const Src &src) noexcept
+    { detail::merger<Dest, Src>::merge(dest, src); }
+
     namespace attr {
         template<class Derived, class Base>
         struct CRTP : Base {
@@ -730,7 +773,7 @@ namespace marker {
                 return Color<Derived, Base>::color(r, g, b, a);
             }
 
-            template<class Iterable>
+            template<class Iterable = std::vector<param::Color>>
             Derived &colors(const Iterable &iterable) noexcept
             {
                 if constexpr (util::has_size_v<Iterable>) {
@@ -741,11 +784,20 @@ namespace marker {
                 }
                 return this->derived();
             }
+
+            template<class ...Args>
+            auto colors(const Args &...args) noexcept
+            -> std::enable_if_t<(util::is_convertible_v<Args, std_msgs::ColorRGBA> && ...), Derived &>
+            {
+                this->message.points.reserve(sizeof...(Args));
+                (this->message.points.push_back(util::convert<std_msgs::ColorRGBA>(args)), ...);
+                return this->derived();
+            }
         };
 
         template<class Derived, class Base>
         struct Points : Base {
-            template<class Iterable>
+            template<class Iterable = std::vector<param::Point>>
             Derived &points(const Iterable &iterable) noexcept
             {
                 if constexpr (util::has_size_v<Iterable>) {
@@ -754,6 +806,15 @@ namespace marker {
                 for (const auto &e : iterable) {
                     this->message.points.push_back(util::convert<geometry_msgs::Point>(e));
                 }
+                return this->derived();
+            }
+
+            template<class ...Args>
+            auto points(const Args &...args) noexcept
+            -> std::enable_if_t<(util::is_convertible_v<Args, geometry_msgs::Point> && ...), Derived &>
+            {
+                this->message.points.reserve(sizeof...(Args));
+                (this->message.points.push_back(util::convert<geometry_msgs::Point>(args)), ...);
                 return this->derived();
             }
         };
@@ -817,13 +878,21 @@ namespace marker {
             }
         };
 
+        template<class Derived, class Base>
+        struct Data : Base {
+            template<class Iterable, class Func>
+            Derived &data(const Iterable &iterable, const Func &func) noexcept
+            {
+                for (const auto &e : iterable) merge(this->derived(), func(e));
+                return this->derived();
+            }
+        };
+
     }
 
     struct MarkerWrapper {
-        operator const visualization_msgs::Marker &() { return this->message; }
-
-    protected:
         visualization_msgs::Marker message;
+        operator const visualization_msgs::Marker &() { return this->message; }
     };
 
     struct DeleteAll : MarkerWrapper {
@@ -835,7 +904,7 @@ namespace marker {
     };
 
     struct Delete : MarkerWrapper {
-        Delete(const int32_t id, const std::string &ns = "")
+        Delete(const int32_t id = 0, const std::string &ns = "")
         {
             this->message.action = visualization_msgs::Marker::DELETE;
             this->message.id = id;
@@ -847,7 +916,7 @@ namespace marker {
         int32_t Type,
         template<class, class> class ...Features>
     struct Add : util::chained<Add<Type, Features...>, MarkerWrapper, attr::CRTP, Features...> {
-        Add(const int32_t id, const std::string &ns = "")
+        Add(const int32_t id = 0, const std::string &ns = "")
         {
             this->message.action = visualization_msgs::Marker::DELETEALL;
             this->message.type = Type;
@@ -894,19 +963,19 @@ namespace marker {
 
     using LineList = Add<
         visualization_msgs::Marker::LINE_LIST,
-        attr::Position, attr::Orientation, attr::LineScale, attr::Colors, attr::Points>;
+        attr::Position, attr::Orientation, attr::LineScale, attr::Colors, attr::Points, attr::Data>;
 
     using CubeList = Add<
         visualization_msgs::Marker::CUBE_LIST,
-        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points, attr::Data>;
 
     using SphereList = Add<
         visualization_msgs::Marker::SPHERE_LIST,
-        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points, attr::Data>;
 
     using Points = Add<
         visualization_msgs::Marker::POINTS,
-        attr::Position, attr::Orientation, attr::PointScale, attr::Colors, attr::Points>;
+        attr::Position, attr::Orientation, attr::PointScale, attr::Colors, attr::Points, attr::Data>;
 
     using TextViewFacing = Add<
         visualization_msgs::Marker::TEXT_VIEW_FACING,
@@ -920,6 +989,278 @@ namespace marker {
         visualization_msgs::Marker::TRIANGLE_LIST,
         attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
 
+    namespace detail {
+
+        template<class T, class Enabler = void>
+        struct marker_type_impl;
+
+        template<int32_t Type, template<class, class> class ...Attrs>
+        struct marker_type_impl<Add<Type, Attrs...>> {
+            static constexpr int32_t value = Type;
+        };
+
+        template<class T>
+        static constexpr int32_t marker_type = marker_type_impl<T>::value;
+
+        template<class Dest, class Src>
+        struct merger<Dest, Src, std::enable_if_t<
+            marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
+            && marker_type<Src> == visualization_msgs::Marker::LINE_STRIP>> {
+
+            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            {
+                using namespace param;
+                visualization_msgs::Marker &dest = d.message;
+                const visualization_msgs::Marker &src = s.message;
+
+                const size_t dest_obj_size = dest.points.size() / 2;
+                const size_t src_obj_size = src.points.size() - 1;
+                const size_t obj_size = dest_obj_size + src_obj_size;
+
+                dest.points.reserve(obj_size);
+                for (size_t i = 0; i < src_obj_size; i++) {
+                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
+                    dest.points.push_back(src.pose.orientation * src.points[i + 1] + src.pose.position);
+                }
+
+                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
+                    dest.colors.reserve(obj_size);
+                    if (dest.colors.empty()) {
+                        dest.colors.resize(dest_obj_size, dest.color);
+                    }
+                    if (src.colors.empty()) {
+                        dest.colors.resize(obj_size, src.color);
+                    } else {
+                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
+                    }
+                }
+            }
+        };
+
+        template<class Dest, class Src>
+        struct merger<Dest, Src, std::enable_if_t<
+            marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
+            && marker_type<Src> == visualization_msgs::Marker::LINE_LIST>> {
+
+            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            {
+                using namespace param;
+                visualization_msgs::Marker &dest = d.message;
+                const visualization_msgs::Marker &src = s.message;
+
+                const size_t dest_obj_size = dest.points.size() / 2;
+                const size_t src_obj_size = src.points.size() / 2;
+                const size_t obj_size = dest_obj_size + src_obj_size;
+
+                dest.points.reserve(obj_size);
+                for (size_t i = 0; i < src_obj_size * 2; i) {
+                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
+                }
+
+                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
+                    dest.colors.reserve(obj_size);
+                    if (dest.colors.empty()) {
+                        dest.colors.resize(dest_obj_size, dest.color);
+                    }
+                    if (src.colors.empty()) {
+                        dest.colors.resize(obj_size, src.color);
+                    } else {
+                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
+                    }
+                }
+            }
+        };
+
+        template<class Dest, class Src>
+        struct merger<Dest, Src, std::enable_if_t<
+            marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
+            && marker_type<Src> == visualization_msgs::Marker::SPHERE>> {
+
+            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            {
+                using namespace param;
+                visualization_msgs::Marker &dest = d.message;
+                const visualization_msgs::Marker &src = s.message;
+
+                const size_t dest_obj_size = dest.points.size();
+                const size_t src_obj_size = 1;
+                const size_t obj_size = dest_obj_size + src_obj_size;
+
+                dest.points.push_back(dest.pose.position);
+
+                if (!dest.colors.empty() || dest.color != src.color) {
+                    dest.colors.reserve(obj_size);
+                    if (dest.colors.empty()) {
+                        dest.colors.resize(dest_obj_size, dest.color);
+                    }
+                    dest.colors.push_back(src.color);
+                }
+            }
+        };
+
+        template<class Dest, class Src>
+        struct merger<Dest, Src, std::enable_if_t<
+            marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
+            && marker_type<Src> == visualization_msgs::Marker::SPHERE_LIST>> {
+
+            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            {
+                using namespace param;
+                visualization_msgs::Marker &dest = d.message;
+                const visualization_msgs::Marker &src = s.message;
+
+                const size_t dest_obj_size = dest.points.size();
+                const size_t src_obj_size = src.points.size();
+                const size_t obj_size = dest_obj_size + src_obj_size;
+
+                dest.points.reserve(obj_size);
+                for (size_t i = 0; i < src_obj_size; i) {
+                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
+                }
+
+                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
+                    dest.colors.reserve(obj_size);
+                    if (dest.colors.empty()) {
+                        dest.colors.resize(dest_obj_size, dest.color);
+                    }
+                    if (src.colors.empty()) {
+                        dest.colors.resize(obj_size, src.color);
+                    } else {
+                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
+                    }
+                }
+            }
+        };
+
+        template<class Dest, class Src>
+        struct merger<Dest, Src, std::enable_if_t<
+            marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
+            && marker_type<Src> == visualization_msgs::Marker::CUBE>> {
+
+            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            {
+                using namespace param;
+                visualization_msgs::Marker &dest = d.message;
+                const visualization_msgs::Marker &src = s.message;
+
+                const size_t dest_obj_size = dest.points.size();
+                const size_t src_obj_size = 1;
+                const size_t obj_size = dest_obj_size + src_obj_size;
+
+                dest.points.push_back(dest.pose.position);
+
+                if (!dest.colors.empty() || dest.color != src.color) {
+                    dest.colors.reserve(obj_size);
+                    if (dest.colors.empty()) {
+                        dest.colors.resize(dest_obj_size, dest.color);
+                    }
+                    dest.colors.push_back(src.color);
+                }
+            }
+        };
+
+        template<class Dest, class Src>
+        struct merger<Dest, Src, std::enable_if_t<
+            marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
+            && marker_type<Src> == visualization_msgs::Marker::CUBE_LIST>> {
+
+            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            {
+                using namespace param;
+                visualization_msgs::Marker &dest = d.message;
+                const visualization_msgs::Marker &src = s.message;
+
+                const size_t dest_obj_size = dest.points.size();
+                const size_t src_obj_size = src.points.size();
+                const size_t obj_size = dest_obj_size + src_obj_size;
+
+                dest.points.reserve(obj_size);
+                for (size_t i = 0; i < src_obj_size; i) {
+                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
+                }
+
+                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
+                    dest.colors.reserve(obj_size);
+                    if (dest.colors.empty()) {
+                        dest.colors.resize(dest_obj_size, dest.color);
+                    }
+                    if (src.colors.empty()) {
+                        dest.colors.resize(obj_size, src.color);
+                    } else {
+                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
+                    }
+                }
+            }
+        };
+
+        template<class Dest, class Src>
+        struct merger<Dest, Src, std::enable_if_t<
+            marker_type<Dest> == visualization_msgs::Marker::POINTS
+            && marker_type<Src> == visualization_msgs::Marker::POINTS>> {
+
+            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            {
+                using namespace param;
+                visualization_msgs::Marker &dest = d.message;
+                const visualization_msgs::Marker &src = s.message;
+
+                const size_t dest_obj_size = dest.points.size();
+                const size_t src_obj_size = src.points.size();
+                const size_t obj_size = dest_obj_size + src_obj_size;
+
+                dest.points.reserve(obj_size);
+                for (size_t i = 0; i < src_obj_size; i) {
+                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
+                }
+
+                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
+                    dest.colors.reserve(obj_size);
+                    if (dest.colors.empty()) {
+                        dest.colors.resize(dest_obj_size, dest.color);
+                    }
+                    if (src.colors.empty()) {
+                        dest.colors.resize(obj_size, src.color);
+                    } else {
+                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
+                    }
+                }
+            }
+        };
+
+        template<class Dest, class Src>
+        struct merger<Dest, Src, std::enable_if_t<
+            marker_type<Dest> == visualization_msgs::Marker::TRIANGLE_LIST
+            && marker_type<Src> == visualization_msgs::Marker::TRIANGLE_LIST>> {
+
+            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            {
+                using namespace param;
+                visualization_msgs::Marker &dest = d.message;
+                const visualization_msgs::Marker &src = s.message;
+
+                const size_t dest_obj_size = dest.points.size() / 3;
+                const size_t src_obj_size = src.points.size() / 3;
+                const size_t obj_size = dest_obj_size + src_obj_size;
+
+                dest.points.reserve(obj_size);
+                for (size_t i = 0; i < src_obj_size * 3; i) {
+                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
+                }
+
+                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
+                    dest.colors.reserve(obj_size);
+                    if (dest.colors.empty()) {
+                        dest.colors.resize(dest_obj_size, dest.color);
+                    }
+                    if (src.colors.empty()) {
+                        dest.colors.resize(obj_size, src.color);
+                    } else {
+                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
+                    }
+                }
+            }
+        };
+    }
 }
 
 class Rviz {

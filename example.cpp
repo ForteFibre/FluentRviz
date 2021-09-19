@@ -15,7 +15,15 @@ int main(int argc, char **argv)
 
     rviz << marker::LineList(2)
         .color(0, 0, 1)
-        .scale(0.05);
+        .scale(0.05)
+        .points({ { 1, 0, 0 }, { 0, 1, 0 } });
+
+    rviz << marker::Points(3)
+        .data(util::Indices(10), [](size_t i) {
+            return marker::Points()
+                .color(1, 0, 0)
+                .points({ { 0, 2, 0 } });
+        });
 
     Vector3 i = { 1, 0, 0 };
     Vector3 j = { 0, 1, 0 };
