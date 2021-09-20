@@ -918,7 +918,7 @@ namespace marker {
     struct Add : util::chained<Add<Type, Features...>, MarkerWrapper, attr::CRTP, Features...> {
         Add(const int32_t id = 0, const std::string &ns = "")
         {
-            this->message.action = visualization_msgs::Marker::DELETEALL;
+            this->message.action = visualization_msgs::Marker::ADD;
             this->message.type = Type;
             this->message.id = id;
             this->message.ns = ns;
