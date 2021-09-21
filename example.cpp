@@ -29,9 +29,9 @@ int main(int argc, char **argv)
     Vector3 j = { 0, 1, 0 };
     Vector3 k = { 0, 0, 1 };
 
-    Vector3 a = 3 * i + 4 * j + 5 * k;
+    Point a = 3 * i + 4 * j + 5 * k;
     Quaternion q = Quaternion::AngleAxis(M_PI / 2);
-    Vector3 rot = q * a;
+    Point rot = q * a;
     std::cout << rot << std::endl;
 
     geometry_msgs::Vector3 v, w;

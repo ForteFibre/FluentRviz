@@ -20,11 +20,6 @@ namespace traits {
     template<class From, class To, class Enabler = void>
     struct converter;
 
-    template<class T>
-    struct converter<T, T> {
-        static constexpr const T &convert(const T &value) { return value; };
-    };
-
     template<class From, class To>
     struct converter<From, To, std::enable_if_t<std::is_convertible_v<From, To>>> {
         static constexpr const To &convert(const From &value) { return value; }
@@ -64,7 +59,7 @@ namespace util {
 
         template<template<class...> class Op, class... Args>
         constexpr inline bool is_detected_impl_v<std::void_t<Op<Args...>>, Op, Args...> = true;
-    } // namespace detail
+    }
 
     template<template<class...> class Op, class... Args>
     constexpr inline bool is_detected_v = detail::is_detected_impl_v<void, Op, Args...>;
@@ -164,9 +159,19 @@ namespace param {
 
         template<class T, size_t ...Is>
         struct construct_accessible<T, std::index_sequence<Is...>> {
-            static T from(const elem_type<T, Is> &...args) {
+            static T from(const elem_type<T, Is> &...args)
+            {
                 T ret;
                 (set<Is>(ret, args), ...);
+                return ret;
+            }
+
+            template<class From>
+            static auto from(const From &arg)
+            -> std::enable_if_t<is_same_size_v<T, From>, T>
+            {
+                T ret;
+                (set<Is>(ret, get<Is>(arg)), ...);
                 return ret;
             }
         };
@@ -201,7 +206,7 @@ namespace param {
         { return detail::construct<Return>::from(0, 0, 1); }
 
         template<class T>
-        operator T() { return util::convert<T>(*this); }
+        operator T() { return util::convert<T, geometry_msgs::Vector3>(*this); }
     };
 
     namespace detail {
@@ -236,7 +241,7 @@ namespace param {
             : geometry_msgs::Point(point) { }
 
         template<class T>
-        operator T() { return util::convert<T>(*this); }
+        operator T() { return util::convert<T, geometry_msgs::Point>(*this); }
     };
 
     namespace detail {
@@ -402,7 +407,7 @@ namespace param {
         { return ScalarVector<Return>(std::cos(angle / 2.0), axis * std::sin(angle / 2.0)); }
 
         template<class T>
-        operator T() { return util::convert<T>(*this); }
+        operator T() { return util::convert<T, geometry_msgs::Quaternion>(*this); }
     };
 
     namespace detail {
@@ -566,7 +571,7 @@ namespace param {
         { return detail::construct<Return>::from(0.50, 0.00, 0.50, alpha); }
 
         template<class T>
-        operator T() { return util::convert<T>(*this); }
+        operator T() { return util::convert<T, std_msgs::ColorRGBA>(*this); }
     };
 
     namespace detail {
@@ -593,6 +598,14 @@ namespace param {
         };
     }
 
+}
+
+namespace traits {
+    template<class From, class To>
+    struct converter<From, To, std::enable_if_t<!std::is_convertible_v<From, To> && param::is_same_size_v<From, To>>> {
+        static constexpr To convert(const From &arg)
+        { return param::detail::construct<To>::from(arg); }
+    };
 }
 
 namespace marker {
