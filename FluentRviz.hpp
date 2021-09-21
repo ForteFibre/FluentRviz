@@ -1079,7 +1079,8 @@ namespace marker {
 
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
-            marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
+            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
+            && marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
             && marker_type<Src> == visualization_msgs::Marker::LINE_STRIP>> {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
@@ -1116,7 +1117,8 @@ namespace marker {
 
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
-            marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
+            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
+            && marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
             && marker_type<Src> == visualization_msgs::Marker::LINE_LIST>> {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
@@ -1132,7 +1134,8 @@ namespace marker {
 
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
-            marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
+            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
+            && marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
             && marker_type<Src> == visualization_msgs::Marker::SPHERE>> {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
@@ -1147,7 +1150,8 @@ namespace marker {
 
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
-            marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
+            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
+            && marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
             && marker_type<Src> == visualization_msgs::Marker::SPHERE_LIST>> {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
@@ -1163,7 +1167,8 @@ namespace marker {
 
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
-            marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
+            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
+            && marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
             && marker_type<Src> == visualization_msgs::Marker::CUBE>> {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
@@ -1178,7 +1183,8 @@ namespace marker {
 
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
-            marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
+            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
+            && marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
             && marker_type<Src> == visualization_msgs::Marker::CUBE_LIST>> {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
@@ -1194,7 +1200,8 @@ namespace marker {
 
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
-            marker_type<Dest> == visualization_msgs::Marker::POINTS
+            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
+            && marker_type<Dest> == visualization_msgs::Marker::POINTS
             && marker_type<Src> == visualization_msgs::Marker::POINTS>> {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
@@ -1210,7 +1217,8 @@ namespace marker {
 
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
-            marker_type<Dest> == visualization_msgs::Marker::TRIANGLE_LIST
+            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
+            && marker_type<Dest> == visualization_msgs::Marker::TRIANGLE_LIST
             && marker_type<Src> == visualization_msgs::Marker::TRIANGLE_LIST>> {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
