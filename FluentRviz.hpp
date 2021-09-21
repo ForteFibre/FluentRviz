@@ -28,11 +28,6 @@ namespace traits {
 }
 
 namespace util {
-
-    template<class To, class From>
-    constexpr decltype(auto) convert(const From &from)
-    { return traits::converter<From, To>::convert(from); }
-
     template<
         class Derived,
         class Base,
@@ -69,6 +64,11 @@ namespace util {
 
     template<class From, class To>
     constexpr inline bool is_convertible_v = is_detected_v<convert_type, From, To>;
+
+    template<class To, class From>
+    constexpr auto convert(const From &from)
+    -> std::enable_if_t<is_convertible_v<From, To>, convert_type<From, To>>
+    { return traits::converter<From, To>::convert(from); }
 
     template<class T>
     using size_type = decltype(std::declval<T>().size());
@@ -615,10 +615,6 @@ namespace marker {
         struct merger;
     }
 
-    template<class Dest, class Src>
-    void merge(Dest &dest, const Src &src) noexcept
-    { detail::merger<Dest, Src>::merge(dest, src); }
-
     namespace attr {
         template<class Derived, class Base>
         struct CRTP : Base {
@@ -898,7 +894,11 @@ namespace marker {
             template<class Iterable, class Func>
             Derived &data(const Iterable &iterable, const Func &func) noexcept
             {
-                for (const auto &e : iterable) merge(this->derived(), func(e));
+                using std::begin;
+                using Element = decltype(*begin(iterable));
+                using Return = decltype(func(std::declval<Element>()));
+                using Marker = std::remove_reference_t<std::remove_const_t<Return>>;
+                for (const auto &e : iterable) detail::merger<Derived, Marker>::merge(this->derived(), func(e));
                 return this->derived();
             }
         };
