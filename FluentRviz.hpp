@@ -1013,12 +1013,12 @@ namespace marker {
 
         void merge_points_n_m(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src)
         {
-            using namespace param;
             const size_t dest_vertex = dest.points.size();
             const size_t src_vertex = src.points.size();
             const size_t vertex = dest_vertex + src_vertex;
             dest.points.reserve(vertex);
             for (size_t i = 0; i < src_vertex; i) {
+                using namespace param;
                 dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
             }
         }
@@ -1067,10 +1067,8 @@ namespace marker {
 
             static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
             {
-                using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
-
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = 2 * (src.points.size() - 1);
                 const size_t vertex = dest_vertex + src_vertex;
@@ -1079,6 +1077,7 @@ namespace marker {
 
                 dest.points.reserve(vertex);
                 for (size_t i = 0; i < src_vertex / 2; i++) {
+                    using namespace param;
                     dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
                     dest.points.push_back(src.pose.orientation * src.points[i + 1] + src.pose.position);
                 }
