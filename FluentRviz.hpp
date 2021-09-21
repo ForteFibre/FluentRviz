@@ -906,8 +906,12 @@ namespace marker {
     }
 
     struct MarkerWrapper {
+    protected:
         visualization_msgs::Marker message;
-        operator visualization_msgs::Marker &() noexcept { return this->message; }
+
+    public:
+        operator visualization_msgs::Marker &() noexcept { return message; }
+        operator const visualization_msgs::Marker &() const noexcept { return message; }
     };
 
     struct DeleteAll : MarkerWrapper {
@@ -1078,10 +1082,8 @@ namespace marker {
             marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
             && marker_type<Src> == visualization_msgs::Marker::LINE_STRIP>> {
 
-            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
-                visualization_msgs::Marker &dest = d.message;
-                const visualization_msgs::Marker &src = s.message;
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = 2 * (src.points.size() - 1);
                 const size_t vertex = dest_vertex + src_vertex;
@@ -1117,10 +1119,8 @@ namespace marker {
             marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
             && marker_type<Src> == visualization_msgs::Marker::LINE_LIST>> {
 
-            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
-                visualization_msgs::Marker &dest = d.message;
-                const visualization_msgs::Marker &src = s.message;
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
 
@@ -1135,10 +1135,8 @@ namespace marker {
             marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
             && marker_type<Src> == visualization_msgs::Marker::SPHERE>> {
 
-            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
-                visualization_msgs::Marker &dest = d.message;
-                const visualization_msgs::Marker &src = s.message;
                 const size_t dest_vertex = dest.points.size();
 
                 merge_common(dest, src);
@@ -1152,10 +1150,8 @@ namespace marker {
             marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
             && marker_type<Src> == visualization_msgs::Marker::SPHERE_LIST>> {
 
-            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
-                visualization_msgs::Marker &dest = d.message;
-                const visualization_msgs::Marker &src = s.message;
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
 
@@ -1170,10 +1166,8 @@ namespace marker {
             marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
             && marker_type<Src> == visualization_msgs::Marker::CUBE>> {
 
-            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
-                visualization_msgs::Marker &dest = d.message;
-                const visualization_msgs::Marker &src = s.message;
                 const size_t dest_vertex = dest.points.size();
 
                 merge_common(dest, src);
@@ -1187,10 +1181,8 @@ namespace marker {
             marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
             && marker_type<Src> == visualization_msgs::Marker::CUBE_LIST>> {
 
-            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
-                visualization_msgs::Marker &dest = d.message;
-                const visualization_msgs::Marker &src = s.message;
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
 
@@ -1205,10 +1197,8 @@ namespace marker {
             marker_type<Dest> == visualization_msgs::Marker::POINTS
             && marker_type<Src> == visualization_msgs::Marker::POINTS>> {
 
-            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
-                visualization_msgs::Marker &dest = d.message;
-                const visualization_msgs::Marker &src = s.message;
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
 
@@ -1223,10 +1213,8 @@ namespace marker {
             marker_type<Dest> == visualization_msgs::Marker::TRIANGLE_LIST
             && marker_type<Src> == visualization_msgs::Marker::TRIANGLE_LIST>> {
 
-            static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
+            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
-                visualization_msgs::Marker &dest = d.message;
-                const visualization_msgs::Marker &src = s.message;
                 const size_t dest_vertex = dest.points.size() / 3;
                 const size_t src_vertex = src.points.size() / 3;
 
@@ -1250,12 +1238,21 @@ public:
         , _frame_id(frame_id) { }
 
     const Rviz &operator<<(const visualization_msgs::Marker &marker) const
-    {
-        publish(marker);
-        return *this;
-    }
+    { return *this << visualization_msgs::Marker(marker); }
 
-    void publish(visualization_msgs::Marker marker) const
+    const Rviz &operator<<(visualization_msgs::Marker &&marker) const
+    { return *this << marker; }
+
+    const Rviz &operator<<(visualization_msgs::Marker &marker) const
+    { publish(marker); return *this; }
+
+    void publish(const visualization_msgs::Marker &marker) const
+    { publish(visualization_msgs::Marker(marker)); }
+
+    void publish(visualization_msgs::Marker &&marker) const
+    { publish(marker); }
+
+    void publish(visualization_msgs::Marker &marker) const
     {
         marker.header.frame_id = _frame_id;
         marker.header.stamp = ros::Time::now();
