@@ -264,30 +264,24 @@ namespace param {
     namespace detail {
         template<class S, class T, class F, size_t ...Is>
         auto apply_impl(S &lhs, const T &rhs, const F &f, std::index_sequence<Is...>)
-        -> std::enable_if_t<is_same_size_v<S, T>>
-        { (set<Is>(lhs, f(get<Is>(lhs), get<Is>(rhs))), ...); }
+        -> std::enable_if_t<is_same_size_v<S, T>, S &>
+        { return (set<Is>(lhs, f(get<Is>(lhs), get<Is>(rhs))), ..., lhs); }
 
         template<class S, class T, class F, size_t ...Is>
         auto apply_impl(S &lhs, T rhs, const F &f, std::index_sequence<Is...>)
-        -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>>
-        { (set<Is>(lhs, f(get<Is>(lhs), rhs)), ...); }
+        -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S &>
+        { return (set<Is>(lhs, f(get<Is>(lhs), rhs)), ..., lhs); }
     }
 
     template<class S, class T, class F>
     auto apply(S &lhs, const T &rhs, const F &f) noexcept
     -> std::enable_if_t<is_same_size_v<S, T>, S &>
-    {
-        detail::apply_impl(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>());
-        return lhs;
-    }
+    { return detail::apply_impl(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>()); }
 
     template<class S, class T, class F>
     auto apply(S &lhs, T rhs, const F &f) noexcept
     -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S &>
-    {
-        detail::apply_impl(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>());
-        return lhs;
-    }
+    { return detail::apply_impl(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>()); }
 
     template<class S, class T>
     auto operator+=(S &lhs, const T &rhs) noexcept
