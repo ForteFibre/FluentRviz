@@ -750,6 +750,14 @@ namespace marker {
             }
         };
 
+        namespace internal {
+            template<class To>
+            struct convert {
+                template<class From>
+                decltype(auto) operator()(const From &from) const noexcept { return util::convert<To>(from); }
+            };
+        }
+
         template<class Derived, class Base>
         struct Colors : Color<Derived, Base> {
             Colors() noexcept { color(1, 1, 1, 1); }
@@ -767,14 +775,14 @@ namespace marker {
                 return Color<Derived, Base>::color(r, g, b, a);
             }
 
-            template<class Iterable = std::vector<param::Color>>
-            Derived &colors(const Iterable &iterable) noexcept
+            template<class Iterable = std::vector<param::Color>, class Func = internal::convert<std_msgs::ColorRGBA>>
+            Derived &colors(const Iterable &iterable, const Func &func = Func()) noexcept
             {
                 if constexpr (util::has_size_v<Iterable>) {
                     this->message.colors.reserve(iterable.size());
                 }
                 for (const auto &e : iterable) {
-                    this->message.colors.push_back(util::convert<std_msgs::ColorRGBA>(e));
+                    this->message.colors.push_back(func(e));
                 }
                 return this->derived();
             }
@@ -791,14 +799,14 @@ namespace marker {
 
         template<class Derived, class Base>
         struct Points : Base {
-            template<class Iterable = std::vector<param::Point>>
-            Derived &points(const Iterable &iterable) noexcept
+            template<class Iterable = std::vector<param::Point>, class Func = internal::convert<geometry_msgs::Point>>
+            Derived &points(const Iterable &iterable, const Func &func = Func()) noexcept
             {
                 if constexpr (util::has_size_v<Iterable>) {
                     this->message.points.reserve(iterable.size());
                 }
                 for (const auto &e : iterable) {
-                    this->message.points.push_back(util::convert<geometry_msgs::Point>(e));
+                    this->message.points.push_back(func(e));
                 }
                 return this->derived();
             }
