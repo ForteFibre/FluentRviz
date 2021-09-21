@@ -961,7 +961,7 @@ namespace marker {
 
     using LineStrip = Add<
         visualization_msgs::Marker::LINE_STRIP,
-        attr::Position, attr::Orientation, attr::LineScale, attr::Color, attr::Points>;
+        attr::Position, attr::Orientation, attr::LineScale, attr::Colors, attr::Points>;
 
     using LineList = Add<
         visualization_msgs::Marker::LINE_LIST,
