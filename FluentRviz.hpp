@@ -1004,6 +1004,62 @@ namespace marker {
         template<class T>
         static constexpr int32_t marker_type = marker_type_impl<T>::value;
 
+        void merge_common(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src)
+        {
+            dest.scale = src.scale;
+            dest.lifetime = src.lifetime;
+            dest.frame_locked = src.frame_locked;
+        }
+
+        void merge_points_n_m(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src)
+        {
+            using namespace param;
+            const size_t dest_vertex = dest.points.size();
+            const size_t src_vertex = src.points.size();
+            const size_t vertex = dest_vertex + src_vertex;
+            dest.points.reserve(vertex);
+            for (size_t i = 0; i < src_vertex; i) {
+                dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
+            }
+        }
+
+        void merge_points_n_1(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src)
+        {
+            dest.points.push_back(src.pose.position);
+        }
+
+        void merge_colors_n_m(
+            visualization_msgs::Marker &dest, size_t dest_vertex,
+            const visualization_msgs::Marker &src, size_t src_vertex)
+        {
+            size_t vertex = dest_vertex + src_vertex;
+            if (dest.colors.empty() && src.colors.empty() && dest.color == src.color) return;
+
+            dest.colors.reserve(vertex);
+            if (dest.colors.empty()) {
+                dest.colors.resize(dest_vertex, dest.color);
+            }
+            if (src.colors.empty()) {
+                dest.colors.resize(vertex, src.color);
+            } else {
+                dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
+            }
+        }
+
+        void merge_colors_n_1(
+            visualization_msgs::Marker &dest, size_t dest_vertex,
+            const visualization_msgs::Marker &src)
+        {
+            size_t vertex = dest_vertex + 1;
+            if (dest.colors.empty() && dest.color == src.color) return;
+
+            dest.colors.reserve(vertex);
+            if (dest.colors.empty()) {
+                dest.colors.resize(dest_vertex, dest.color);
+            }
+            dest.colors.push_back(src.color);
+        }
+
         template<class Dest, class Src>
         struct merger<Dest, Src, std::enable_if_t<
             marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
@@ -1015,29 +1071,30 @@ namespace marker {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
-                const size_t dest_obj_size = dest.points.size() / 2;
-                const size_t src_obj_size = src.points.size() - 1;
-                const size_t obj_size = dest_obj_size + src_obj_size;
+                const size_t dest_vertex = dest.points.size();
+                const size_t src_vertex = 2 * (src.points.size() - 1);
+                const size_t vertex = dest_vertex + src_vertex;
 
-                dest.scale = src.scale;
-                dest.lifetime = src.lifetime;
-                dest.frame_locked = src.frame_locked;
+                merge_common(dest, src);
 
-                dest.points.reserve(obj_size);
-                for (size_t i = 0; i < src_obj_size; i++) {
+                dest.points.reserve(vertex);
+                for (size_t i = 0; i < src_vertex / 2; i++) {
                     dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
                     dest.points.push_back(src.pose.orientation * src.points[i + 1] + src.pose.position);
                 }
 
                 if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(obj_size);
+                    dest.colors.reserve(vertex);
                     if (dest.colors.empty()) {
-                        dest.colors.resize(dest_obj_size, dest.color);
+                        dest.colors.resize(dest_vertex, dest.color);
                     }
                     if (src.colors.empty()) {
-                        dest.colors.resize(obj_size, src.color);
+                        dest.colors.resize(vertex, src.color);
                     } else {
-                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
+                        for (size_t i = 0; i < src_vertex / 2; i++) {
+                            dest.colors.push_back(src.colors[i]);
+                            dest.colors.push_back(src.colors[i + 1]);
+                        }
                     }
                 }
             }
@@ -1050,34 +1107,16 @@ namespace marker {
 
             static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
             {
-                using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
-                const size_t dest_obj_size = dest.points.size() / 2;
-                const size_t src_obj_size = src.points.size() / 2;
-                const size_t obj_size = dest_obj_size + src_obj_size;
+                const size_t dest_vertex = dest.points.size();
+                const size_t src_vertex = src.points.size();
+                const size_t vertex = dest_vertex + src_vertex;
 
-                dest.scale = src.scale;
-                dest.lifetime = src.lifetime;
-                dest.frame_locked = src.frame_locked;
-
-                dest.points.reserve(obj_size);
-                for (size_t i = 0; i < src_obj_size * 2; i) {
-                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
-                }
-
-                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(obj_size);
-                    if (dest.colors.empty()) {
-                        dest.colors.resize(dest_obj_size, dest.color);
-                    }
-                    if (src.colors.empty()) {
-                        dest.colors.resize(obj_size, src.color);
-                    } else {
-                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
-                    }
-                }
+                merge_common(dest, src);
+                merge_points_n_m(dest, src);
+                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
             }
         };
 
@@ -1088,27 +1127,15 @@ namespace marker {
 
             static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
             {
-                using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
-                dest.scale = src.scale;
-                dest.lifetime = src.lifetime;
-                dest.frame_locked = src.frame_locked;
+                const size_t dest_vertex = dest.points.size();
+                const size_t vertex = dest_vertex + 1;
 
-                const size_t dest_obj_size = dest.points.size();
-                const size_t src_obj_size = 1;
-                const size_t obj_size = dest_obj_size + src_obj_size;
-
-                dest.points.push_back(dest.pose.position);
-
-                if (!dest.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(obj_size);
-                    if (dest.colors.empty()) {
-                        dest.colors.resize(dest_obj_size, dest.color);
-                    }
-                    dest.colors.push_back(src.color);
-                }
+                merge_common(dest, src);
+                merge_points_n_1(dest, src);
+                merge_colors_n_1(dest, dest_vertex, src);
             }
         };
 
@@ -1119,34 +1146,16 @@ namespace marker {
 
             static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
             {
-                using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
-                dest.scale = src.scale;
-                dest.lifetime = src.lifetime;
-                dest.frame_locked = src.frame_locked;
+                const size_t dest_vertex = dest.points.size();
+                const size_t src_vertex = src.points.size();
+                const size_t vertex = dest_vertex + src_vertex;
 
-                const size_t dest_obj_size = dest.points.size();
-                const size_t src_obj_size = src.points.size();
-                const size_t obj_size = dest_obj_size + src_obj_size;
-
-                dest.points.reserve(obj_size);
-                for (size_t i = 0; i < src_obj_size; i) {
-                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
-                }
-
-                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(obj_size);
-                    if (dest.colors.empty()) {
-                        dest.colors.resize(dest_obj_size, dest.color);
-                    }
-                    if (src.colors.empty()) {
-                        dest.colors.resize(obj_size, src.color);
-                    } else {
-                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
-                    }
-                }
+                merge_common(dest, src);
+                merge_points_n_m(dest, src);
+                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
             }
         };
 
@@ -1157,27 +1166,15 @@ namespace marker {
 
             static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
             {
-                using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
-                dest.scale = src.scale;
-                dest.lifetime = src.lifetime;
-                dest.frame_locked = src.frame_locked;
+                const size_t dest_vertex = dest.points.size();
+                const size_t vertex = dest_vertex + 1;
 
-                const size_t dest_obj_size = dest.points.size();
-                const size_t src_obj_size = 1;
-                const size_t obj_size = dest_obj_size + src_obj_size;
-
-                dest.points.push_back(dest.pose.position);
-
-                if (!dest.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(obj_size);
-                    if (dest.colors.empty()) {
-                        dest.colors.resize(dest_obj_size, dest.color);
-                    }
-                    dest.colors.push_back(src.color);
-                }
+                merge_common(dest, src);
+                merge_points_n_1(dest, src);
+                merge_colors_n_1(dest, dest_vertex, src);
             }
         };
 
@@ -1188,34 +1185,16 @@ namespace marker {
 
             static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
             {
-                using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
-                dest.scale = src.scale;
-                dest.lifetime = src.lifetime;
-                dest.frame_locked = src.frame_locked;
+                const size_t dest_vertex = dest.points.size();
+                const size_t src_vertex = src.points.size();
+                const size_t vertex = dest_vertex + src_vertex;
 
-                const size_t dest_obj_size = dest.points.size();
-                const size_t src_obj_size = src.points.size();
-                const size_t obj_size = dest_obj_size + src_obj_size;
-
-                dest.points.reserve(obj_size);
-                for (size_t i = 0; i < src_obj_size; i) {
-                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
-                }
-
-                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(obj_size);
-                    if (dest.colors.empty()) {
-                        dest.colors.resize(dest_obj_size, dest.color);
-                    }
-                    if (src.colors.empty()) {
-                        dest.colors.resize(obj_size, src.color);
-                    } else {
-                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
-                    }
-                }
+                merge_common(dest, src);
+                merge_points_n_m(dest, src);
+                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
             }
         };
 
@@ -1226,34 +1205,16 @@ namespace marker {
 
             static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
             {
-                using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
-                dest.scale = src.scale;
-                dest.lifetime = src.lifetime;
-                dest.frame_locked = src.frame_locked;
+                const size_t dest_vertex = dest.points.size();
+                const size_t src_vertex = src.points.size();
+                const size_t vertex = dest_vertex + src_vertex;
 
-                const size_t dest_obj_size = dest.points.size();
-                const size_t src_obj_size = src.points.size();
-                const size_t obj_size = dest_obj_size + src_obj_size;
-
-                dest.points.reserve(obj_size);
-                for (size_t i = 0; i < src_obj_size; i) {
-                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
-                }
-
-                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(obj_size);
-                    if (dest.colors.empty()) {
-                        dest.colors.resize(dest_obj_size, dest.color);
-                    }
-                    if (src.colors.empty()) {
-                        dest.colors.resize(obj_size, src.color);
-                    } else {
-                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
-                    }
-                }
+                merge_common(dest, src);
+                merge_points_n_m(dest, src);
+                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
             }
         };
 
@@ -1264,34 +1225,15 @@ namespace marker {
 
             static void merge(MarkerWrapper &d, const MarkerWrapper &s) noexcept
             {
-                using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
-                dest.scale = src.scale;
-                dest.lifetime = src.lifetime;
-                dest.frame_locked = src.frame_locked;
+                const size_t dest_vertex = dest.points.size() / 3;
+                const size_t src_vertex = src.points.size() / 3;
 
-                const size_t dest_obj_size = dest.points.size() / 3;
-                const size_t src_obj_size = src.points.size() / 3;
-                const size_t obj_size = dest_obj_size + src_obj_size;
-
-                dest.points.reserve(obj_size);
-                for (size_t i = 0; i < src_obj_size * 3; i) {
-                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
-                }
-
-                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(obj_size);
-                    if (dest.colors.empty()) {
-                        dest.colors.resize(dest_obj_size, dest.color);
-                    }
-                    if (src.colors.empty()) {
-                        dest.colors.resize(obj_size, src.color);
-                    } else {
-                        dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
-                    }
-                }
+                merge_common(dest, src);
+                merge_points_n_m(dest, src);
+                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
             }
         };
     }
