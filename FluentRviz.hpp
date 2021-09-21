@@ -1109,10 +1109,8 @@ namespace marker {
             {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
-
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
-                const size_t vertex = dest_vertex + src_vertex;
 
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
@@ -1129,9 +1127,7 @@ namespace marker {
             {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
-
                 const size_t dest_vertex = dest.points.size();
-                const size_t vertex = dest_vertex + 1;
 
                 merge_common(dest, src);
                 merge_points_n_1(dest, src);
@@ -1148,10 +1144,8 @@ namespace marker {
             {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
-
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
-                const size_t vertex = dest_vertex + src_vertex;
 
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
@@ -1168,9 +1162,7 @@ namespace marker {
             {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
-
                 const size_t dest_vertex = dest.points.size();
-                const size_t vertex = dest_vertex + 1;
 
                 merge_common(dest, src);
                 merge_points_n_1(dest, src);
@@ -1187,10 +1179,8 @@ namespace marker {
             {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
-
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
-                const size_t vertex = dest_vertex + src_vertex;
 
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
@@ -1207,10 +1197,8 @@ namespace marker {
             {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
-
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
-                const size_t vertex = dest_vertex + src_vertex;
 
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
@@ -1227,7 +1215,6 @@ namespace marker {
             {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
-
                 const size_t dest_vertex = dest.points.size() / 3;
                 const size_t src_vertex = src.points.size() / 3;
 
