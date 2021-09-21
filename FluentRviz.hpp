@@ -80,17 +80,17 @@ namespace util {
         ssize_t _start, _end;
 
     public:
-        Index(ssize_t start, ssize_t end)
+        Index(ssize_t start, ssize_t end) noexcept
             : _start(start), _end(end) { }
 
-        Index(ssize_t end)
+        Index(ssize_t end) noexcept
             : Index(0, end) { }
 
         class iterator {
             ssize_t _index;
 
         public:
-            iterator(ssize_t index)
+            iterator(ssize_t index) noexcept
                 : _index(index) { }
 
             iterator &operator++() noexcept
@@ -907,11 +907,11 @@ namespace marker {
 
     struct MarkerWrapper {
         visualization_msgs::Marker message;
-        operator const visualization_msgs::Marker &() { return this->message; }
+        operator visualization_msgs::Marker &() noexcept { return this->message; }
     };
 
     struct DeleteAll : MarkerWrapper {
-        DeleteAll(const std::string &ns = "")
+        DeleteAll(const std::string &ns = "") noexcept
         {
             this->message.action = visualization_msgs::Marker::DELETEALL;
             this->message.ns = ns;
@@ -919,7 +919,7 @@ namespace marker {
     };
 
     struct Delete : MarkerWrapper {
-        Delete(const int32_t id = 0, const std::string &ns = "")
+        Delete(const int32_t id = 0, const std::string &ns = "") noexcept
         {
             this->message.action = visualization_msgs::Marker::DELETE;
             this->message.id = id;
@@ -931,7 +931,7 @@ namespace marker {
         int32_t Type,
         template<class, class> class ...Features>
     struct Add : util::chained<Add<Type, Features...>, MarkerWrapper, attr::CRTP, Features...> {
-        Add(const int32_t id = 0, const std::string &ns = "")
+        Add(const int32_t id = 0, const std::string &ns = "") noexcept
         {
             this->message.action = visualization_msgs::Marker::ADD;
             this->message.type = Type;
@@ -1017,14 +1017,14 @@ namespace marker {
         template<class T>
         static constexpr int32_t marker_type = marker_type_impl<T>::value;
 
-        void merge_common(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src)
+        void merge_common(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
         {
             dest.scale = src.scale;
             dest.lifetime = src.lifetime;
             dest.frame_locked = src.frame_locked;
         }
 
-        void merge_points_n_m(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src)
+        void merge_points_n_m(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
         {
             const size_t dest_vertex = dest.points.size();
             const size_t src_vertex = src.points.size();
@@ -1036,14 +1036,14 @@ namespace marker {
             }
         }
 
-        void merge_points_n_1(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src)
+        void merge_points_n_1(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
         {
             dest.points.push_back(src.pose.position);
         }
 
         void merge_colors_n_m(
             visualization_msgs::Marker &dest, size_t dest_vertex,
-            const visualization_msgs::Marker &src, size_t src_vertex)
+            const visualization_msgs::Marker &src, size_t src_vertex) noexcept
         {
             size_t vertex = dest_vertex + src_vertex;
             if (dest.colors.empty() && src.colors.empty() && dest.color == src.color) return;
@@ -1061,7 +1061,7 @@ namespace marker {
 
         void merge_colors_n_1(
             visualization_msgs::Marker &dest, size_t dest_vertex,
-            const visualization_msgs::Marker &src)
+            const visualization_msgs::Marker &src) noexcept
         {
             size_t vertex = dest_vertex + 1;
             if (dest.colors.empty() && dest.color == src.color) return;
