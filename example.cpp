@@ -19,7 +19,7 @@ int main(int argc, char **argv)
         .points({ { 1, 0, 0 }, { 0, 1, 0 } });
 
     rviz << marker::Points(3)
-        .data(util::Indices(10), [](size_t i) {
+        .data(util::Index(10), [](size_t i) {
             return marker::Points()
                 .color(1, 0, 0)
                 .points({ { 0, 2, 0 } });

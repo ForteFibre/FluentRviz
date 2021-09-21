@@ -81,15 +81,15 @@ namespace util {
     template<class T>
     constexpr inline bool has_size_v = is_detected_v<size_type, T>;
 
-    class Indices {
+    class Index {
         ssize_t _start, _end;
 
     public:
-        Indices(ssize_t start, ssize_t end)
+        Index(ssize_t start, ssize_t end)
             : _start(start), _end(end) { }
 
-        Indices(ssize_t end)
-            : Indices(0, end) { }
+        Index(ssize_t end)
+            : Index(0, end) { }
 
         class iterator {
             ssize_t _index;
