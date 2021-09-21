@@ -1011,6 +1011,10 @@ namespace marker {
                 const size_t src_obj_size = src.points.size() - 1;
                 const size_t obj_size = dest_obj_size + src_obj_size;
 
+                dest.scale = src.scale;
+                dest.lifetime = src.lifetime;
+                dest.frame_locked = src.frame_locked;
+
                 dest.points.reserve(obj_size);
                 for (size_t i = 0; i < src_obj_size; i++) {
                     dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
@@ -1046,6 +1050,10 @@ namespace marker {
                 const size_t src_obj_size = src.points.size() / 2;
                 const size_t obj_size = dest_obj_size + src_obj_size;
 
+                dest.scale = src.scale;
+                dest.lifetime = src.lifetime;
+                dest.frame_locked = src.frame_locked;
+
                 dest.points.reserve(obj_size);
                 for (size_t i = 0; i < src_obj_size * 2; i) {
                     dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
@@ -1076,6 +1084,10 @@ namespace marker {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
+                dest.scale = src.scale;
+                dest.lifetime = src.lifetime;
+                dest.frame_locked = src.frame_locked;
+
                 const size_t dest_obj_size = dest.points.size();
                 const size_t src_obj_size = 1;
                 const size_t obj_size = dest_obj_size + src_obj_size;
@@ -1102,6 +1114,10 @@ namespace marker {
                 using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
+
+                dest.scale = src.scale;
+                dest.lifetime = src.lifetime;
+                dest.frame_locked = src.frame_locked;
 
                 const size_t dest_obj_size = dest.points.size();
                 const size_t src_obj_size = src.points.size();
@@ -1137,6 +1153,10 @@ namespace marker {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
+                dest.scale = src.scale;
+                dest.lifetime = src.lifetime;
+                dest.frame_locked = src.frame_locked;
+
                 const size_t dest_obj_size = dest.points.size();
                 const size_t src_obj_size = 1;
                 const size_t obj_size = dest_obj_size + src_obj_size;
@@ -1163,6 +1183,10 @@ namespace marker {
                 using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
+
+                dest.scale = src.scale;
+                dest.lifetime = src.lifetime;
+                dest.frame_locked = src.frame_locked;
 
                 const size_t dest_obj_size = dest.points.size();
                 const size_t src_obj_size = src.points.size();
@@ -1198,6 +1222,10 @@ namespace marker {
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
 
+                dest.scale = src.scale;
+                dest.lifetime = src.lifetime;
+                dest.frame_locked = src.frame_locked;
+
                 const size_t dest_obj_size = dest.points.size();
                 const size_t src_obj_size = src.points.size();
                 const size_t obj_size = dest_obj_size + src_obj_size;
@@ -1231,6 +1259,10 @@ namespace marker {
                 using namespace param;
                 visualization_msgs::Marker &dest = d.message;
                 const visualization_msgs::Marker &src = s.message;
+
+                dest.scale = src.scale;
+                dest.lifetime = src.lifetime;
+                dest.frame_locked = src.frame_locked;
 
                 const size_t dest_obj_size = dest.points.size() / 3;
                 const size_t src_obj_size = src.points.size() / 3;
