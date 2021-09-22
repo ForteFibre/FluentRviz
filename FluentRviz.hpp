@@ -206,7 +206,7 @@ namespace param {
         { return detail::construct<Return>::from(0, 0, 1); }
 
         template<class T>
-        operator T() { return util::convert<T, geometry_msgs::Vector3>(*this); }
+        operator T() const { return util::convert<T, geometry_msgs::Vector3>(*this); }
     };
 
     namespace detail {
@@ -241,7 +241,7 @@ namespace param {
             : geometry_msgs::Point(point) { }
 
         template<class T>
-        operator T() { return util::convert<T, geometry_msgs::Point>(*this); }
+        operator T() const { return util::convert<T, geometry_msgs::Point>(*this); }
     };
 
     namespace detail {
@@ -407,7 +407,7 @@ namespace param {
         { return ScalarVector<Return>(std::cos(angle / 2.0), axis * std::sin(angle / 2.0)); }
 
         template<class T>
-        operator T() { return util::convert<T, geometry_msgs::Quaternion>(*this); }
+        operator T() const { return util::convert<T, geometry_msgs::Quaternion>(*this); }
     };
 
     namespace detail {
@@ -571,7 +571,7 @@ namespace param {
         { return detail::construct<Return>::from(0.50, 0.00, 0.50, alpha); }
 
         template<class T>
-        operator T() { return util::convert<T, std_msgs::ColorRGBA>(*this); }
+        operator T() const { return util::convert<T, std_msgs::ColorRGBA>(*this); }
     };
 
     namespace detail {
