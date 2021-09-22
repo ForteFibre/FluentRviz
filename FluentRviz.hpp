@@ -28,25 +28,28 @@ namespace traits {
 }
 
 namespace util {
-    template<
-        class Derived,
-        class Base,
-        template<class, class> class ...Features>
-    struct chain { using type = Base; };
+
+    namespace detail {
+        template<
+            class Derived,
+            class Base,
+            template<class, class> class ...Features>
+        struct chain_impl { using type = Base; };
+
+        template<
+            class Derived,
+            class Base,
+            template<class, class> class Feature,
+            template<class, class> class ...Features>
+        struct chain_impl<Derived, Base, Feature, Features...>
+            : chain_impl<Derived, Feature<Derived, Base>, Features...> { };
+    }
 
     template<
         class Derived,
         class Base,
-        template<class, class> class Feature,
         template<class, class> class ...Features>
-    struct chain<Derived, Base, Feature, Features...>
-        : chain<Derived, Feature<Derived, Base>, Features...> { };
-
-    template<
-        class Derived,
-        class Base,
-        template<class, class> class ...Features>
-    using chained = typename chain<Derived, Base, Features...>::type;
+    using chain = typename chain_impl<Derived, Base, Features...>::type;
 
     namespace detail {
         template<class AlwaysVoid, template<class...> class Op, class... Args>
@@ -934,7 +937,7 @@ namespace marker {
     template<
         int32_t Type,
         template<class, class> class ...Features>
-    struct Add : util::chained<Add<Type, Features...>, MarkerWrapper, attr::CRTP, Features...> {
+    struct Add : util::chain<Add<Type, Features...>, MarkerWrapper, attr::CRTP, Features...> {
         Add(const int32_t id = 0, const std::string &ns = "") noexcept
         {
             this->message.action = visualization_msgs::Marker::ADD;
