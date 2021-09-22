@@ -22,7 +22,7 @@ namespace traits {
 
     template<class From, class To>
     struct converter<From, To, std::enable_if_t<std::is_convertible_v<From, To>>> {
-        static constexpr const To &convert(const From &value) { return value; }
+        static constexpr To convert(const From &value) { return value; }
     };
 
 }
