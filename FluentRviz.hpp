@@ -444,7 +444,7 @@ namespace param {
 
     template<class Return = Vector3, class T>
     auto vector(const T &t) noexcept
-    -> std::enable_if_t<is_quat_compat_v<T>, Return>
+    -> std::enable_if_t<is_quat_compat_v<T> && is_vec3_compat_v<Return>, Return>
     { return detail::construct<Return>::from(get<1>(t), get<2>(t), get<3>(t)); }
 
     template<class T>
