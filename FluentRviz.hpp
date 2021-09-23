@@ -49,7 +49,7 @@ namespace util {
         class Derived,
         class Base,
         template<class, class> class ...Features>
-    using chain = typename chain_impl<Derived, Base, Features...>::type;
+    using chain = typename detail::chain_impl<Derived, Base, Features...>::type;
 
     namespace detail {
         template<class AlwaysVoid, template<class...> class Op, class... Args>
