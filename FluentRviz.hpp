@@ -881,7 +881,7 @@ namespace marker {
         struct MeshResource : Base {
             Derived &mesh_resource(const std::string &mesh_resource) noexcept
             {
-                this->message.mesh_resouce = mesh_resource;
+                this->message.mesh_resource = mesh_resource;
                 return this->derived();
             }
 
