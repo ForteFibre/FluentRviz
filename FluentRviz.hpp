@@ -1088,6 +1088,8 @@ namespace marker {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
+                if (src.points.empty()) return;
+
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = 2 * (src.points.size() - 1);
                 const size_t vertex = dest_vertex + src_vertex;
@@ -1126,9 +1128,10 @@ namespace marker {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
+                if (src.points.empty()) return;
+
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
-
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
                 merge_colors_n_m(dest, dest_vertex, src, src_vertex);
@@ -1144,7 +1147,6 @@ namespace marker {
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
                 const size_t dest_vertex = dest.points.size();
-
                 merge_common(dest, src);
                 merge_points_n_1(dest, src);
                 merge_colors_n_1(dest, dest_vertex, src);
@@ -1159,9 +1161,10 @@ namespace marker {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
+                if (src.points.empty()) return;
+
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
-
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
                 merge_colors_n_m(dest, dest_vertex, src, src_vertex);
@@ -1177,7 +1180,6 @@ namespace marker {
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
                 const size_t dest_vertex = dest.points.size();
-
                 merge_common(dest, src);
                 merge_points_n_1(dest, src);
                 merge_colors_n_1(dest, dest_vertex, src);
@@ -1192,9 +1194,10 @@ namespace marker {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
+                if (src.points.empty()) return;
+
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
-
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
                 merge_colors_n_m(dest, dest_vertex, src, src_vertex);
@@ -1209,9 +1212,10 @@ namespace marker {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
+                if (src.points.empty()) return;
+
                 const size_t dest_vertex = dest.points.size();
                 const size_t src_vertex = src.points.size();
-
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
                 merge_colors_n_m(dest, dest_vertex, src, src_vertex);
@@ -1226,9 +1230,10 @@ namespace marker {
 
             static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
             {
+                if (src.points.empty()) return;
+
                 const size_t dest_vertex = dest.points.size() / 3;
                 const size_t src_vertex = src.points.size() / 3;
-
                 merge_common(dest, src);
                 merge_points_n_m(dest, src);
                 merge_colors_n_m(dest, dest_vertex, src, src_vertex);
