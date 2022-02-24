@@ -1253,22 +1253,22 @@ public:
         : _publisher(_node_handle.advertise<visualization_msgs::Marker>(topic, 1))
         , _frame_id(frame_id) { }
 
-    const Rviz &operator<<(const visualization_msgs::Marker &marker) const
-    { return *this << visualization_msgs::Marker(marker); }
+    inline const Rviz &operator<<(const visualization_msgs::Marker &marker) const
+    {
+        publish(marker);
+        return *this;
+    }
 
-    const Rviz &operator<<(visualization_msgs::Marker &&marker) const
-    { return *this << marker; }
-
-    const Rviz &operator<<(visualization_msgs::Marker &marker) const
-    { publish(marker); return *this; }
+    inline const Rviz &operator<<(visualization_msgs::Marker &&marker) const
+    {
+        publish(marker);
+        return *this;
+    }
 
     void publish(const visualization_msgs::Marker &marker) const
     { publish(visualization_msgs::Marker(marker)); }
 
     void publish(visualization_msgs::Marker &&marker) const
-    { publish(marker); }
-
-    void publish(visualization_msgs::Marker &marker) const
     {
         marker.header.frame_id = _frame_id;
         marker.header.stamp = ros::Time::now();
