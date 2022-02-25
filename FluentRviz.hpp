@@ -789,15 +789,6 @@ namespace marker {
                 }
                 return this->derived();
             }
-
-            template<class ...Args>
-            auto colors(const Args &...args) noexcept
-            -> std::enable_if_t<(util::is_convertible_v<Args, std_msgs::ColorRGBA> && ...), Derived &>
-            {
-                this->message.points.reserve(sizeof...(Args));
-                (this->message.points.push_back(util::convert<std_msgs::ColorRGBA>(args)), ...);
-                return this->derived();
-            }
         };
 
         template<class Derived, class Base>
@@ -811,15 +802,6 @@ namespace marker {
                 for (const auto &e : iterable) {
                     this->message.points.push_back(func(e));
                 }
-                return this->derived();
-            }
-
-            template<class ...Args>
-            auto points(const Args &...args) noexcept
-            -> std::enable_if_t<(util::is_convertible_v<Args, geometry_msgs::Point> && ...), Derived &>
-            {
-                this->message.points.reserve(sizeof...(Args));
-                (this->message.points.push_back(util::convert<geometry_msgs::Point>(args)), ...);
                 return this->derived();
             }
         };
