@@ -185,13 +185,10 @@ namespace param {
     }
 
     struct Vector3 : geometry_msgs::Vector3 {
-        Vector3() = default;
+        using geometry_msgs::Vector3::Vector3;
 
         Vector3(const double x, const double y, const double z) noexcept
         { this->x = x, this->y = y, this->z = z; }
-
-        Vector3(const geometry_msgs::Vector3 &vector3) noexcept
-            : geometry_msgs::Vector3(vector3) { }
 
         template<class Return = Vector3>
         static auto UnitX() noexcept
@@ -235,13 +232,10 @@ namespace param {
     }
 
     struct Point : geometry_msgs::Point {
-        Point() = default;
+        using geometry_msgs::Point::Point;
 
         Point(const double x, const double y, const double z) noexcept
         { this->x = x, this->y = y, this->z = z; }
-
-        Point(const geometry_msgs::Point &point)
-            : geometry_msgs::Point(point) { }
 
         template<class T>
         operator T() const { return util::convert<T, geometry_msgs::Point>(*this); }
@@ -348,7 +342,7 @@ namespace param {
 
     namespace detail {
         template<class S, class T, size_t ...Is>
-        auto dot_impl(const S &lhs, const T &rhs, std::index_sequence<Is...>) noexcept
+        auto dot(const S &lhs, const T &rhs, std::index_sequence<Is...>) noexcept
         -> std::enable_if_t<is_same_size_v<S, T>, double>
         { return ((get<Is>(lhs) * get<Is>(rhs)) + ...); }
     }
@@ -356,7 +350,7 @@ namespace param {
     template<class S, class T>
     auto dot(const S &lhs, const T &rhs) noexcept
     -> std::enable_if_t<is_same_size_v<S, T>, double>
-    { return detail::dot_impl(lhs, rhs, std::make_index_sequence<detail::access<S>::size>()); }
+    { return detail::dot(lhs, rhs, std::make_index_sequence<detail::access<S>::size>()); }
 
     template<class T>
     auto squared_norm(const T &s) noexcept
@@ -391,13 +385,10 @@ namespace param {
     { return detail::print_impl(os, s, std::make_index_sequence<detail::access<T>::size>()); }
 
     struct Quaternion : geometry_msgs::Quaternion {
-        Quaternion() = default;
+        using geometry_msgs::Quaternion::Quaternion;
 
         Quaternion(const double w, const double x, const double y, const double z) noexcept
         { this->w = w, this->x = x, this->y = y, this->z = z; }
-
-        Quaternion(const geometry_msgs::Quaternion &quaternion) noexcept
-            : geometry_msgs::Quaternion(quaternion) { }
 
         template<class Return = Quaternion, class T>
         static auto ScalarVector(const double scalar, const T &vector) noexcept
@@ -488,7 +479,7 @@ namespace param {
     }
 
     struct Color : std_msgs::ColorRGBA {
-        Color() = default;
+        using std_msgs::ColorRGBA::ColorRGBA;
 
         Color(const float r, const float g, const float b, const float a = 1.0f) noexcept
         { this->r = r, this->g = g, this->b = b, this->a = a; }
