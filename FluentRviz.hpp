@@ -778,7 +778,7 @@ namespace marker {
                 return Color<Derived, Base>::color(r, g, b, a);
             }
 
-            template<class Iterable = std::vector<param::Color>, class Func = internal::convert<std_msgs::ColorRGBA>>
+            template<class Iterable = std::initializer_list<param::Color>, class Func = internal::convert<std_msgs::ColorRGBA>>
             Derived &colors(const Iterable &iterable, const Func &func = Func()) noexcept
             {
                 if constexpr (util::has_size_v<Iterable>) {
@@ -802,7 +802,7 @@ namespace marker {
 
         template<class Derived, class Base>
         struct Points : Base {
-            template<class Iterable = std::vector<param::Point>, class Func = internal::convert<geometry_msgs::Point>>
+            template<class Iterable = std::initializer_list<param::Point>, class Func = internal::convert<geometry_msgs::Point>>
             Derived &points(const Iterable &iterable, const Func &func = Func()) noexcept
             {
                 if constexpr (util::has_size_v<Iterable>) {
