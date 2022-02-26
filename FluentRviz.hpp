@@ -79,39 +79,6 @@ namespace util {
     template<class T>
     constexpr inline bool has_size_v = is_detected_v<size_type, T>;
 
-    class Index {
-        ssize_t _start, _end;
-
-    public:
-        Index(ssize_t start, ssize_t end) noexcept
-            : _start(start), _end(end) { }
-
-        Index(ssize_t end) noexcept
-            : Index(0, end) { }
-
-        class iterator {
-            ssize_t _index;
-
-        public:
-            iterator(ssize_t index) noexcept
-                : _index(index) { }
-
-            iterator &operator++() noexcept
-            { ++_index; return *this; }
-
-            ssize_t operator*() const noexcept
-            { return _index; }
-
-            bool operator!=(iterator &rhs) const noexcept
-            { return _index != rhs._index; }
-        };
-
-        iterator begin() const noexcept
-        { return iterator { _start }; }
-
-        iterator end() const noexcept
-        { return iterator { _end }; }
-    };
 }
 
 namespace param {
@@ -181,7 +148,10 @@ namespace param {
 
         template<class T>
         struct construct<T, std::enable_if_t<is_accessible_v<T> && std::is_default_constructible_v<T>>>
-            : construct_accessible<T, std::make_index_sequence<detail::access<T>::size>> { };
+            : construct_accessible<T, std::make_index_sequence<detail::access<T>::size>> {
+
+            
+        };
     }
 
     struct Vector3 : geometry_msgs::Vector3 {
@@ -265,12 +235,12 @@ namespace param {
 
     namespace detail {
         template<class S, class T, class F, size_t ...Is>
-        auto apply_impl(S &lhs, const T &rhs, const F &f, std::index_sequence<Is...>)
+        auto apply(S &lhs, const T &rhs, const F &f, std::index_sequence<Is...>)
         -> std::enable_if_t<is_same_size_v<S, T>, S &>
         { return (set<Is>(lhs, f(get<Is>(lhs), get<Is>(rhs))), ..., lhs); }
 
         template<class S, class T, class F, size_t ...Is>
-        auto apply_impl(S &lhs, T rhs, const F &f, std::index_sequence<Is...>)
+        auto apply(S &lhs, T rhs, const F &f, std::index_sequence<Is...>)
         -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S &>
         { return (set<Is>(lhs, f(get<Is>(lhs), rhs)), ..., lhs); }
     }
@@ -278,12 +248,12 @@ namespace param {
     template<class S, class T, class F>
     auto apply(S &lhs, const T &rhs, const F &f) noexcept
     -> std::enable_if_t<is_same_size_v<S, T>, S &>
-    { return detail::apply_impl(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>()); }
+    { return detail::apply(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>()); }
 
     template<class S, class T, class F>
     auto apply(S &lhs, T rhs, const F &f) noexcept
     -> std::enable_if_t<is_accessible_v<S> && std::is_scalar_v<T>, S &>
-    { return detail::apply_impl(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>()); }
+    { return detail::apply(lhs, rhs, f, std::make_index_sequence<detail::access<S>::size>()); }
 
     template<class S, class T>
     auto operator+=(S &lhs, const T &rhs) noexcept
@@ -865,20 +835,6 @@ namespace marker {
             }
         };
 
-        template<class Derived, class Base>
-        struct Data : Base {
-            template<class Iterable, class Func>
-            Derived &data(const Iterable &iterable, const Func &func) noexcept
-            {
-                using std::begin;
-                using Element = decltype(*begin(iterable));
-                using Return = decltype(func(std::declval<Element>()));
-                using Marker = std::remove_reference_t<std::remove_const_t<Return>>;
-                for (const auto &e : iterable) detail::merger<Derived, Marker>::merge(this->derived(), func(e));
-                return this->derived();
-            }
-        };
-
     }
 
     struct MarkerWrapper {
@@ -958,19 +914,19 @@ namespace marker {
 
     using LineList = Add<
         visualization_msgs::Marker::LINE_LIST,
-        attr::Position, attr::Orientation, attr::LineScale, attr::Colors, attr::Points, attr::Data>;
+        attr::Position, attr::Orientation, attr::LineScale, attr::Colors, attr::Points>;
 
     using CubeList = Add<
         visualization_msgs::Marker::CUBE_LIST,
-        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points, attr::Data>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
 
     using SphereList = Add<
         visualization_msgs::Marker::SPHERE_LIST,
-        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points, attr::Data>;
+        attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
 
     using Points = Add<
         visualization_msgs::Marker::POINTS,
-        attr::Position, attr::Orientation, attr::PointScale, attr::Colors, attr::Points, attr::Data>;
+        attr::Position, attr::Orientation, attr::PointScale, attr::Colors, attr::Points>;
 
     using TextViewFacing = Add<
         visualization_msgs::Marker::TEXT_VIEW_FACING,
@@ -984,235 +940,6 @@ namespace marker {
         visualization_msgs::Marker::TRIANGLE_LIST,
         attr::Position, attr::Orientation, attr::Scale, attr::Colors, attr::Points>;
 
-    namespace detail {
-
-        template<class T, class Enabler = void>
-        struct marker_type_impl;
-
-        template<int32_t Type, template<class, class> class ...Attrs>
-        struct marker_type_impl<Add<Type, Attrs...>> {
-            static constexpr int32_t value = Type;
-        };
-
-        template<class T>
-        static constexpr int32_t marker_type = marker_type_impl<T>::value;
-
-        void merge_common(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-        {
-            dest.scale = src.scale;
-            dest.lifetime = src.lifetime;
-            dest.frame_locked = src.frame_locked;
-        }
-
-        void merge_points_n_m(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-        {
-            const size_t dest_vertex = dest.points.size();
-            const size_t src_vertex = src.points.size();
-            const size_t vertex = dest_vertex + src_vertex;
-            dest.points.reserve(vertex);
-            for (size_t i = 0; i < src_vertex; i) {
-                using namespace param;
-                dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
-            }
-        }
-
-        void merge_points_n_1(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-        {
-            dest.points.push_back(src.pose.position);
-        }
-
-        void merge_colors_n_m(
-            visualization_msgs::Marker &dest, size_t dest_vertex,
-            const visualization_msgs::Marker &src, size_t src_vertex) noexcept
-        {
-            size_t vertex = dest_vertex + src_vertex;
-            if (dest.colors.empty() && src.colors.empty() && dest.color == src.color) return;
-
-            dest.colors.reserve(vertex);
-            if (dest.colors.empty()) {
-                dest.colors.resize(dest_vertex, dest.color);
-            }
-            if (src.colors.empty()) {
-                dest.colors.resize(vertex, src.color);
-            } else {
-                dest.colors.insert(dest.colors.end(), src.colors.begin(), src.colors.end());
-            }
-        }
-
-        void merge_colors_n_1(
-            visualization_msgs::Marker &dest, size_t dest_vertex,
-            const visualization_msgs::Marker &src) noexcept
-        {
-            size_t vertex = dest_vertex + 1;
-            if (dest.colors.empty() && dest.color == src.color) return;
-
-            dest.colors.reserve(vertex);
-            if (dest.colors.empty()) {
-                dest.colors.resize(dest_vertex, dest.color);
-            }
-            dest.colors.push_back(src.color);
-        }
-
-        template<class Dest, class Src>
-        struct merger<Dest, Src, std::enable_if_t<
-            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
-            && marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
-            && marker_type<Src> == visualization_msgs::Marker::LINE_STRIP>> {
-
-            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-            {
-                if (src.points.empty()) return;
-
-                const size_t dest_vertex = dest.points.size();
-                const size_t src_vertex = 2 * (src.points.size() - 1);
-                const size_t vertex = dest_vertex + src_vertex;
-
-                merge_common(dest, src);
-
-                dest.points.reserve(vertex);
-                for (size_t i = 0; i < src_vertex / 2; i++) {
-                    using namespace param;
-                    dest.points.push_back(src.pose.orientation * src.points[i] + src.pose.position);
-                    dest.points.push_back(src.pose.orientation * src.points[i + 1] + src.pose.position);
-                }
-
-                if (!dest.colors.empty() || !src.colors.empty() || dest.color != src.color) {
-                    dest.colors.reserve(vertex);
-                    if (dest.colors.empty()) {
-                        dest.colors.resize(dest_vertex, dest.color);
-                    }
-                    if (src.colors.empty()) {
-                        dest.colors.resize(vertex, src.color);
-                    } else {
-                        for (size_t i = 0; i < src_vertex / 2; i++) {
-                            dest.colors.push_back(src.colors[i]);
-                            dest.colors.push_back(src.colors[i + 1]);
-                        }
-                    }
-                }
-            }
-        };
-
-        template<class Dest, class Src>
-        struct merger<Dest, Src, std::enable_if_t<
-            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
-            && marker_type<Dest> == visualization_msgs::Marker::LINE_LIST
-            && marker_type<Src> == visualization_msgs::Marker::LINE_LIST>> {
-
-            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-            {
-                if (src.points.empty()) return;
-
-                const size_t dest_vertex = dest.points.size();
-                const size_t src_vertex = src.points.size();
-                merge_common(dest, src);
-                merge_points_n_m(dest, src);
-                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
-            }
-        };
-
-        template<class Dest, class Src>
-        struct merger<Dest, Src, std::enable_if_t<
-            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
-            && marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
-            && marker_type<Src> == visualization_msgs::Marker::SPHERE>> {
-
-            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-            {
-                const size_t dest_vertex = dest.points.size();
-                merge_common(dest, src);
-                merge_points_n_1(dest, src);
-                merge_colors_n_1(dest, dest_vertex, src);
-            }
-        };
-
-        template<class Dest, class Src>
-        struct merger<Dest, Src, std::enable_if_t<
-            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
-            && marker_type<Dest> == visualization_msgs::Marker::SPHERE_LIST
-            && marker_type<Src> == visualization_msgs::Marker::SPHERE_LIST>> {
-
-            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-            {
-                if (src.points.empty()) return;
-
-                const size_t dest_vertex = dest.points.size();
-                const size_t src_vertex = src.points.size();
-                merge_common(dest, src);
-                merge_points_n_m(dest, src);
-                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
-            }
-        };
-
-        template<class Dest, class Src>
-        struct merger<Dest, Src, std::enable_if_t<
-            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
-            && marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
-            && marker_type<Src> == visualization_msgs::Marker::CUBE>> {
-
-            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-            {
-                const size_t dest_vertex = dest.points.size();
-                merge_common(dest, src);
-                merge_points_n_1(dest, src);
-                merge_colors_n_1(dest, dest_vertex, src);
-            }
-        };
-
-        template<class Dest, class Src>
-        struct merger<Dest, Src, std::enable_if_t<
-            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
-            && marker_type<Dest> == visualization_msgs::Marker::CUBE_LIST
-            && marker_type<Src> == visualization_msgs::Marker::CUBE_LIST>> {
-
-            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-            {
-                if (src.points.empty()) return;
-
-                const size_t dest_vertex = dest.points.size();
-                const size_t src_vertex = src.points.size();
-                merge_common(dest, src);
-                merge_points_n_m(dest, src);
-                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
-            }
-        };
-
-        template<class Dest, class Src>
-        struct merger<Dest, Src, std::enable_if_t<
-            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
-            && marker_type<Dest> == visualization_msgs::Marker::POINTS
-            && marker_type<Src> == visualization_msgs::Marker::POINTS>> {
-
-            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-            {
-                if (src.points.empty()) return;
-
-                const size_t dest_vertex = dest.points.size();
-                const size_t src_vertex = src.points.size();
-                merge_common(dest, src);
-                merge_points_n_m(dest, src);
-                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
-            }
-        };
-
-        template<class Dest, class Src>
-        struct merger<Dest, Src, std::enable_if_t<
-            std::is_base_of_v<MarkerWrapper, Dest> && std::is_base_of_v<MarkerWrapper, Src>
-            && marker_type<Dest> == visualization_msgs::Marker::TRIANGLE_LIST
-            && marker_type<Src> == visualization_msgs::Marker::TRIANGLE_LIST>> {
-
-            static void merge(visualization_msgs::Marker &dest, const visualization_msgs::Marker &src) noexcept
-            {
-                if (src.points.empty()) return;
-
-                const size_t dest_vertex = dest.points.size() / 3;
-                const size_t src_vertex = src.points.size() / 3;
-                merge_common(dest, src);
-                merge_points_n_m(dest, src);
-                merge_colors_n_m(dest, dest_vertex, src, src_vertex);
-            }
-        };
-    }
 }
 
 class Rviz {
