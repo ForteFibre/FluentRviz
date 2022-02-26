@@ -18,13 +18,6 @@ int main(int argc, char **argv)
         .scale(0.05)
         .points({ { 1, 0, 0 }, { 0, 1, 0 } });
 
-    rviz << marker::Points(3)
-        .data(util::Index(10), [](double i) {
-            return marker::Points()
-                .color(1, 0, 0)
-                .points({ { i, i, i }, { -i, -i, -i } });
-        });
-
     Vector3 i = { 1, 0, 0 };
     Vector3 j = { 0, 1, 0 };
     Vector3 k = { 0, 0, 1 };
