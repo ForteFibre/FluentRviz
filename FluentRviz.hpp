@@ -139,11 +139,7 @@ namespace param {
             template<class From>
             static auto from(const From &arg)
             -> std::enable_if_t<is_same_size_v<T, From>, T>
-            {
-                T ret;
-                (set<Is>(ret, get<Is>(arg)), ...);
-                return ret;
-            }
+            { return from(get<Is>(args)...); }
         };
 
         template<class T>
