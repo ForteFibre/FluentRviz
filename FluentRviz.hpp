@@ -148,10 +148,7 @@ namespace param {
 
         template<class T>
         struct construct<T, std::enable_if_t<is_accessible_v<T> && std::is_default_constructible_v<T>>>
-            : construct_accessible<T, std::make_index_sequence<detail::access<T>::size>> {
-
-            
-        };
+            : construct_accessible<T, std::make_index_sequence<detail::access<T>::size>> { };
     }
 
     struct Vector3 : geometry_msgs::Vector3 {
