@@ -18,8 +18,6 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_executable(${PROJECT_NAME} sample/example.cpp include/fluent_rviz/fluent_rviz.hpp)
-
 if(BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()

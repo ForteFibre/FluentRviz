@@ -16,7 +16,6 @@
 #define FLUENT_RVIZ__FLUENT_RVIZ_HPP_
 
 #include <array>
-#include <color_names/color_names.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
@@ -1166,4 +1165,4 @@ public:
 
 }  // namespace flrv
 
-#endif FLUENT_RVIZ__FLUENT_RVIZ_HPP_
+#endif  // FLUENT_RVIZ__FLUENT_RVIZ_HPP_
