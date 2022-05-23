@@ -1123,7 +1123,6 @@ class Rviz
 {
 private:
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr publisher_;
-  rclcpp::Node::SharedPtr node_;
   rclcpp::Clock::SharedPtr clock_;
   std::string frame_id_;
 
