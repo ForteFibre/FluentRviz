@@ -2,7 +2,7 @@
 <package format="3">
     <name>fluent_rviz</name>
     <version>0.0.1</version>
-    <description>A library to make Rviz markers fluent to use</description>
+    <description>A library which makes Rviz fluent. Powered by C++17</description>
 
     <maintainer email="shouth@shouth.com">shouth</maintainer>
 
