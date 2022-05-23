@@ -13,14 +13,14 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "example");
     ros::NodeHandle nh;
-    ros::Publisher pub = nh.advertise<visualization_msgs::Marker>("visualization_msgs", 1);
+    ros::Publisher pub = nh.advertise<visualization_msgs::msg::Marker>("visualization_msgs", 1);
 
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = ros::Time::now();
     marker.id = 0;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.pose.orientation.w = 1.0;
     marker.scale.x = 1;
     marker.scale.y = 1;
