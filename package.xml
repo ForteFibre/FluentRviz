@@ -4,7 +4,8 @@
     <version>0.0.1</version>
     <description>A library which makes Rviz fluent. Powered by C++17</description>
 
-    <maintainer email="shouth@shouth.com">shouth</maintainer>
+    <maintainer email="shouth373@gmail.com">shouth</maintainer>
+    <maintainer email="pythagora.yoshimoto@shouth.com">HansRobo</maintainer>
 
     <license>Apache 2.0</license>
 
