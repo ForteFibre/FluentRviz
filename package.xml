@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
     <name>fluent_rviz</name>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <description>A library which makes Rviz fluent. Powered by C++17</description>
 
     <maintainer email="shouth373@gmail.com">shouth</maintainer>
