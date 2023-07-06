@@ -4,6 +4,8 @@
 #include "fluent_rviz/marker/cube_list.hpp"
 #include "fluent_rviz/marker/cube.hpp"
 #include "fluent_rviz/marker/cylinder.hpp"
+#include "fluent_rviz/marker/delete.hpp"
+#include "fluent_rviz/marker/delete_all.hpp"
 #include "fluent_rviz/marker/line_list.hpp"
 #include "fluent_rviz/marker/line_strip.hpp"
 #include "fluent_rviz/marker/mesh_resource.hpp"
