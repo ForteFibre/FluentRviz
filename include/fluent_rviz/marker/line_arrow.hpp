@@ -28,13 +28,13 @@ public:
   using Base::frame_locked;
 
   auto scale(double shaft_diameter, double head_diameter, double head_length) && noexcept
-  -> LineArrow &&
+  -> Derived &&
   {
     return Base::scale(shaft_diameter, head_diameter, head_length);
   }
 
   auto points(geometry_msgs::msg::Point start, geometry_msgs::msg::Point end) && noexcept
-  -> LineArrow &&
+  -> Derived &&
   {
     return Base::points({ start, end });
   }

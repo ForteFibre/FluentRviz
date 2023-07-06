@@ -29,7 +29,7 @@ public:
   using Base::colors;
 
   auto scale(double width) && noexcept
-  -> LineStrip &&
+  -> Derived &&
   {
     return Base::scale(width, 0, 0);
   }

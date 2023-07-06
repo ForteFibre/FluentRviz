@@ -28,7 +28,7 @@ public:
   using Base::frame_locked;
 
   auto scale(double length, double width, double height) && noexcept
-  -> PoseArrow &&
+  -> Derived &&
   {
     return Base::scale(length, width, height);
   }

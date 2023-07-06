@@ -29,7 +29,7 @@ public:
   using Base::text;
 
   auto scale(double height) && noexcept
-  -> TextViewFacing &&
+  -> Derived &&
   {
     return Base::scale(0, 0, height);
   }
