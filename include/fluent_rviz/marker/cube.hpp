@@ -3,15 +3,14 @@
 #include <visualization_msgs/msg/marker.hpp>
 
 #include "fluent_rviz/marker/marker_base.hpp"
-#include "fluent_rviz/marker/marker_wrapper.hpp"
 
 namespace flrv::marker
 {
-template <typename MarkerToken = MarkerWrapper>
-struct Cube : public MarkerBase<MarkerToken, Cube<MarkerToken>>
+template <typename Derived>
+struct Cube : public MarkerBase<Derived>
 {
 private:
-  using Base = MarkerBase<MarkerToken, Cube<MarkerToken>>;
+  using Base = MarkerBase<Derived>;
 
 public:
   Cube()
