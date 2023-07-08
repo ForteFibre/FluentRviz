@@ -2,18 +2,20 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_base.hpp"
+#include "fluent_rviz/marker/marker_composition.hpp"
+#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
 template <typename Derived>
-struct Points : public MarkerBase<Derived>
+struct PointsProperty : public MarkerPropertyBase<Derived>
 {
 private:
-  using Base = MarkerBase<Derived>;
+  using Base = MarkerPropertyBase<Derived>;
 
 public:
-  Points()
+  PointsProperty()
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -30,4 +32,10 @@ public:
   using Base::points;
   using Base::colors;
 };
+
+template <typename MarkerToken = UseTemporal>
+auto Points(MarkerToken && token = UseTemporal{})
+{
+  return compose<PointsProperty>(std::forward<MarkerToken>(token));
+}
 }  // namespace flrv::marker

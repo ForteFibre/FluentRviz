@@ -2,18 +2,20 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_base.hpp"
+#include "fluent_rviz/marker/marker_composition.hpp"
+#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
 template <typename Derived>
-struct LineList : public MarkerBase<Derived>
+struct LineListProperty : public MarkerPropertyBase<Derived>
 {
 private:
-  using Base = MarkerBase<Derived>;
+  using Base = MarkerPropertyBase<Derived>;
 
 public:
-  LineList()
+  LineListProperty()
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -29,10 +31,16 @@ public:
   using Base::points;
   using Base::colors;
 
-  auto scale(double width) && noexcept
-  -> Derived &&
+  auto scale(double width) noexcept
+  -> Derived &
   {
     return Base::scale(width, 0, 0);
   }
 };
+
+template <typename MarkerToken = UseTemporal>
+auto LineList(MarkerToken && token = UseTemporal{})
+{
+  return compose<LineList>(std::forward<MarkerToken>(token));
+}
 }  // namespace flrv::marker

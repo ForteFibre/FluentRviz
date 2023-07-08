@@ -8,5 +8,5 @@
 namespace flrv::marker
 {
 template <typename Derived>
-using Arrow = LineArrow<Derived>;
+using Arrow = LineArrowProperty<Derived>;
 }  // namespace flrv::marker

@@ -2,18 +2,20 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_base.hpp"
+#include "fluent_rviz/marker/marker_composition.hpp"
+#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
 template <typename Derived>
-struct DeleteAll : public MarkerBase<Derived>
+struct DeleteAllProperty : public MarkerPropertyBase<Derived>
 {
 private:
-  using Base = MarkerBase<Derived>;
+  using Base = MarkerPropertyBase<Derived>;
 
 public:
-  DeleteAll()
+  DeleteAllProperty()
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::DELETEALL);
@@ -21,4 +23,10 @@ public:
 
   using Base::ns;
 };
+
+template <typename MarkerToken = UseTemporal>
+auto DeleteAll(MarkerToken && token = UseTemporal{})
+{
+  return compose<DeleteAllProperty>(std::forward<MarkerToken>(token));
+}
 }  // namespace flrv::marker

@@ -1,5 +1,11 @@
 #pragma once
 
+#include "fluent_rviz/marker/marker_composition.hpp"
+#include "fluent_rviz/marker/loaned_marker.hpp"
+#include "fluent_rviz/marker/reference_marker.hpp"
+#include "fluent_rviz/marker/temporal_marker.hpp"
+#include "fluent_rviz/marker/unique_marker.hpp"
+
 #include "fluent_rviz/marker/arrow.hpp"
 #include "fluent_rviz/marker/cube_list.hpp"
 #include "fluent_rviz/marker/cube.hpp"

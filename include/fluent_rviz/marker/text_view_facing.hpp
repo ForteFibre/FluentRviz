@@ -2,18 +2,20 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_base.hpp"
+#include "fluent_rviz/marker/marker_composition.hpp"
+#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
 template <typename Derived>
-struct TextViewFacing : public MarkerBase<Derived>
+struct TextViewFacingProperty : public MarkerPropertyBase<Derived>
 {
 private:
-  using Base = MarkerBase<Derived>;
+  using Base = MarkerPropertyBase<Derived>;
 
 public:
-  TextViewFacing()
+  TextViewFacingProperty()
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -28,10 +30,16 @@ public:
   using Base::frame_locked;
   using Base::text;
 
-  auto scale(double height) && noexcept
-  -> Derived &&
+  auto scale(double height) noexcept
+  -> Derived &
   {
     return Base::scale(0, 0, height);
   }
 };
+
+template <typename MarkerToken = UseTemporal>
+auto TextViewFacing(MarkerToken && token = UseTemporal{})
+{
+  return compose<TextViewFacingProperty>(std::forward<MarkerToken>(token));
+}
 }  // namespace flrv::marker

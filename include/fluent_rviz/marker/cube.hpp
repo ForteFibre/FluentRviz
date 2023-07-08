@@ -2,18 +2,20 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_base.hpp"
+#include "fluent_rviz/marker/marker_composition.hpp"
+#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
 template <typename Derived>
-struct Cube : public MarkerBase<Derived>
+struct CubeProperty : public MarkerPropertyBase<Derived>
 {
 private:
-  using Base = MarkerBase<Derived>;
+  using Base = MarkerPropertyBase<Derived>;
 
 public:
-  Cube()
+  CubeProperty()
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -28,4 +30,10 @@ public:
   using Base::lifetime;
   using Base::frame_locked;
 };
+
+template <typename MarkerToken = UseTemporal>
+auto Cube(MarkerToken && token = UseTemporal{})
+{
+  return compose_marker<CubeProperty>(std::forward<MarkerToken>(token));
+}
 }  // namespace flrv::marker

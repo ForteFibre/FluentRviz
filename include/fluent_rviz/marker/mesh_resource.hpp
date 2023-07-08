@@ -2,18 +2,20 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_base.hpp"
+#include "fluent_rviz/marker/marker_composition.hpp"
+#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
 template <typename Derived>
-struct MeshResource : public MarkerBase<Derived>
+struct MeshResourceProperty : public MarkerPropertyBase<Derived>
 {
 private:
-  using Base = MarkerBase<Derived>;
+  using Base = MarkerPropertyBase<Derived>;
 
 public:
-  MeshResource()
+  MeshResourceProperty()
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -31,4 +33,10 @@ public:
   using Base::mesh_file;
   using Base::mesh_use_embedded_materials;
 };
+
+template <typename MarkerToken = UseTemporal>
+auto MeshResource(MarkerToken && token = UseTemporal{})
+{
+  return compose<MeshResourceProperty>(std::forward<MarkerToken>(token));
+}
 }  // namespace flrv::marker

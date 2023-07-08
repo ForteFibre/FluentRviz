@@ -2,18 +2,20 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_base.hpp"
+#include "fluent_rviz/marker/marker_composition.hpp"
+#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
 template <typename Derived>
-struct LineStrip : public MarkerBase<Derived>
+struct LineStripProperty : public MarkerPropertyBase<Derived>
 {
 private:
-  using Base = MarkerBase<Derived>;
+  using Base = MarkerPropertyBase<Derived>;
 
 public:
-  LineStrip()
+  LineStripProperty()
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -28,10 +30,16 @@ public:
   using Base::frame_locked;
   using Base::colors;
 
-  auto scale(double width) && noexcept
-  -> Derived &&
+  auto scale(double width) noexcept
+  -> Derived &
   {
     return Base::scale(width, 0, 0);
   }
 };
+
+template <typename MarkerToken = UseTemporal>
+auto LineStrip(MarkerToken && token = UseTemporal{})
+{
+  return compose<LineStripProperty>(std::forward<MarkerToken>(token));
+}
 }  // namespace flrv::marker
