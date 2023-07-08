@@ -41,6 +41,6 @@ public:
 template <typename MarkerToken = UseTemporal>
 auto LineList(MarkerToken && token = UseTemporal{})
 {
-  return compose<LineList>(std::forward<MarkerToken>(token));
+  return compose_marker<LineList>(std::forward<MarkerToken>(token));
 }
 }  // namespace flrv::marker

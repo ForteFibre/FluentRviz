@@ -40,6 +40,6 @@ public:
 template <typename MarkerToken = UseTemporal>
 auto TextViewFacing(MarkerToken && token = UseTemporal{})
 {
-  return compose<TextViewFacingProperty>(std::forward<MarkerToken>(token));
+  return compose_marker<TextViewFacingProperty>(std::forward<MarkerToken>(token));
 }
 }  // namespace flrv::marker

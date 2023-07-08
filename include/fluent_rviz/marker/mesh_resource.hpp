@@ -37,6 +37,6 @@ public:
 template <typename MarkerToken = UseTemporal>
 auto MeshResource(MarkerToken && token = UseTemporal{})
 {
-  return compose<MeshResourceProperty>(std::forward<MarkerToken>(token));
+  return compose_marker<MeshResourceProperty>(std::forward<MarkerToken>(token));
 }
 }  // namespace flrv::marker

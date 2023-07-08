@@ -39,6 +39,6 @@ public:
 template <typename MarkerToken = UseTemporal>
 auto PoseArrow(MarkerToken && token = UseTemporal{})
 {
-  return compose<PoseArrowProperty>(std::forward<MarkerToken>(token));
+  return compose_marker<PoseArrowProperty>(std::forward<MarkerToken>(token));
 }
 }  // namespace flrv::marker

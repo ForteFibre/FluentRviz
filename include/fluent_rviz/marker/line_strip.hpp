@@ -40,6 +40,6 @@ public:
 template <typename MarkerToken = UseTemporal>
 auto LineStrip(MarkerToken && token = UseTemporal{})
 {
-  return compose<LineStripProperty>(std::forward<MarkerToken>(token));
+  return compose_marker<LineStripProperty>(std::forward<MarkerToken>(token));
 }
 }  // namespace flrv::marker

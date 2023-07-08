@@ -36,6 +36,6 @@ public:
 template <typename MarkerToken = UseTemporal>
 auto TriangleList(MarkerToken && token = UseTemporal{})
 {
-  return compose<TriangleListProperty>(std::forward<MarkerToken>(token));
+  return compose_marker<TriangleListProperty>(std::forward<MarkerToken>(token));
 }
 }  // namespace flrv::marker
