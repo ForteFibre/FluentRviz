@@ -38,7 +38,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineStrip(MarkerToken && token = UseTemporal{})
+auto LineStrip(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<LineStripProperty>(std::forward<MarkerToken>(token));
 }

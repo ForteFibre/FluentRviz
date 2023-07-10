@@ -34,7 +34,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto SphereList(MarkerToken && token = UseTemporal{})
+auto SphereList(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<SphereListProperty>(std::forward<MarkerToken>(token));
 }

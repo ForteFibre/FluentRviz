@@ -26,7 +26,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Delete(MarkerToken && token = UseTemporal{})
+auto Delete(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<DeleteProperty>(std::forward<MarkerToken>(token));
 }

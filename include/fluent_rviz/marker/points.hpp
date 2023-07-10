@@ -34,7 +34,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Points(MarkerToken && token = UseTemporal{})
+auto Points(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<PointsProperty>(std::forward<MarkerToken>(token));
 }

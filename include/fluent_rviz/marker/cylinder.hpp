@@ -32,7 +32,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Cylinder(MarkerToken && token = UseTemporal{})
+auto Cylinder(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<CylinderProperty>(std::forward<MarkerToken>(token));
 }

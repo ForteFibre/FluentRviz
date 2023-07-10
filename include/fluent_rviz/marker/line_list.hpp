@@ -39,7 +39,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineList(MarkerToken && token = UseTemporal{})
+auto LineList(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<LineList>(std::forward<MarkerToken>(token));
 }

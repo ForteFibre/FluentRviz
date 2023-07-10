@@ -32,7 +32,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Sphere(MarkerToken && token = UseTemporal{})
+auto Sphere(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<SphereProperty>(std::forward<MarkerToken>(token));
 }

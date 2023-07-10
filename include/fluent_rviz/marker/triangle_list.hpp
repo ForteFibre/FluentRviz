@@ -34,7 +34,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto TriangleList(MarkerToken && token = UseTemporal{})
+auto TriangleList(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<TriangleListProperty>(std::forward<MarkerToken>(token));
 }

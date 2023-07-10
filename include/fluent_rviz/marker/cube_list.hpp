@@ -35,7 +35,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto CubeList(MarkerToken && token = UseTemporal{})
+auto CubeList(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<CubeListProperty>(std::forward<MarkerToken>(token));
 }

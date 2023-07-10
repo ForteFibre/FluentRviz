@@ -43,7 +43,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineArrow(MarkerToken && token = UseTemporal{})
+auto LineArrow(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<LineArrowProperty>(std::forward<MarkerToken>(token));
 }

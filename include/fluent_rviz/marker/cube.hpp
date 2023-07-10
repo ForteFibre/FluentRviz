@@ -32,7 +32,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Cube(MarkerToken && token = UseTemporal{})
+auto Cube(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<CubeProperty>(std::forward<MarkerToken>(token));
 }

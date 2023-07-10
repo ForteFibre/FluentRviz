@@ -38,7 +38,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto TextViewFacing(MarkerToken && token = UseTemporal{})
+auto TextViewFacing(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<TextViewFacingProperty>(std::forward<MarkerToken>(token));
 }

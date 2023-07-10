@@ -37,7 +37,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto PoseArrow(MarkerToken && token = UseTemporal{})
+auto PoseArrow(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<PoseArrowProperty>(std::forward<MarkerToken>(token));
 }

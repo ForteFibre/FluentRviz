@@ -35,7 +35,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto MeshResource(MarkerToken && token = UseTemporal{})
+auto MeshResource(MarkerToken && token = MarkerToken{})
 {
   return compose_marker<MeshResourceProperty>(std::forward<MarkerToken>(token));
 }
