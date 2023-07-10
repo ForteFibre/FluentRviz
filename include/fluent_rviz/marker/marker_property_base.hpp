@@ -66,9 +66,9 @@ protected:
   auto scale(double x, double y, double z) noexcept
   -> Derived &
   {
-    auto scale = geometry_msgs::msg::Vector3();
-    scale.x = x, scale.y = y, scale.z = z;
-    derived().get().scale = scale;
+    derived().get().scale.x = x;
+    derived().get().scale.y = y;
+    derived().get().scale.z = z;
     return derived();
   }
 
@@ -114,10 +114,10 @@ protected:
     return derived();
   }
 
-  auto texture(const sensor_msgs::msg::CompressedImage & texture) noexcept
+  auto texture(sensor_msgs::msg::CompressedImage texture) noexcept
   -> Derived &
   {
-    derived().get().texture = texture;
+    derived().get().texture = std::move(texture);
     return derived();
   }
 
@@ -142,10 +142,10 @@ protected:
     return derived();
   }
 
-  auto mesh_file(const visualization_msgs::msg::MeshFile & mesh_file) noexcept
+  auto mesh_file(visualization_msgs::msg::MeshFile mesh_file) noexcept
   -> Derived &
   {
-    derived().get().mesh_file = mesh_file;
+    derived().get().mesh_file = std::move(mesh_file);
     return derived();
   }
 
