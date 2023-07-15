@@ -23,13 +23,13 @@ public:
   ReferenceMarker(ReferenceMarker &&) = delete;
 
 protected:
-  auto get() noexcept -> visualization_msgs::msg::Marker &
+  auto marker() noexcept -> visualization_msgs::msg::Marker &
   {
     return _marker;
   }
 
 public:
-  auto build() noexcept -> const visualization_msgs::msg::Marker &
+  auto get() noexcept -> const visualization_msgs::msg::Marker &
   {
     return _marker;
   }

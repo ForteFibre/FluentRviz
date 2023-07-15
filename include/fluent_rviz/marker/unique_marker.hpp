@@ -23,13 +23,13 @@ protected:
     : _marker(std::move(marker))
   { }
 
-  auto get() -> visualization_msgs::msg::Marker &
+  auto marker() noexcept -> visualization_msgs::msg::Marker &
   {
     return *_marker;
   }
 
 public:
-  auto build() && noexcept -> std::unique_ptr<visualization_msgs::msg::Marker>
+  auto get() && noexcept -> std::unique_ptr<visualization_msgs::msg::Marker>
   {
     return std::move(_marker);
   }

@@ -18,13 +18,13 @@ protected:
     : _marker(std::move(marker))
   { }
 
-  auto get() -> visualization_msgs::msg::Marker &
+  auto marker() -> visualization_msgs::msg::Marker &
   {
     return _marker.get();
   }
 
 public:
-  auto build() && noexcept -> rclcpp::LoanedMessage<visualization_msgs::msg::Marker>
+  auto get() && noexcept -> rclcpp::LoanedMessage<visualization_msgs::msg::Marker>
   {
     return std::move(_marker);
   }
