@@ -1,21 +1,23 @@
 #pragma once
 
+#include <utility>
+
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/marker_base.hpp"
 #include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename Derived>
-struct SphereProperty : public MarkerPropertyBase<Derived>
+template <typename MarkerToken = UseTemporal>
+struct SphereMarker : public MarkerBase<MarkerToken, SphereMarker<MarkerToken>>
 {
 private:
-  using Base = MarkerPropertyBase<Derived>;
+  using Base = MarkerBase<MarkerToken, SphereMarker<MarkerToken>>;
 
 public:
-  SphereProperty()
+  explicit SphereMarker(MarkerToken token = { })
+    : Base(std::forward<MarkerToken>(token))
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -32,8 +34,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Sphere(MarkerToken && token = MarkerToken{})
+auto Sphere(MarkerToken &&token = { })
 {
-  return compose_marker<SphereProperty>(std::forward<MarkerToken>(token));
+  return SphereMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

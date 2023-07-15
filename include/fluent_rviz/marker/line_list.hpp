@@ -1,21 +1,23 @@
 #pragma once
 
+#include <utility>
+
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/marker_base.hpp"
 #include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename Derived>
-struct LineListProperty : public MarkerPropertyBase<Derived>
+template <typename MarkerToken = UseTemporal>
+struct LineListMarker : public MarkerBase<MarkerToken, LineListMarker<MarkerToken>>
 {
 private:
-  using Base = MarkerPropertyBase<Derived>;
+  using Base = MarkerBase<MarkerToken, LineListMarker<MarkerToken>>;
 
 public:
-  LineListProperty()
+  explicit LineListMarker(MarkerToken token = { })
+    : Base(std::forward<MarkerToken>(token))
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -31,16 +33,16 @@ public:
   using Base::points;
   using Base::colors;
 
-  auto scale(double width) noexcept
-  -> Derived &
+  auto scale(double width) && noexcept
+  -> LineListMarker &&
   {
     return Base::scale(width, 0, 0);
   }
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineList(MarkerToken && token = MarkerToken{})
+auto LineList(MarkerToken &&token)
 {
-  return compose_marker<LineList>(std::forward<MarkerToken>(token));
+  return LineListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

@@ -1,21 +1,23 @@
 #pragma once
 
+#include <utility>
+
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/marker_base.hpp"
 #include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename Derived>
-struct PointsProperty : public MarkerPropertyBase<Derived>
+template <typename MarkerToken = UseTemporal>
+struct PointsMarker : public MarkerBase<MarkerToken, PointsMarker<MarkerToken>>
 {
 private:
-  using Base = MarkerPropertyBase<Derived>;
+  using Base = MarkerBase<MarkerToken, PointsMarker<MarkerToken>>;
 
 public:
-  PointsProperty()
+  explicit PointsMarker(MarkerToken token = { })
+    : Base(std::forward<MarkerToken>(token))
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -34,8 +36,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Points(MarkerToken && token = MarkerToken{})
+auto Points(MarkerToken &&token)
 {
-  return compose_marker<PointsProperty>(std::forward<MarkerToken>(token));
+  return PointsMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

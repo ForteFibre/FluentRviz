@@ -2,20 +2,20 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/marker_base.hpp"
 #include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename Derived>
-struct TriangleListProperty : public MarkerPropertyBase<Derived>
+template <typename MarkerToken = UseTemporal>
+struct TriangleListMarker : public MarkerBase<MarkerToken, TriangleListMarker<MarkerToken>>
 {
 private:
-  using Base = MarkerPropertyBase<Derived>;
+  using Base = MarkerBase<MarkerToken, TriangleListMarker<MarkerToken>>;
 
 public:
-  TriangleListProperty()
+  explicit TriangleListMarker(MarkerToken token = { })
+    : Base(std::forward<MarkerToken>(token))
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -34,8 +34,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto TriangleList(MarkerToken && token = MarkerToken{})
+auto TriangleList(MarkerToken &&token = { })
 {
-  return compose_marker<TriangleListProperty>(std::forward<MarkerToken>(token));
+  return TriangleListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

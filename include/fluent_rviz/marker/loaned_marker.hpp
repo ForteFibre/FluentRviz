@@ -1,30 +1,33 @@
 #pragma once
 
+#include "fluent_rviz/marker/plain_marker_base.hpp"
+#include <utility>
+
 #include <rclcpp/loaned_message.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
-
 namespace flrv::marker
 {
-template <template <typename Derived> typename MarkerProperty>
-struct LoanedMarker : public MarkerProperty<LoanedMarker<MarkerProperty>>
+struct LoanedMessage
 {
 private:
-  friend MarkerPropertyBase<LoanedMarker<MarkerProperty>>;
-
   rclcpp::LoanedMessage<visualization_msgs::msg::Marker> _marker;
 
-  auto get() noexcept -> visualization_msgs::msg::Marker &
+protected:
+  LoanedMessage(rclcpp::LoanedMessage<visualization_msgs::msg::Marker> marker)
+    : _marker(std::move(marker))
+  { }
+
+  auto get() -> visualization_msgs::msg::Marker &
   {
     return _marker.get();
   }
 
 public:
-  LoanedMarker(rclcpp::LoanedMessage<visualization_msgs::msg::Marker> marker)
-    : _marker(std::move(marker))
-  { }
+  auto build() && noexcept -> rclcpp::LoanedMessage<visualization_msgs::msg::Marker>
+  {
+    return std::move(_marker);
+  }
 
   operator rclcpp::LoanedMessage<visualization_msgs::msg::Marker>() && noexcept
   {
@@ -32,12 +35,9 @@ public:
   }
 };
 
-template <template <typename Derived> typename MarkerProperty>
-struct detail::MarkerComposition<MarkerProperty, rclcpp::LoanedMessage<visualization_msgs::msg::Marker>>
+template <>
+struct PlainMarkerBase<rclcpp::LoanedMessage<visualization_msgs::msg::Marker>> : public LoanedMessage
 {
-  static auto get(rclcpp::LoanedMessage<visualization_msgs::msg::Marker> marker)
-  {
-    return LoanedMarker<MarkerProperty>(std::move(marker));
-  }
+  using LoanedMessage::LoanedMessage;
 };
 }  // namespace flrv::marker

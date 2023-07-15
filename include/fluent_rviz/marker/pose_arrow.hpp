@@ -1,21 +1,23 @@
 #pragma once
 
+#include <utility>
+
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/marker_base.hpp"
 #include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename Derived>
-struct PoseArrowProperty : public MarkerPropertyBase<Derived>
+template <typename MarkerToken = UseTemporal>
+struct PoseArrowMarker : public MarkerBase<MarkerToken, PoseArrowMarker<MarkerToken>>
 {
 private:
-  using Base = MarkerPropertyBase<Derived>;
+  using Base = MarkerBase<MarkerToken, PoseArrowMarker<MarkerToken>>;
 
 public:
-  PoseArrowProperty()
+  explicit PoseArrowMarker(MarkerToken token = { })
+    : Base(std::forward<MarkerToken>(token))
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -30,15 +32,15 @@ public:
   using Base::frame_locked;
 
   auto scale(double length, double width, double height) noexcept
-  -> Derived &
+  -> PoseArrowMarker &
   {
     return Base::scale(length, width, height);
   }
 };
 
-template <typename MarkerToken = UseTemporal>
-auto PoseArrow(MarkerToken && token = MarkerToken{})
+template <typename MarkerToken>
+auto PoseArrow(MarkerToken &&token = { })
 {
-  return compose_marker<PoseArrowProperty>(std::forward<MarkerToken>(token));
+  return PoseArrowMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

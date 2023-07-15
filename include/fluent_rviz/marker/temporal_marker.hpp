@@ -2,26 +2,28 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/plain_marker_base.hpp"
 
 namespace flrv::marker
 {
-template <template <typename Derived> typename MarkerProperty>
-struct TemporalMarker : public MarkerProperty<TemporalMarker<MarkerProperty>>
+struct TemporalMarker
 {
 private:
-  friend MarkerPropertyBase<TemporalMarker<MarkerProperty>>;
-
   visualization_msgs::msg::Marker _marker;
 
+protected:
   auto get() noexcept -> visualization_msgs::msg::Marker &
   {
     return _marker;
   }
 
 public:
-  operator visualization_msgs::msg::Marker &() noexcept
+  auto build() noexcept -> const visualization_msgs::msg::Marker &
+  {
+    return _marker;
+  }
+
+  operator const visualization_msgs::msg::Marker &() const noexcept
   {
     return _marker;
   }
@@ -29,12 +31,9 @@ public:
 
 struct UseTemporal { };
 
-template <template <typename Derived> typename MarkerProperty>
-struct detail::MarkerComposition<MarkerProperty, UseTemporal>
+template <>
+struct PlainMarkerBase<UseTemporal> : public TemporalMarker
 {
-  static auto get(UseTemporal)
-  {
-    return TemporalMarker<MarkerProperty>();
-  }
+  PlainMarkerBase(UseTemporal) { }
 };
 }  // namespace flrv::marker

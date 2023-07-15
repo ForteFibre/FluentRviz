@@ -1,21 +1,23 @@
 #pragma once
 
+#include <utility>
+
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/marker_base.hpp"
 #include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename Derived>
-struct LineStripProperty : public MarkerPropertyBase<Derived>
+template <typename MarkerToken = UseTemporal>
+struct LineStripMarker : public MarkerBase<MarkerToken, LineStripMarker<MarkerToken>>
 {
 private:
-  using Base = MarkerPropertyBase<Derived>;
+  using Base = MarkerBase<MarkerToken, LineStripMarker<MarkerToken>>;
 
 public:
-  LineStripProperty()
+  explicit LineStripMarker(MarkerToken token = { })
+    : Base(std::forward<MarkerToken>(token))
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -30,16 +32,16 @@ public:
   using Base::frame_locked;
   using Base::colors;
 
-  auto scale(double width) noexcept
-  -> Derived &
+  auto scale(double width) && noexcept
+  -> LineStripMarker &&
   {
     return Base::scale(width, 0, 0);
   }
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineStrip(MarkerToken && token = MarkerToken{})
+auto LineStrip(MarkerToken &&token = { })
 {
-  return compose_marker<LineStripProperty>(std::forward<MarkerToken>(token));
+  return LineStripMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

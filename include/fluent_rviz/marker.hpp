@@ -1,6 +1,5 @@
 #pragma once
 
-#include "fluent_rviz/marker/marker_composition.hpp"
 #include "fluent_rviz/marker/loaned_marker.hpp"
 #include "fluent_rviz/marker/reference_marker.hpp"
 #include "fluent_rviz/marker/temporal_marker.hpp"

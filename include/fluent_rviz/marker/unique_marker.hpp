@@ -2,27 +2,19 @@
 
 #include <algorithm>
 #include <memory>
+
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/plain_marker_base.hpp"
 
 namespace flrv::marker
 {
-template <template <typename Derived> typename MarkerProperty>
-struct UniqueMarker : public MarkerProperty<UniqueMarker<MarkerProperty>>
+struct UniqueMarker
 {
 private:
-  friend MarkerPropertyBase<UniqueMarker<MarkerProperty>>;
-
   std::unique_ptr<visualization_msgs::msg::Marker> _marker;
 
-  auto get() noexcept -> visualization_msgs::msg::Marker &
-  {
-    return *_marker;
-  }
-
-public:
+protected:
   UniqueMarker()
     : _marker(std::make_unique<visualization_msgs::msg::Marker>())
   { }
@@ -30,6 +22,17 @@ public:
   UniqueMarker(std::unique_ptr<visualization_msgs::msg::Marker> marker)
     : _marker(std::move(marker))
   { }
+
+  auto get() -> visualization_msgs::msg::Marker &
+  {
+    return *_marker;
+  }
+
+public:
+  auto build() && noexcept -> std::unique_ptr<visualization_msgs::msg::Marker>
+  {
+    return std::move(_marker);
+  }
 
   operator std::unique_ptr<visualization_msgs::msg::Marker>() && noexcept
   {
@@ -39,21 +42,18 @@ public:
 
 struct UseUnique { };
 
-template <template <typename Derived> typename MarkerProperty>
-struct detail::MarkerComposition<MarkerProperty, UseUnique>
+template <>
+struct PlainMarkerBase<UseUnique> : public UniqueMarker
 {
-  static auto get(UseUnique)
-  {
-    return UniqueMarker<MarkerProperty>();
-  }
+  PlainMarkerBase(UseUnique)
+  { }
 };
 
-template <template <typename Derived> typename MarkerProperty>
-struct detail::MarkerComposition<MarkerProperty, std::unique_ptr<visualization_msgs::msg::Marker>>
+template <>
+struct PlainMarkerBase<std::unique_ptr<visualization_msgs::msg::Marker>> : public UniqueMarker
 {
-  static auto get(std::unique_ptr<visualization_msgs::msg::Marker> marker)
-  {
-    return UniqueMarker<MarkerProperty>(std::move(marker));
-  }
+  PlainMarkerBase(std::unique_ptr<visualization_msgs::msg::Marker> marker)
+    : UniqueMarker(std::move(marker))
+  { }
 };
 }  // namespace flrv::marker

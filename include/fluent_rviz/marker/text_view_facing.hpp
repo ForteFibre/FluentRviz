@@ -1,21 +1,23 @@
 #pragma once
 
+#include <utility>
+
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/marker_composition.hpp"
-#include "fluent_rviz/marker/marker_property_base.hpp"
+#include "fluent_rviz/marker/marker_base.hpp"
 #include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename Derived>
-struct TextViewFacingProperty : public MarkerPropertyBase<Derived>
+template <typename MarkerToken = UseTemporal>
+struct TextViewFacingMarker : public MarkerBase<MarkerToken, TextViewFacingMarker<MarkerToken>>
 {
 private:
-  using Base = MarkerPropertyBase<Derived>;
+  using Base = MarkerBase<MarkerToken, TextViewFacingMarker<MarkerToken>>;
 
 public:
-  TextViewFacingProperty()
+  explicit TextViewFacingMarker(MarkerToken token = { })
+    : Base(std::forward<MarkerToken>(token))
   {
     std::move(*this)
       .action(visualization_msgs::msg::Marker::ADD)
@@ -30,16 +32,16 @@ public:
   using Base::frame_locked;
   using Base::text;
 
-  auto scale(double height) noexcept
-  -> Derived &
+  auto scale(double height) && noexcept
+  -> TextViewFacingMarker &&
   {
     return Base::scale(0, 0, height);
   }
 };
 
 template <typename MarkerToken = UseTemporal>
-auto TextViewFacing(MarkerToken && token = MarkerToken{})
+auto TextViewFacing(MarkerToken &&token = { })
 {
-  return compose_marker<TextViewFacingProperty>(std::forward<MarkerToken>(token));
+  return TextViewFacingMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

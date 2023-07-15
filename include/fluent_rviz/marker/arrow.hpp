@@ -7,6 +7,6 @@
 
 namespace flrv::marker
 {
-template <typename Derived>
-using Arrow = LineArrowProperty<Derived>;
+template <typename MarkerToken>
+using Arrow = LineArrowMarker<MarkerToken>;
 }  // namespace flrv::marker
