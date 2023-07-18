@@ -38,7 +38,7 @@ public:
   }
 };
 
-template <typename MarkerToken>
+template <typename MarkerToken = UseTemporal>
 auto PoseArrow(MarkerToken &&token = { })
 {
   return PoseArrowMarker<MarkerToken>{ std::forward<MarkerToken>(token) };

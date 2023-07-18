@@ -36,7 +36,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Points(MarkerToken &&token)
+auto Points(MarkerToken &&token = { })
 {
   return PointsMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }

@@ -41,7 +41,7 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineList(MarkerToken &&token)
+auto LineList(MarkerToken &&token = { })
 {
   return LineListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }

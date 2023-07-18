@@ -36,8 +36,8 @@ public:
   using Base::mesh_use_embedded_materials;
 };
 
-template <typename MarkerToken>
-auto MeshResource(MarkerToken &&token)
+template <typename MarkerToken = UseTemporal>
+auto MeshResource(MarkerToken &&token = { })
 {
   return MeshResourceMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
