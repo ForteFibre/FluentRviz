@@ -13,20 +13,14 @@ private:
 
 protected:
   auto marker() noexcept -> visualization_msgs::msg::Marker &
-  {
-    return _marker;
-  }
+  { return _marker; }
 
 public:
   auto get() noexcept -> const visualization_msgs::msg::Marker &
-  {
-    return _marker;
-  }
+  { return _marker; }
 
   operator const visualization_msgs::msg::Marker &() const noexcept
-  {
-    return _marker;
-  }
+  { return _marker; }
 };
 
 struct UseTemporal { };

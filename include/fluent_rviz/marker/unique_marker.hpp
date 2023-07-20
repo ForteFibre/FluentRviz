@@ -24,20 +24,14 @@ protected:
   { }
 
   auto marker() noexcept -> visualization_msgs::msg::Marker &
-  {
-    return *_marker;
-  }
+  { return *_marker; }
 
 public:
   auto get() && noexcept -> std::unique_ptr<visualization_msgs::msg::Marker>
-  {
-    return std::move(_marker);
-  }
+  { return std::move(_marker); }
 
   operator std::unique_ptr<visualization_msgs::msg::Marker>() && noexcept
-  {
-    return std::move(_marker);
-  }
+  { return std::move(_marker); }
 };
 
 struct UseUnique { };

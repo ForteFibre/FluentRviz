@@ -19,20 +19,14 @@ protected:
   { }
 
   auto marker() -> visualization_msgs::msg::Marker &
-  {
-    return _marker.get();
-  }
+  { return _marker.get(); }
 
 public:
   auto get() && noexcept -> rclcpp::LoanedMessage<visualization_msgs::msg::Marker>
-  {
-    return std::move(_marker);
-  }
+  { return std::move(_marker); }
 
   operator rclcpp::LoanedMessage<visualization_msgs::msg::Marker>() && noexcept
-  {
-    return std::move(_marker);
-  }
+  { return std::move(_marker); }
 };
 
 template <>

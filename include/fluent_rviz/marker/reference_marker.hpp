@@ -22,22 +22,19 @@ public:
   ReferenceMarker(const ReferenceMarker &) = delete;
   ReferenceMarker(ReferenceMarker &&) = delete;
 
+  auto operator=(const ReferenceMarker &) = delete;
+  auto operator=(ReferenceMarker &&) = delete;
+
 protected:
   auto marker() noexcept -> visualization_msgs::msg::Marker &
-  {
-    return _marker;
-  }
+  { return _marker; }
 
 public:
   auto get() noexcept -> const visualization_msgs::msg::Marker &
-  {
-    return _marker;
-  }
+  { return _marker; }
 
   operator const visualization_msgs::msg::Marker &() noexcept
-  {
-    return _marker;
-  }
+  { return _marker; }
 };
 
 template <>
