@@ -36,8 +36,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Points(MarkerToken &&token = { })
+auto Points(MarkerToken &&token = { }) -> PointsMarker<MarkerToken>
 {
-  return PointsMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
+  return { std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

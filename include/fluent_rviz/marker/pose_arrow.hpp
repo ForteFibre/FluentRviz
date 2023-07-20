@@ -39,8 +39,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto PoseArrow(MarkerToken &&token = { })
+auto PoseArrow(MarkerToken &&token = { }) -> PoseArrowMarker<MarkerToken>
 {
-  return PoseArrowMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
+  return { std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

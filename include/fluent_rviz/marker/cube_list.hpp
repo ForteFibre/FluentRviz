@@ -36,8 +36,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto CubeList(MarkerToken &&token = { })
+auto CubeList(MarkerToken &&token = { }) -> CubeListMarker<MarkerToken>
 {
-  return CubeListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
+  return { std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

@@ -40,8 +40,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineStrip(MarkerToken &&token = { })
+auto LineStrip(MarkerToken &&token = { }) -> LineStripMarker<MarkerToken>
 {
-  return LineStripMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
+  return { std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

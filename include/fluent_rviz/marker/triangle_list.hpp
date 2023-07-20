@@ -34,8 +34,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto TriangleList(MarkerToken &&token = { })
+auto TriangleList(MarkerToken &&token = { }) -> TriangleListMarker<MarkerToken>
 {
-  return TriangleListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
+  return { std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker
