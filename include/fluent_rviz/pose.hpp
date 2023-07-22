@@ -38,14 +38,14 @@ inline auto Identity() noexcept -> Pose
 { return { point::Zero(), quaternion::Identity() }; }
 
 template <
-  typename PointLike,
+  typename PointLike = point::Point,
   typename = decltype(traits::Convert<geometry_msgs::msg::Point, PointLike>{ })>
 [[nodiscard]]
 inline auto Translation(const PointLike &point) noexcept -> Pose
 { return { point, quaternion::Identity() }; }
 
 template <
-  typename QuaternionLike,
+  typename QuaternionLike = quaternion::Quaternion,
   typename = decltype(traits::Convert<geometry_msgs::msg::Quaternion, QuaternionLike>{ })>
 [[nodiscard]]
 inline auto Rotation(const QuaternionLike &quaternion) noexcept -> Pose
