@@ -5,7 +5,7 @@
 #include <geometry_msgs/msg/quaternion.hpp>
 
 #include "fluent_rviz/point.hpp"
-#include "fluent_rviz/traits/convert.hpp"
+#include "fluent_rviz/traits.hpp"
 
 namespace flrv::quaternion
 {
@@ -15,7 +15,8 @@ struct Quaternion : public geometry_msgs::msg::Quaternion
 
   template <
     typename QuaternionLike,
-    typename = decltype(traits::Convert<geometry_msgs::msg::Quaternion, QuaternionLike>{ })>
+    traits::Require<
+      traits::ConversionDefined<geometry_msgs::msg::Quaternion, QuaternionLike>> = nullptr>
   Quaternion(const QuaternionLike &quaternion)
     : geometry_msgs::msg::Quaternion{ traits::convert<geometry_msgs::msg::Quaternion>(quaternion) }
   { }
@@ -39,6 +40,18 @@ inline auto ScalarVector(double scalar, const point::Point &vector) noexcept -> 
 [[nodiscard]]
 inline auto AngleAxis(double angle, const point::Point &axis) noexcept -> Quaternion
 { return ScalarVector(std::cos(angle / 2), axis * std::sin(angle / 2)); }
+
+[[nodiscard]]
+inline auto AngleAxisX(double angle) noexcept -> Quaternion
+{ return AngleAxis(angle, { 1, 0, 0 }); }
+
+[[nodiscard]]
+inline auto AngleAxisY(double angle) noexcept -> Quaternion
+{ return AngleAxis(angle, { 0, 1, 0 }); }
+
+[[nodiscard]]
+inline auto AngleAxisZ(double angle) noexcept -> Quaternion
+{ return AngleAxis(angle, { 0, 0, 1 }); }
 
 [[nodiscard]]
 inline auto scalar(const Quaternion &q) noexcept -> double

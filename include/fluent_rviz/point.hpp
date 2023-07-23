@@ -4,7 +4,7 @@
 
 #include <geometry_msgs/msg/point.hpp>
 
-#include "fluent_rviz/traits/convert.hpp"
+#include "fluent_rviz/traits.hpp"
 
 namespace flrv::point
 {
@@ -14,7 +14,8 @@ struct Point : public geometry_msgs::msg::Point
 
   template <
     typename PointLike,
-    typename = decltype(traits::Convert<geometry_msgs::msg::Point, PointLike>{ })>
+    traits::Require<
+      traits::ConversionDefined<geometry_msgs::msg::Point, PointLike>> = nullptr>
   Point(const PointLike &p)
     : geometry_msgs::msg::Point{ traits::convert<geometry_msgs::msg::Point>(p) }
   { }
@@ -26,18 +27,6 @@ struct Point : public geometry_msgs::msg::Point
 [[nodiscard]]
 inline auto Zero() noexcept -> Point
 { return { 0, 0, 0 }; }
-
-[[nodiscard]]
-inline auto UnitX() noexcept -> Point
-{ return { 1, 0, 0 }; }
-
-[[nodiscard]]
-inline auto UnitY() noexcept -> Point
-{ return { 0, 1, 0 }; }
-
-[[nodiscard]]
-inline auto UnitZ() noexcept -> Point
-{ return { 0, 0, 1 }; }
 
 [[nodiscard]]
 inline auto operator==(const Point &l, const Point &r) noexcept -> bool

@@ -3,10 +3,11 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
+#include <type_traits>
 
 #include "fluent_rviz/point.hpp"
 #include "fluent_rviz/quaterinion.hpp"
-#include "fluent_rviz/traits/convert.hpp"
+#include "fluent_rviz/traits.hpp"
 
 namespace flrv::pose
 {
@@ -16,7 +17,8 @@ struct Pose : public geometry_msgs::msg::Pose
 
   template <
     typename PoseLike,
-    typename = decltype(traits::Convert<geometry_msgs::msg::Pose, PoseLike>{ })>
+    traits::Require<
+      traits::ConversionDefined<geometry_msgs::msg::Pose, PoseLike>> = nullptr>
   Pose(const PoseLike &pose)
     : geometry_msgs::msg::Pose{ traits::convert<geometry_msgs::msg::Pose>(pose) }
   { }
@@ -24,8 +26,9 @@ struct Pose : public geometry_msgs::msg::Pose
   template <
     typename PointLike = point::Point,
     typename QuaternionLike = quaternion::Quaternion,
-    typename = decltype(traits::Convert<geometry_msgs::msg::Point, PointLike>{ }),
-    typename = decltype(traits::Convert<geometry_msgs::msg::Quaternion, QuaternionLike>{ })>
+    traits::Require<
+      traits::ConversionDefined<geometry_msgs::msg::Point, PointLike>,
+      traits::ConversionDefined<geometry_msgs::msg::Quaternion, QuaternionLike>> = nullptr>
   Pose(const PointLike &position, const QuaternionLike &orientation)
   {
     this->position = traits::convert<geometry_msgs::msg::Point>(position);
@@ -39,16 +42,18 @@ inline auto Identity() noexcept -> Pose
 
 template <
   typename PointLike = point::Point,
-  typename = decltype(traits::Convert<geometry_msgs::msg::Point, PointLike>{ })>
+  traits::Require<
+    traits::ConversionDefined<geometry_msgs::msg::Point, PointLike>> = nullptr>
 [[nodiscard]]
-inline auto Translation(const PointLike &point) noexcept -> Pose
+auto Position(const PointLike &point) noexcept -> Pose
 { return { point, quaternion::Identity() }; }
 
 template <
   typename QuaternionLike = quaternion::Quaternion,
-  typename = decltype(traits::Convert<geometry_msgs::msg::Quaternion, QuaternionLike>{ })>
+  traits::Require<
+    traits::ConversionDefined<geometry_msgs::msg::Quaternion, QuaternionLike>> = nullptr>
 [[nodiscard]]
-inline auto Rotation(const QuaternionLike &quaternion) noexcept -> Pose
+auto Orientation(const QuaternionLike &quaternion) noexcept -> Pose
 { return { point::Zero(), quaternion }; }
 
 [[nodiscard]]
