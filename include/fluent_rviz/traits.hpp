@@ -23,6 +23,6 @@ using ConversionDefined = decltype(Convert<Into, From>::do_convert(std::declval<
 
 template <typename Into, typename From>
 [[nodiscard]]
-auto convert(const From &from) -> decltype(auto)
-{ return Convert<Into, From>::do_convert(from); }
+auto convert(From &&from) -> decltype(auto)
+{ return Convert<Into, From>::do_convert(std::forward<From>(from)); }
 }  // namespace flrv::traits
