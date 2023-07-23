@@ -16,6 +16,9 @@
 #include <visualization_msgs/msg/uv_coordinate.hpp>
 
 #include "fluent_rviz/marker/plain_marker_base.hpp"
+#include "fluent_rviz/color.hpp"
+#include "fluent_rviz/pose.hpp"
+#include "fluent_rviz/traits.hpp"
 
 namespace flrv::marker
 {
@@ -28,43 +31,41 @@ private:
 protected:
   using Base::Base;
 
-  auto ns(std::string ns) && noexcept
-  -> Derived &&
+  auto ns(std::string ns) && noexcept -> Derived &&
   {
     this->marker().ns = std::move(ns);
     return static_cast<Derived &&>(*this);
   }
 
-  auto id(std::int32_t id) && noexcept
-  -> Derived &&
+  auto id(const std::int32_t id) && noexcept -> Derived &&
   {
     this->marker().id = id;
     return static_cast<Derived &&>(*this);
   }
 
-  auto type(std::int32_t type) && noexcept
-  -> Derived &&
+  auto type(const std::int32_t type) && noexcept -> Derived &&
   {
     this->marker().type = type;
     return static_cast<Derived &&>(*this);
   }
 
-  auto action(std::int32_t action) && noexcept
-  -> Derived &&
+  auto action(const std::int32_t action) && noexcept -> Derived &&
   {
     this->marker().action = action;
     return static_cast<Derived &&>(*this);
   }
 
-  auto pose(geometry_msgs::msg::Pose pose) && noexcept
-  -> Derived &&
+  template <
+    typename PoseLike = pose::Pose,
+    traits::Require<
+      traits::ConversionDefined<geometry_msgs::msg::Pose, PoseLike>> = nullptr>
+  auto pose(const PoseLike &pose) && noexcept -> Derived &&
   {
-    this->marker().pose = pose;
+    this->marker().pose = traits::convert<geometry_msgs::msg::Pose>(pose);
     return static_cast<Derived &&>(*this);
   }
 
-  auto scale(double x, double y, double z) && noexcept
-  -> Derived &&
+  auto scale(const double x, const double y, const double z) && noexcept -> Derived &&
   {
     this->marker().scale.x = x;
     this->marker().scale.y = y;
@@ -72,85 +73,77 @@ protected:
     return static_cast<Derived &&>(*this);
   }
 
-  auto color(std_msgs::msg::ColorRGBA color) && noexcept
-  -> Derived &&
+  template <
+    typename ColorLike = color::Color,
+    traits::Require<
+      traits::ConversionDefined<std_msgs::msg::ColorRGBA, ColorLike>> = nullptr>
+  auto color(const ColorLike &color) && noexcept -> Derived &&
   {
-    this->marker().color = color;
+    this->marker().color = traits::convert<std_msgs::msg::ColorRGBA>(color);
     return static_cast<Derived &&>(*this);
   }
 
-  auto lifetime(rclcpp::Duration lifetime) && noexcept
-  -> Derived &&
+  auto lifetime(rclcpp::Duration lifetime) && noexcept -> Derived &&
   {
     this->marker().lifetime = lifetime;
     return static_cast<Derived &&>(*this);
   }
 
-  auto frame_locked(bool frame_locked) && noexcept
-  -> Derived &&
+  auto frame_locked(const bool frame_locked) && noexcept -> Derived &&
   {
     this->marker().frame_locked = frame_locked;
     return static_cast<Derived &&>(*this);
   }
 
-  auto points(std::vector<geometry_msgs::msg::Point> points) && noexcept
-  -> Derived &&
+  auto points(std::vector<geometry_msgs::msg::Point> points) && noexcept -> Derived &&
   {
     this->marker().points = std::move(points);
     return static_cast<Derived &&>(*this);
   }
 
-  auto colors(std::vector<std_msgs::msg::ColorRGBA> colors) && noexcept
-  -> Derived &&
+  auto colors(std::vector<std_msgs::msg::ColorRGBA> colors) && noexcept -> Derived &&
   {
     this->marker().colors = std::move(colors);
     return static_cast<Derived &&>(*this);
   }
 
-  auto texture_resource(std::string texture_resource) && noexcept
-  -> Derived &&
+  auto texture_resource(std::string texture_resource) && noexcept -> Derived &&
   {
     this->marker().texture_resource = std::move(texture_resource);
     return static_cast<Derived &&>(*this);
   }
 
-  auto texture(sensor_msgs::msg::CompressedImage texture) && noexcept
-  -> Derived &&
+  auto texture(sensor_msgs::msg::CompressedImage texture) && noexcept -> Derived &&
   {
     this->marker().texture = std::move(texture);
     return static_cast<Derived &&>(*this);
   }
 
-  auto uv_coordinates(std::vector<visualization_msgs::msg::UVCoordinate> uv_coordinates) && noexcept
-  -> Derived &&
+  auto uv_coordinates(std::vector<visualization_msgs::msg::UVCoordinate> uv_coordinates) && noexcept -> Derived &&
   {
     this->marker().uv_coordinates = std::move(uv_coordinates);
     return static_cast<Derived &&>(*this);
   }
 
-  auto text(std::string text) && noexcept
-  -> Derived &&
+  auto text(std::string text) && noexcept -> Derived &&
   {
     this->marker().text = std::move(text);
     return static_cast<Derived &&>(*this);
   }
 
-  auto mesh_resource(std::string mesh_resource) && noexcept
-  -> Derived &&
+  auto mesh_resource(std::string mesh_resource) && noexcept -> Derived &&
   {
     this->marker().mesh_resource = std::move(mesh_resource);
     return static_cast<Derived &&>(*this);
   }
 
-  auto mesh_file(visualization_msgs::msg::MeshFile mesh_file) && noexcept
-  -> Derived &&
+  auto mesh_file(visualization_msgs::msg::MeshFile mesh_file) && noexcept -> Derived &&
   {
     this->marker().mesh_file = std::move(mesh_file);
     return static_cast<Derived &&>(*this);
   }
 
-  auto mesh_use_embedded_materials(bool mesh_use_embedded_materials) && noexcept
-  -> Derived &&
+  auto mesh_use_embedded_materials(const bool mesh_use_embedded_materials) && noexcept -> Derived &&
   {
     this->marker().mesh_use_embedded_materials = mesh_use_embedded_materials;
     return static_cast<Derived &&>(*this);
