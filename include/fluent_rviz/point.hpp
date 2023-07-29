@@ -10,7 +10,7 @@ namespace flrv::point
 {
 struct Point : public geometry_msgs::msg::Point
 {
-  using geometry_msgs::msg::Point::Point;
+  Point() = default;
 
   template <
     typename PointLike,

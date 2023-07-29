@@ -11,7 +11,7 @@ namespace flrv::quaternion
 {
 struct Quaternion : public geometry_msgs::msg::Quaternion
 {
-  using geometry_msgs::msg::Quaternion::Quaternion;
+  Quaternion() = default;
 
   template <
     typename QuaternionLike,

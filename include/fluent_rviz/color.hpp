@@ -10,7 +10,7 @@ namespace flrv::color
 {
 struct Color : public std_msgs::msg::ColorRGBA
 {
-  using std_msgs::msg::ColorRGBA::ColorRGBA;
+  Color() = default;
 
   template <
     typename ColorLike,

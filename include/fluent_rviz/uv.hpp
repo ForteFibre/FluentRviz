@@ -8,7 +8,7 @@ namespace flrv::uv
 {
 struct UV : public visualization_msgs::msg::UVCoordinate
 {
-  using visualization_msgs::msg::UVCoordinate::UVCoordinate;
+  UV() = default;
 
   template <
     typename UVLike,

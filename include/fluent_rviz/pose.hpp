@@ -13,7 +13,7 @@ namespace flrv::pose
 {
 struct Pose : public geometry_msgs::msg::Pose
 {
-  using geometry_msgs::msg::Pose::Pose;
+  Pose() = default;
 
   template <
     typename PoseLike,
