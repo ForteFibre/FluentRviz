@@ -83,7 +83,7 @@ inline auto operator+(const Quaternion &l, const Quaternion &r) noexcept -> Quat
 
 [[nodiscard]]
 inline auto operator-(const Quaternion &l, const Quaternion &r) noexcept -> Quaternion
-{ return { l.x - r.x, l.y - r.y, l.z - r.z, l.w + r.w }; }
+{ return { l.x - r.x, l.y - r.y, l.z - r.z, l.w - r.w }; }
 
 [[nodiscard]]
 inline auto operator*(const Quaternion &l, const Quaternion &r) noexcept -> Quaternion
