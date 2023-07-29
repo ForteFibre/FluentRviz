@@ -14,7 +14,8 @@ struct Color : public std_msgs::msg::ColorRGBA
 
   template <
     typename ColorLike,
-    typename = decltype(traits::Convert<std_msgs::msg::ColorRGBA, ColorLike>{ })>
+    traits::Require<
+      traits::ConversionDefined<std_msgs::msg::ColorRGBA, ColorLike>> = nullptr>
   Color(const ColorLike &color)
     : std_msgs::msg::ColorRGBA{ traits::convert<std_msgs::msg::ColorRGBA>(color) }
   { }
