@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <functional>
+#include <initializer_list>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -17,6 +19,7 @@
 
 #include "fluent_rviz/marker/plain_marker_base.hpp"
 #include "fluent_rviz/color.hpp"
+#include "fluent_rviz/point.hpp"
 #include "fluent_rviz/pose.hpp"
 #include "fluent_rviz/traits.hpp"
 
@@ -101,11 +104,25 @@ protected:
     return static_cast<Derived &&>(*this);
   }
 
+  template <
+    typename PointArrayLike = std::initializer_list<point::Point>,
+    traits::Require<
+      traits::ConversionDefined<std::vector<geometry_msgs::msg::Point>, PointArrayLike>> = nullptr>
+  auto points(const PointArrayLike &points) && noexcept -> Derived &&
+  { return this->points(traits::convert<std::vector<geometry_msgs::msg::Point>>(points)); }
+
   auto colors(std::vector<std_msgs::msg::ColorRGBA> colors) && noexcept -> Derived &&
   {
     this->marker().colors = std::move(colors);
     return static_cast<Derived &&>(*this);
   }
+
+  template <
+    typename ColorArrayLike = std::initializer_list<color::Color>,
+    traits::Require<
+      traits::ConversionDefined<std::vector<std_msgs::msg::ColorRGBA>, ColorArrayLike>> = nullptr>
+  auto colors(const ColorArrayLike &colors) && noexcept -> Derived &&
+  { return this->colors(traits::convert<std::vector<std_msgs::msg::ColorRGBA>>(colors)); }
 
   auto texture_resource(std::string texture_resource) && noexcept -> Derived &&
   {
