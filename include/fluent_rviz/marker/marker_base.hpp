@@ -142,6 +142,13 @@ protected:
     return static_cast<Derived &&>(*this);
   }
 
+  template <
+    typename UVCoordinateArrayLike = std::initializer_list<visualization_msgs::msg::UVCoordinate>,
+    traits::Require<
+      traits::ConversionDefined<std::vector<visualization_msgs::msg::UVCoordinate>, UVCoordinateArrayLike>> = nullptr>
+  auto uv_coordinates(const UVCoordinateArrayLike &uv_coordinates) && noexcept -> Derived &&
+  { return this->uv_coordinates(traits::convert<std::vector<visualization_msgs::msg::UVCoordinate>>(uv_coordinates)); }
+
   auto text(std::string text) && noexcept -> Derived &&
   {
     this->marker().text = std::move(text);
