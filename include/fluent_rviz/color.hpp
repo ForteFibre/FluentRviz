@@ -39,22 +39,24 @@ inline auto HSLA(float h, float s, float l, float a = 1.0) noexcept -> Color
   l = std::clamp(l, 0.f, 1.f);
   a = std::clamp(a, 0.f, 1.f);
 
-  const auto c = s * (1.f - std::abs(2.f * l - 1.f));
-  const auto x = c * (1.f - std::abs(std::fmod(h / 60.f, 2.f) - 1.f));
-  const auto m = l - c / 2.f;
+  auto c = s * (1.f - std::abs(2.f * l - 1.f));
+  auto x = c * (1.f - std::abs(std::fmod(h / 60.f, 2.f) - 1.f));
+  auto m = l - c / 2.f;
+  c += m;
+  x += m;
 
   if (0 <= h and h < 60) {
-    return { c + m, x + m, 0, a };
+    return { c, x, 0, a };
   } else if (60 <= h and h < 120) {
-    return { x + m, c + m, 0, a };
+    return { x, c, 0, a };
   } else if (120 <= h and h < 180) {
-    return { 0, c + m, x + m, a };
+    return { 0, c, x, a };
   } else if (180 <= h and h < 240) {
-    return { 0, x + m, c + m, a };
+    return { 0, x, c, a };
   } else if (240 <= h and h < 300) {
-    return { x + m, 0, c + m, a };
+    return { x, 0, c, a };
   } else {
-    return { c + m, 0, x + m, a };
+    return { c, 0, x, a };
   }
 }
 }  // namespace flrv::color
