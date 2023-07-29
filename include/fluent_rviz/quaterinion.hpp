@@ -123,11 +123,11 @@ inline auto dot(const Quaternion &l, const Quaternion &r) noexcept -> double
 
 [[nodiscard]]
 inline auto conjugate(const Quaternion &q) noexcept -> Quaternion
-{ return { -q.x, -q.y, -q.z, q.w }; }
+{ return ScalarVector(scalar(q), -vector(q)); }
 
 [[nodiscard]]
 inline auto inverse(const Quaternion &q) noexcept -> Quaternion
-{ return conjugate(q) / norm(q); }
+{ return conjugate(q) / squared_norm(q); }
 
 [[nodiscard]]
 inline auto rotate(const Quaternion &q, const point::Point &p) noexcept -> point::Point
