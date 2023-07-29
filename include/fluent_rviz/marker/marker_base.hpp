@@ -109,7 +109,7 @@ protected:
     traits::Require<
       traits::ConversionDefined<std::vector<geometry_msgs::msg::Point>, PointArrayLike>> = nullptr>
   auto points(const PointArrayLike &points) && noexcept -> Derived &&
-  { return this->points(traits::convert<std::vector<geometry_msgs::msg::Point>>(points)); }
+  { return std::move(*this).points(traits::convert<std::vector<geometry_msgs::msg::Point>>(points)); }
 
   auto colors(std::vector<std_msgs::msg::ColorRGBA> colors) && noexcept -> Derived &&
   {
@@ -122,7 +122,7 @@ protected:
     traits::Require<
       traits::ConversionDefined<std::vector<std_msgs::msg::ColorRGBA>, ColorArrayLike>> = nullptr>
   auto colors(const ColorArrayLike &colors) && noexcept -> Derived &&
-  { return this->colors(traits::convert<std::vector<std_msgs::msg::ColorRGBA>>(colors)); }
+  { return std::move(*this).colors(traits::convert<std::vector<std_msgs::msg::ColorRGBA>>(colors)); }
 
   auto texture_resource(std::string texture_resource) && noexcept -> Derived &&
   {
@@ -147,7 +147,7 @@ protected:
     traits::Require<
       traits::ConversionDefined<std::vector<visualization_msgs::msg::UVCoordinate>, UVCoordinateArrayLike>> = nullptr>
   auto uv_coordinates(const UVCoordinateArrayLike &uv_coordinates) && noexcept -> Derived &&
-  { return this->uv_coordinates(traits::convert<std::vector<visualization_msgs::msg::UVCoordinate>>(uv_coordinates)); }
+  { return std::move(*this).uv_coordinates(traits::convert<std::vector<visualization_msgs::msg::UVCoordinate>>(uv_coordinates)); }
 
   auto text(std::string text) && noexcept -> Derived &&
   {
