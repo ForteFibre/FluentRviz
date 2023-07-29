@@ -132,6 +132,13 @@ inline auto inverse(const Quaternion &q) noexcept -> Quaternion
 [[nodiscard]]
 inline auto rotate(const Quaternion &q, const point::Point &p) noexcept -> point::Point
 { return vector(q * ScalarVector(0, p) * inverse(q)); }
+
+[[nodiscard]]
+inline auto slerp(const Quaternion &q0, const Quaternion &q1, const double t) noexcept -> Quaternion
+{
+  auto omega = std::acos(dot(q0, q1));
+  return (std::sin((1 - t) * omega) * q0 + std::sin(t * omega) * q1) / std::sin(omega);
+}
 }  // flrv::quaternion
 
 template <>
