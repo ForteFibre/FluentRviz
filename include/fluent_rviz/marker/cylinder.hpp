@@ -34,8 +34,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Cylinder(MarkerToken &&token = { }) -> CylinderMarker<MarkerToken>
+auto Cylinder(MarkerToken &&token = { })
 {
-  return { std::forward<MarkerToken>(token) };
+  return CylinderMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

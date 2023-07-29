@@ -37,8 +37,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto MeshResource(MarkerToken &&token = { }) -> MeshResourceMarker<MarkerToken>
+auto MeshResource(MarkerToken &&token = { })
 {
-  return { std::forward<MarkerToken>(token) };
+  return MeshResourceMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

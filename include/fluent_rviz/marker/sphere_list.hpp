@@ -36,8 +36,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto SphereList(MarkerToken &&token = { }) -> SphereListMarker<MarkerToken>
+auto SphereList(MarkerToken &&token = { })
 {
-  return { std::forward<MarkerToken>(token) };
+  return SphereListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

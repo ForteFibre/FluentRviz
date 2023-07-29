@@ -45,8 +45,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineArrow(MarkerToken &&token = { }) -> LineArrowMarker<MarkerToken>
+auto LineArrow(MarkerToken &&token = { })
 {
-  return { std::forward<MarkerToken>(token) };
+  return LineArrowMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

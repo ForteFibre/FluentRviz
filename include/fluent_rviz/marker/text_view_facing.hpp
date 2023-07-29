@@ -40,8 +40,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto TextViewFacing(MarkerToken &&token = { }) -> TextViewFacingMarker<MarkerToken>
+auto TextViewFacing(MarkerToken &&token = { })
 {
-  return { std::forward<MarkerToken>(token) };
+  return TextViewFacingMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker

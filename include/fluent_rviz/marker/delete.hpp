@@ -28,8 +28,8 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Delete(MarkerToken &&token = { }) -> DeleteMarker<MarkerToken>
+auto Delete(MarkerToken &&token = { })
 {
-  return { std::forward<MarkerToken>(token) };
+  return DeleteMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
 }
 }  // namespace flrv::marker
