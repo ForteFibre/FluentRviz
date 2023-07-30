@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include <visualization_msgs/msg/marker.hpp>
 
 #include "fluent_rviz/marker/plain_marker_base.hpp"
@@ -16,11 +18,17 @@ protected:
   { return _marker; }
 
 public:
-  auto get() noexcept -> const visualization_msgs::msg::Marker &
+  auto get() const & noexcept -> visualization_msgs::msg::Marker
   { return _marker; }
 
-  operator const visualization_msgs::msg::Marker &() const noexcept
+  auto get() && noexcept -> visualization_msgs::msg::Marker &&
+  { return std::move(_marker); }
+
+  operator visualization_msgs::msg::Marker() const & noexcept
   { return _marker; }
+
+  operator visualization_msgs::msg::Marker &&() && noexcept
+  { return std::move(_marker); }
 };
 
 struct UseTemporal { };
