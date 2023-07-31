@@ -16,12 +16,12 @@ private:
   using Base = MarkerBase<MarkerToken, SphereListMarker<MarkerToken>>;
 
 public:
-  explicit SphereListMarker(MarkerToken token)
+  explicit SphereListMarker(std::string frame_id, MarkerToken token)
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::SPHERE_LIST);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::SPHERE_LIST;
   }
 
   using Base::ns;
@@ -36,8 +36,6 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto SphereList(MarkerToken &&token = { })
-{
-  return SphereListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto SphereList(std::string frame_id, MarkerToken &&token = { })
+{ return SphereListMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

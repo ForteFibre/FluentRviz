@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <utility>
 
 #include <visualization_msgs/msg/marker.hpp>
@@ -16,12 +17,12 @@ private:
   using Base = MarkerBase<MarkerToken, PointsMarker<MarkerToken>>;
 
 public:
-  explicit PointsMarker(MarkerToken token = { })
+  explicit PointsMarker(std::string frame_id, MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::POINTS);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::POINTS;
   }
 
   using Base::ns;
@@ -36,8 +37,6 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Points(MarkerToken &&token = { })
-{
-  return PointsMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto Points(std::string frame_id, MarkerToken &&token = { })
+{ return PointsMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

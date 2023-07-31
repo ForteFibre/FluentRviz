@@ -16,12 +16,12 @@ private:
   using Base = MarkerBase<MarkerToken, CubeMarker<MarkerToken>>;
 
 public:
-  explicit CubeMarker(MarkerToken token = { })
+  explicit CubeMarker(std::string frame_id, MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::CUBE);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::CUBE;
   }
 
   using Base::ns;
@@ -34,8 +34,6 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Cube(MarkerToken &&token = { })
-{
-  return CubeMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto Cube(std::string frame_id, MarkerToken &&token = { })
+{ return CubeMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

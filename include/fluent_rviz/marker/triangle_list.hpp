@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include "fluent_rviz/marker/marker_base.hpp"
@@ -14,12 +15,12 @@ private:
   using Base = MarkerBase<MarkerToken, TriangleListMarker<MarkerToken>>;
 
 public:
-  explicit TriangleListMarker(MarkerToken token = { })
+  explicit TriangleListMarker(std::string frame_id, MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::TRIANGLE_LIST);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
   }
 
   using Base::ns;
@@ -34,8 +35,6 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto TriangleList(MarkerToken &&token = { })
-{
-  return TriangleListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto TriangleList(std::string frame_id, MarkerToken &&token = { })
+{ return TriangleListMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

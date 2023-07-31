@@ -16,12 +16,12 @@ private:
   using Base = MarkerBase<MarkerToken, MeshResourceMarker<MarkerToken>>;
 
 public:
-  explicit MeshResourceMarker(MarkerToken token = { })
+  explicit MeshResourceMarker(std::string frame_id, MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::MESH_RESOURCE);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::MESH_RESOURCE;
   }
 
   using Base::ns;
@@ -37,8 +37,6 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto MeshResource(MarkerToken &&token = { })
-{
-  return MeshResourceMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto MeshResource(std::string frame_id, MarkerToken &&token = { })
+{ return MeshResourceMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

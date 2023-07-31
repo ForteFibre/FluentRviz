@@ -16,12 +16,12 @@ private:
   using Base = MarkerBase<MarkerToken, LineListMarker<MarkerToken>>;
 
 public:
-  explicit LineListMarker(MarkerToken token = { })
+  explicit LineListMarker(std::string frame_id, MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::LINE_LIST);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::LINE_LIST;
   }
 
   using Base::ns;
@@ -33,16 +33,11 @@ public:
   using Base::points;
   using Base::colors;
 
-  auto scale(double width) && noexcept
-  -> LineListMarker &&
-  {
-    return Base::scale(width, 0, 0);
-  }
+  auto scale(double width) && noexcept -> LineListMarker &&
+  { return Base::scale(width, 0, 0); }
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineList(MarkerToken &&token = { })
-{
-  return LineListMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto LineList(std::string frame_id, MarkerToken &&token = { })
+{ return LineListMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

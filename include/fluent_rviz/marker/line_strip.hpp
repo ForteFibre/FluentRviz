@@ -16,12 +16,12 @@ private:
   using Base = MarkerBase<MarkerToken, LineStripMarker<MarkerToken>>;
 
 public:
-  explicit LineStripMarker(MarkerToken token = { })
+  explicit LineStripMarker(std::string frame_id, MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::LINE_STRIP);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::LINE_STRIP;
   }
 
   using Base::ns;
@@ -32,16 +32,11 @@ public:
   using Base::frame_locked;
   using Base::colors;
 
-  auto scale(double width) && noexcept
-  -> LineStripMarker &&
-  {
-    return Base::scale(width, 0, 0);
-  }
+  auto scale(double width) && noexcept -> LineStripMarker &&
+  { return Base::scale(width, 0, 0); }
 };
 
 template <typename MarkerToken = UseTemporal>
-auto LineStrip(MarkerToken &&token = { })
-{
-  return LineStripMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto LineStrip(std::string frame_id, MarkerToken &&token = { })
+{ return LineStripMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

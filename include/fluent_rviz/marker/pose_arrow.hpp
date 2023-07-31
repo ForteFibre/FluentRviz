@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <utility>
 
 #include <visualization_msgs/msg/marker.hpp>
@@ -16,12 +17,12 @@ private:
   using Base = MarkerBase<MarkerToken, PoseArrowMarker<MarkerToken>>;
 
 public:
-  explicit PoseArrowMarker(MarkerToken token = { })
+  explicit PoseArrowMarker(std::string frame_id, MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::ARROW);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::ARROW;
   }
 
   using Base::ns;
@@ -31,16 +32,11 @@ public:
   using Base::lifetime;
   using Base::frame_locked;
 
-  auto scale(double length, double width, double height) noexcept
-  -> PoseArrowMarker &
-  {
-    return Base::scale(length, width, height);
-  }
+  auto scale(double length, double width, double height) noexcept -> PoseArrowMarker &
+  { return Base::scale(length, width, height); }
 };
 
 template <typename MarkerToken = UseTemporal>
-auto PoseArrow(MarkerToken &&token = { })
-{
-  return PoseArrowMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto PoseArrow(std::string frame_id, MarkerToken &&token = { })
+{ return PoseArrowMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

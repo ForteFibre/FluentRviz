@@ -18,17 +18,12 @@ private:
 public:
   explicit DeleteAllMarker(MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
-  {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::DELETEALL);
-  }
+  { this->marker().action = visualization_msgs::msg::Marker::DELETEALL; }
 
   using Base::ns;
 };
 
 template <typename MarkerToken = UseTemporal>
 auto DeleteAll(MarkerToken &&token = { })
-{
-  return DeleteAllMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+{ return DeleteAllMarker<MarkerToken>{ std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker

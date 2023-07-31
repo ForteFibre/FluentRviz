@@ -16,12 +16,12 @@ private:
   using Base = MarkerBase<MarkerToken, CylinderMarker<MarkerToken>>;
 
 public:
-  explicit CylinderMarker(MarkerToken token = { })
+  explicit CylinderMarker(std::string frame_id, MarkerToken token = { })
     : Base(std::forward<MarkerToken>(token))
   {
-    std::move(*this)
-      .action(visualization_msgs::msg::Marker::ADD)
-      .type(visualization_msgs::msg::Marker::CYLINDER);
+    this->marker().header.frame_id = std::move(frame_id);
+    this->marker().action = visualization_msgs::msg::Marker::ADD;
+    this->marker().type = visualization_msgs::msg::Marker::CYLINDER;
   }
 
   using Base::ns;
@@ -34,8 +34,6 @@ public:
 };
 
 template <typename MarkerToken = UseTemporal>
-auto Cylinder(MarkerToken &&token = { })
-{
-  return CylinderMarker<MarkerToken>{ std::forward<MarkerToken>(token) };
-}
+auto Cylinder(std::string frame_id, MarkerToken &&token = { })
+{ return CylinderMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
 }  // namespace flrv::marker
