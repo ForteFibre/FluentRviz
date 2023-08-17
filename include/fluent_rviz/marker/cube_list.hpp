@@ -1,27 +1,29 @@
 #pragma once
 
+#include <string>
 #include <utility>
 
+#include <rclcpp/time.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include "fluent_rviz/marker/inplace_marker.hpp"
 #include "fluent_rviz/marker/marker_base.hpp"
-#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename MarkerToken = UseTemporal>
+template <typename MarkerToken>
 struct CubeListMarker : public MarkerBase<MarkerToken, CubeListMarker<MarkerToken>>
 {
 private:
   using Base = MarkerBase<MarkerToken, CubeListMarker<MarkerToken>>;
 
 public:
-  explicit CubeListMarker(std::string frame_id, MarkerToken token = { })
-    : Base(std::forward<MarkerToken>(token))
+  explicit CubeListMarker(MarkerToken token, std::string frame_id, const rclcpp::Time &stamp) noexcept
+    : Base(std::forward<MarkerToken>(token), std::move(frame_id), stamp)
   {
-    this->marker().header.frame_id = std::move(frame_id);
-    this->marker().action = visualization_msgs::msg::Marker::ADD;
-    this->marker().type = visualization_msgs::msg::Marker::CUBE_LIST;
+    std::move(*this)
+      .action(visualization_msgs::msg::Marker::ADD)
+      .type(visualization_msgs::msg::Marker::CUBE_LIST);
   }
 
   using Base::ns;
@@ -35,7 +37,12 @@ public:
   using Base::colors;
 };
 
-template <typename MarkerToken = UseTemporal>
-auto CubeList(std::string frame_id, MarkerToken &&token = { })
-{ return CubeListMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
+template <typename MarkerToken>
+[[nodiscard]]
+auto CubeList(MarkerToken &&token, std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return CubeListMarker<MarkerToken>{ std::forward<MarkerToken>(token), std::move(frame_id), stamp }; }
+
+[[nodiscard]]
+inline auto CubeList(std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return CubeList(UseInplace{ }, std::move(frame_id), stamp); }
 }  // namespace flrv::marker

@@ -13,28 +13,24 @@ struct ReferenceMarker
 private:
   visualization_msgs::msg::Marker &_marker;
 
-protected:
+public:
   ReferenceMarker(visualization_msgs::msg::Marker &marker)
     : _marker(marker)
   { }
 
-public:
   ReferenceMarker(const ReferenceMarker &) = delete;
   ReferenceMarker(ReferenceMarker &&) = delete;
 
   auto operator=(const ReferenceMarker &) = delete;
   auto operator=(ReferenceMarker &&) = delete;
 
-protected:
-  auto marker() noexcept -> visualization_msgs::msg::Marker &
-  { return _marker; }
-
-public:
+  [[nodiscard]]
   auto get() noexcept -> const visualization_msgs::msg::Marker &
   { return _marker; }
 
-  operator const visualization_msgs::msg::Marker &() noexcept
-  { return _marker; }
+  [[nodiscard]]
+  friend auto get_marker(ReferenceMarker &marker) noexcept -> visualization_msgs::msg::Marker &
+  { return marker._marker; }
 };
 
 template <>

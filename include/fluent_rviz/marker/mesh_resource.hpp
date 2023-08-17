@@ -1,27 +1,28 @@
 #pragma once
 
+#include <rclcpp/time.hpp>
 #include <utility>
 
 #include <visualization_msgs/msg/marker.hpp>
 
+#include "fluent_rviz/marker/inplace_marker.hpp"
 #include "fluent_rviz/marker/marker_base.hpp"
-#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename MarkerToken = UseTemporal>
+template <typename MarkerToken>
 struct MeshResourceMarker : public MarkerBase<MarkerToken, MeshResourceMarker<MarkerToken>>
 {
 private:
   using Base = MarkerBase<MarkerToken, MeshResourceMarker<MarkerToken>>;
 
 public:
-  explicit MeshResourceMarker(std::string frame_id, MarkerToken token = { })
-    : Base(std::forward<MarkerToken>(token))
+  explicit MeshResourceMarker(MarkerToken token, std::string frame_id, const rclcpp::Time &stamp) noexcept
+    : Base(std::forward<MarkerToken>(token), std::move(frame_id), stamp)
   {
-    this->marker().header.frame_id = std::move(frame_id);
-    this->marker().action = visualization_msgs::msg::Marker::ADD;
-    this->marker().type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+    std::move(*this)
+      .action(visualization_msgs::msg::Marker::ADD)
+      .type(visualization_msgs::msg::Marker::MESH_RESOURCE);
   }
 
   using Base::ns;
@@ -36,7 +37,12 @@ public:
   using Base::mesh_use_embedded_materials;
 };
 
-template <typename MarkerToken = UseTemporal>
-auto MeshResource(std::string frame_id, MarkerToken &&token = { })
-{ return MeshResourceMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
+template <typename MarkerToken>
+[[nodiscard]]
+auto MeshResource(MarkerToken &&token, std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return MeshResourceMarker<MarkerToken>{ std::forward<MarkerToken>(token), std::move(frame_id), stamp }; }
+
+[[nodiscard]]
+inline auto MeshResource(std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return MeshResource(UseInplace{ }, std::move(frame_id), stamp); }
 }  // namespace flrv::marker

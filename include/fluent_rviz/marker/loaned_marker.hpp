@@ -8,30 +8,28 @@
 
 namespace flrv::marker
 {
-struct LoanedMessage
+struct LoanedMarker
 {
 private:
   rclcpp::LoanedMessage<visualization_msgs::msg::Marker> _marker;
 
-protected:
-  LoanedMessage(rclcpp::LoanedMessage<visualization_msgs::msg::Marker> marker)
+public:
+  LoanedMarker(rclcpp::LoanedMessage<visualization_msgs::msg::Marker> marker)
     : _marker(std::move(marker))
   { }
 
-  auto marker() -> visualization_msgs::msg::Marker &
-  { return _marker.get(); }
-
-public:
+  [[nodiscard]]
   auto get() && noexcept -> rclcpp::LoanedMessage<visualization_msgs::msg::Marker>
   { return std::move(_marker); }
 
-  operator rclcpp::LoanedMessage<visualization_msgs::msg::Marker>() && noexcept
-  { return std::move(_marker); }
+  [[nodiscard]]
+  friend auto get_marker(LoanedMarker &marker) noexcept -> visualization_msgs::msg::Marker &
+  { return marker._marker.get(); }
 };
 
 template <>
-struct PlainMarkerBase<rclcpp::LoanedMessage<visualization_msgs::msg::Marker>> : public LoanedMessage
+struct PlainMarkerBase<rclcpp::LoanedMessage<visualization_msgs::msg::Marker>> : public LoanedMarker
 {
-  using LoanedMessage::LoanedMessage;
+  using LoanedMarker::LoanedMarker;
 };
 }  // namespace flrv::marker

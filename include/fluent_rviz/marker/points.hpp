@@ -3,26 +3,27 @@
 #include <string>
 #include <utility>
 
+#include <rclcpp/time.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include "fluent_rviz/marker/inplace_marker.hpp"
 #include "fluent_rviz/marker/marker_base.hpp"
-#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename MarkerToken = UseTemporal>
+template <typename MarkerToken>
 struct PointsMarker : public MarkerBase<MarkerToken, PointsMarker<MarkerToken>>
 {
 private:
   using Base = MarkerBase<MarkerToken, PointsMarker<MarkerToken>>;
 
 public:
-  explicit PointsMarker(std::string frame_id, MarkerToken token = { })
-    : Base(std::forward<MarkerToken>(token))
+  explicit PointsMarker(MarkerToken token, std::string frame_id, const rclcpp::Time &stamp) noexcept
+    : Base(std::forward<MarkerToken>(token), std::move(frame_id), stamp)
   {
-    this->marker().header.frame_id = std::move(frame_id);
-    this->marker().action = visualization_msgs::msg::Marker::ADD;
-    this->marker().type = visualization_msgs::msg::Marker::POINTS;
+    std::move(*this)
+      .action(visualization_msgs::msg::Marker::ADD)
+      .type(visualization_msgs::msg::Marker::POINTS);
   }
 
   using Base::ns;
@@ -36,7 +37,12 @@ public:
   using Base::colors;
 };
 
-template <typename MarkerToken = UseTemporal>
-auto Points(std::string frame_id, MarkerToken &&token = { })
-{ return PointsMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
+template <typename MarkerToken>
+[[nodiscard]]
+auto Points(MarkerToken &&token, std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return PointsMarker<MarkerToken>{ std::forward<MarkerToken>(token), std::move(frame_id), stamp }; }
+
+[[nodiscard]]
+inline auto Points(std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return Points(UseInplace{ }, std::move(frame_id), stamp); }
 }  // namespace flrv::marker

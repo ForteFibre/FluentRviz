@@ -1,27 +1,29 @@
 #pragma once
 
+#include <string>
 #include <utility>
 
+#include <rclcpp/time.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include "fluent_rviz/marker/inplace_marker.hpp"
 #include "fluent_rviz/marker/marker_base.hpp"
-#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename MarkerToken = UseTemporal>
+template <typename MarkerToken>
 struct SphereListMarker : public MarkerBase<MarkerToken, SphereListMarker<MarkerToken>>
 {
 private:
   using Base = MarkerBase<MarkerToken, SphereListMarker<MarkerToken>>;
 
 public:
-  explicit SphereListMarker(std::string frame_id, MarkerToken token)
-    : Base(std::forward<MarkerToken>(token))
+  explicit SphereListMarker(MarkerToken token, std::string frame_id, const rclcpp::Time &stamp) noexcept
+    : Base(std::forward<MarkerToken>(token), std::move(frame_id), stamp)
   {
-    this->marker().header.frame_id = std::move(frame_id);
-    this->marker().action = visualization_msgs::msg::Marker::ADD;
-    this->marker().type = visualization_msgs::msg::Marker::SPHERE_LIST;
+    std::move(*this)
+      .action(visualization_msgs::msg::Marker::ADD)
+      .type(visualization_msgs::msg::Marker::SPHERE_LIST);
   }
 
   using Base::ns;
@@ -35,7 +37,12 @@ public:
   using Base::colors;
 };
 
-template <typename MarkerToken = UseTemporal>
-auto SphereList(std::string frame_id, MarkerToken &&token = { })
-{ return SphereListMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
+template <typename MarkerToken>
+[[nodiscard]]
+auto SphereList(MarkerToken &&token, std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return SphereListMarker<MarkerToken>{ std::forward<MarkerToken>(token), std::move(frame_id), stamp }; }
+
+[[nodiscard]]
+inline auto SphereList(std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return SphereList(UseInplace{ }, std::move(frame_id), stamp); }
 }  // namespace flrv::marker

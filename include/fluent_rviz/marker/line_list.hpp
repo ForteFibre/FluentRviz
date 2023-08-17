@@ -1,27 +1,29 @@
 #pragma once
 
+#include <string>
 #include <utility>
 
+#include <rclcpp/time.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include "fluent_rviz/marker/inplace_marker.hpp"
 #include "fluent_rviz/marker/marker_base.hpp"
-#include "fluent_rviz/marker/temporal_marker.hpp"
 
 namespace flrv::marker
 {
-template <typename MarkerToken = UseTemporal>
+template <typename MarkerToken>
 struct LineListMarker : public MarkerBase<MarkerToken, LineListMarker<MarkerToken>>
 {
 private:
   using Base = MarkerBase<MarkerToken, LineListMarker<MarkerToken>>;
 
 public:
-  explicit LineListMarker(std::string frame_id, MarkerToken token = { })
-    : Base(std::forward<MarkerToken>(token))
+  explicit LineListMarker(MarkerToken token, std::string frame_id, const rclcpp::Time &stamp) noexcept
+    : Base(std::forward<MarkerToken>(token), std::move(frame_id), stamp)
   {
-    this->marker().header.frame_id = std::move(frame_id);
-    this->marker().action = visualization_msgs::msg::Marker::ADD;
-    this->marker().type = visualization_msgs::msg::Marker::LINE_LIST;
+    std::move(*this)
+      .action(visualization_msgs::msg::Marker::ADD)
+      .type(visualization_msgs::msg::Marker::LINE_LIST);
   }
 
   using Base::ns;
@@ -37,7 +39,12 @@ public:
   { return Base::scale(width, 0, 0); }
 };
 
-template <typename MarkerToken = UseTemporal>
-auto LineList(std::string frame_id, MarkerToken &&token = { })
-{ return LineListMarker<MarkerToken>{ std::move(frame_id), std::forward<MarkerToken>(token) }; }
+template <typename MarkerToken>
+[[nodiscard]]
+auto LineList(MarkerToken &&token, std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return LineListMarker<MarkerToken>{ std::forward<MarkerToken>(token), std::move(frame_id), stamp }; }
+
+[[nodiscard]]
+inline auto LineList(std::string frame_id, const rclcpp::Time &stamp = rclcpp::Time{ }) noexcept
+{ return LineList(UseInplace{ }, std::move(frame_id), stamp); }
 }  // namespace flrv::marker

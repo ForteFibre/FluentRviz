@@ -8,34 +8,30 @@
 
 namespace flrv::marker
 {
-struct TemporalMarker
+struct InplaceMarker
 {
 private:
   visualization_msgs::msg::Marker _marker;
 
-protected:
-  auto marker() noexcept -> visualization_msgs::msg::Marker &
-  { return _marker; }
-
 public:
+  [[nodiscard]]
   auto get() const & noexcept -> visualization_msgs::msg::Marker
   { return _marker; }
 
+  [[nodiscard]]
   auto get() && noexcept -> visualization_msgs::msg::Marker &&
   { return std::move(_marker); }
 
-  operator visualization_msgs::msg::Marker() const & noexcept
-  { return _marker; }
-
-  operator visualization_msgs::msg::Marker &&() && noexcept
-  { return std::move(_marker); }
+  [[nodiscard]]
+  friend auto get_marker(InplaceMarker &marker) noexcept -> visualization_msgs::msg::Marker &
+  { return marker._marker; }
 };
 
-struct UseTemporal { };
+struct UseInplace { };
 
 template <>
-struct PlainMarkerBase<UseTemporal> : public TemporalMarker
+struct PlainMarkerBase<UseInplace> : public InplaceMarker
 {
-  PlainMarkerBase(UseTemporal) { }
+  PlainMarkerBase(UseInplace) { }
 };
 }  // namespace flrv::marker
