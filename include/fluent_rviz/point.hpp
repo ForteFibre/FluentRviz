@@ -1,10 +1,13 @@
 #pragma once
 
 #include <cmath>
+#include <cstddef>
+#include <type_traits>
 
 #include <geometry_msgs/msg/point.hpp>
 
-#include "fluent_rviz/traits.hpp"
+#include "fluent_rviz/traits/convert.hpp"
+#include "fluent_rviz/traits/like_message.hpp"
 
 namespace flrv::point
 {
@@ -14,8 +17,7 @@ struct Point : public geometry_msgs::msg::Point
 
   template <
     typename PointLike,
-    traits::Require<
-      traits::ConversionDefined<geometry_msgs::msg::Point, PointLike>> = nullptr>
+    std::enable_if_t<traits::like_point<PointLike>, std::nullptr_t> = nullptr>
   Point(const PointLike &p)
     : geometry_msgs::msg::Point{ traits::convert<geometry_msgs::msg::Point>(p) }
   { }
@@ -86,7 +88,7 @@ inline auto cross(const Point &l, const Point &r) noexcept -> Point
 }  // namespace flrv::point
 
 template <>
-struct flrv::traits::Convert<geometry_msgs::msg::Point, flrv::point::Point>
+struct flrv::traits::convertor<geometry_msgs::msg::Point, flrv::point::Point>
 {
   static auto do_convert(const flrv::point::Point &point) noexcept -> geometry_msgs::msg::Point
   { return point; }

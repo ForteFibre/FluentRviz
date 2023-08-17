@@ -2,20 +2,25 @@
 
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
+
 #include <std_msgs/msg/color_rgba.hpp>
 
-#include "fluent_rviz/traits.hpp"
+#include "fluent_rviz/traits/convert.hpp"
+#include "fluent_rviz/traits/like_message.hpp"
 
 namespace flrv::color
 {
+template <typename T>
+inline constexpr bool like_color = traits::is_convertible<std_msgs::msg::ColorRGBA, T>;
+
 struct Color : public std_msgs::msg::ColorRGBA
 {
   Color() = default;
 
   template <
     typename ColorLike,
-    traits::Require<
-      traits::ConversionDefined<std_msgs::msg::ColorRGBA, ColorLike>> = nullptr>
+    std::enable_if_t<like_color<ColorLike>> = nullptr>
   Color(const ColorLike &color)
     : std_msgs::msg::ColorRGBA{ traits::convert<std_msgs::msg::ColorRGBA>(color) }
   { }
@@ -62,7 +67,7 @@ inline auto HSLA(float h, float s, float l, float a = 1.0) noexcept -> Color
 }  // namespace flrv::color
 
 template <>
-struct flrv::traits::Convert<std_msgs::msg::ColorRGBA, flrv::color::Color>
+struct flrv::traits::convertor<std_msgs::msg::ColorRGBA, flrv::color::Color>
 {
   static auto do_convert(const flrv::color::Color &color) -> std_msgs::msg::ColorRGBA
   { return color; }

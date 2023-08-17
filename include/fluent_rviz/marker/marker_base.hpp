@@ -1,17 +1,19 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <initializer_list>
-#include <rclcpp/time.hpp>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <rclcpp/duration.hpp>
+#include <rclcpp/time.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
 #include <visualization_msgs/msg/marker.hpp>
@@ -22,7 +24,8 @@
 #include "fluent_rviz/color.hpp"
 #include "fluent_rviz/point.hpp"
 #include "fluent_rviz/pose.hpp"
-#include "fluent_rviz/traits.hpp"
+#include "fluent_rviz/traits/convert.hpp"
+#include "fluent_rviz/traits/like_message.hpp"
 
 namespace flrv::marker
 {
@@ -71,8 +74,7 @@ protected:
 
   template <
     typename PoseLike = pose::Pose,
-    traits::Require<
-      traits::ConversionDefined<geometry_msgs::msg::Pose, PoseLike>> = nullptr>
+    std::enable_if_t<traits::like_pose<PoseLike>, std::nullptr_t> = nullptr>
   auto pose(const PoseLike &pose) && noexcept -> Derived &&
   {
     marker().pose = traits::convert<geometry_msgs::msg::Pose>(pose);
@@ -89,8 +91,7 @@ protected:
 
   template <
     typename ColorLike = color::Color,
-    traits::Require<
-      traits::ConversionDefined<std_msgs::msg::ColorRGBA, ColorLike>> = nullptr>
+    std::enable_if_t<color::like_color<ColorLike>, std::nullptr_t> = nullptr>
   auto color(const ColorLike &color) && noexcept -> Derived &&
   {
     marker().color = traits::convert<std_msgs::msg::ColorRGBA>(color);
@@ -109,29 +110,15 @@ protected:
     return std::move(self());
   }
 
-  auto points(std::vector<geometry_msgs::msg::Point> points) && noexcept -> Derived &&
-  {
-    marker().points = std::move(points);
-    return std::move(self());
-  }
-
   template <
     typename PointArrayLike = std::initializer_list<point::Point>,
-    traits::Require<
-      traits::ConversionDefined<std::vector<geometry_msgs::msg::Point>, PointArrayLike>> = nullptr>
+    std::enable_if_t<traits::like_points<PointArrayLike>, std::nullptr_t> = nullptr>
   auto points(const PointArrayLike &points) && noexcept -> Derived &&
   { return std::move(*this).points(traits::convert<std::vector<geometry_msgs::msg::Point>>(points)); }
 
-  auto colors(std::vector<std_msgs::msg::ColorRGBA> colors) && noexcept -> Derived &&
-  {
-    marker().colors = std::move(colors);
-    return std::move(self());
-  }
-
   template <
     typename ColorArrayLike = std::initializer_list<color::Color>,
-    traits::Require<
-      traits::ConversionDefined<std::vector<std_msgs::msg::ColorRGBA>, ColorArrayLike>> = nullptr>
+    std::enable_if_t<traits::like_colors<ColorArrayLike>, std::nullptr_t> = nullptr>
   auto colors(const ColorArrayLike &colors) && noexcept -> Derived &&
   { return std::move(*this).colors(traits::convert<std::vector<std_msgs::msg::ColorRGBA>>(colors)); }
 
@@ -155,8 +142,7 @@ protected:
 
   template <
     typename UVCoordinateArrayLike = std::initializer_list<visualization_msgs::msg::UVCoordinate>,
-    traits::Require<
-      traits::ConversionDefined<std::vector<visualization_msgs::msg::UVCoordinate>, UVCoordinateArrayLike>> = nullptr>
+    std::enable_if_t<traits::like_uv_coordinates<UVCoordinateArrayLike>, std::nullptr_t> = nullptr>
   auto uv_coordinates(const UVCoordinateArrayLike &uv_coordinates) && noexcept -> Derived &&
   { return std::move(*this).uv_coordinates(traits::convert<std::vector<visualization_msgs::msg::UVCoordinate>>(uv_coordinates)); }
 

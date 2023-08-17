@@ -1,8 +1,11 @@
 #pragma once
 
+#include <type_traits>
+
 #include <visualization_msgs/msg/uv_coordinate.hpp>
 
-#include "fluent_rviz/traits.hpp"
+#include "fluent_rviz/traits/convert.hpp"
+#include "fluent_rviz/traits/like_message.hpp"
 
 namespace flrv::uv
 {
@@ -12,8 +15,7 @@ struct UV : public visualization_msgs::msg::UVCoordinate
 
   template <
     typename UVLike,
-    traits::Require<
-      traits::ConversionDefined<visualization_msgs::msg::UVCoordinate, UVLike>> = nullptr>
+    std::enable_if_t<traits::like_uv_coordinate<UVLike>> = nullptr>
   UV(const UVLike &uv)
     : visualization_msgs::msg::UVCoordinate{ traits::convert<visualization_msgs::msg::UVCoordinate>(uv) }
   { }
@@ -24,7 +26,7 @@ struct UV : public visualization_msgs::msg::UVCoordinate
 }  // namespace flrv::uv
 
 template <>
-struct flrv::traits::Convert<visualization_msgs::msg::UVCoordinate, flrv::uv::UV>
+struct flrv::traits::convertor<visualization_msgs::msg::UVCoordinate, flrv::uv::UV>
 {
   static auto do_convert(const flrv::uv::UV &uv) noexcept -> visualization_msgs::msg::UVCoordinate
   { return uv; }

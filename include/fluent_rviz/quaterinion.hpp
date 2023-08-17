@@ -2,7 +2,9 @@
 
 #include <cmath>
 
+#include <cstddef>
 #include <geometry_msgs/msg/quaternion.hpp>
+#include <type_traits>
 
 #include "fluent_rviz/point.hpp"
 #include "fluent_rviz/traits.hpp"
@@ -15,8 +17,7 @@ struct Quaternion : public geometry_msgs::msg::Quaternion
 
   template <
     typename QuaternionLike,
-    traits::Require<
-      traits::ConversionDefined<geometry_msgs::msg::Quaternion, QuaternionLike>> = nullptr>
+    std::enable_if_t<traits::like_quaternion<QuaternionLike>, std::nullptr_t> = nullptr>
   Quaternion(const QuaternionLike &quaternion)
     : geometry_msgs::msg::Quaternion{ traits::convert<geometry_msgs::msg::Quaternion>(quaternion) }
   { }
@@ -142,7 +143,7 @@ inline auto slerp(const Quaternion &q0, const Quaternion &q1, const double t) no
 }  // flrv::quaternion
 
 template <>
-struct flrv::traits::Convert<geometry_msgs::msg::Quaternion, flrv::quaternion::Quaternion>
+struct flrv::traits::convertor<geometry_msgs::msg::Quaternion, flrv::quaternion::Quaternion>
 {
   static auto do_convert(const flrv::quaternion::Quaternion &quaternion) noexcept -> geometry_msgs::msg::Quaternion
   { return quaternion; }
