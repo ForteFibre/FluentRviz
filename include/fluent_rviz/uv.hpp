@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <type_traits>
 
 #include <visualization_msgs/msg/uv_coordinate.hpp>
@@ -15,7 +16,7 @@ struct UV : public visualization_msgs::msg::UVCoordinate
 
   template <
     typename UVLike,
-    std::enable_if_t<traits::like_uv_coordinate<UVLike>> = nullptr>
+    std::enable_if_t<traits::like_uv_coordinate<UVLike>, std::nullptr_t> = nullptr>
   UV(const UVLike &uv)
     : visualization_msgs::msg::UVCoordinate{ traits::convert<visualization_msgs::msg::UVCoordinate>(uv) }
   { }
