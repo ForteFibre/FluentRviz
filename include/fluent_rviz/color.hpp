@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <type_traits>
 
 #include <std_msgs/msg/color_rgba.hpp>
@@ -11,16 +12,13 @@
 
 namespace flrv::color
 {
-template <typename T>
-inline constexpr bool like_color = traits::is_convertible<std_msgs::msg::ColorRGBA, T>;
-
 struct Color : public std_msgs::msg::ColorRGBA
 {
   Color() = default;
 
   template <
     typename ColorLike,
-    std::enable_if_t<like_color<ColorLike>> = nullptr>
+    std::enable_if_t<traits::like_color<ColorLike>, std::nullptr_t> = nullptr>
   Color(const ColorLike &color)
     : std_msgs::msg::ColorRGBA{ traits::convert<std_msgs::msg::ColorRGBA>(color) }
   { }
