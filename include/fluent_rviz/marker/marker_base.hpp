@@ -91,7 +91,7 @@ protected:
 
   template <
     typename ColorLike = color::Color,
-    std::enable_if_t<color::like_color<ColorLike>, std::nullptr_t> = nullptr>
+    std::enable_if_t<traits::like_color<ColorLike>, std::nullptr_t> = nullptr>
   auto color(const ColorLike &color) && noexcept -> Derived &&
   {
     marker().color = traits::convert<std_msgs::msg::ColorRGBA>(color);
@@ -140,17 +140,14 @@ protected:
     return std::move(self());
   }
 
-  auto uv_coordinates(std::vector<visualization_msgs::msg::UVCoordinate> uv_coordinates) && noexcept -> Derived &&
-  {
-    marker().uv_coordinates = std::move(uv_coordinates);
-    return std::move(self());
-  }
-
   template <
     typename UVCoordinateArrayLike = std::initializer_list<visualization_msgs::msg::UVCoordinate>,
     std::enable_if_t<traits::like_uv_coordinates<UVCoordinateArrayLike>, std::nullptr_t> = nullptr>
   auto uv_coordinates(const UVCoordinateArrayLike &uv_coordinates) && noexcept -> Derived &&
-  { return std::move(*this).uv_coordinates(traits::convert<std::vector<visualization_msgs::msg::UVCoordinate>>(uv_coordinates)); }
+  {
+    marker().uv_coordinates = traits::convert<std::vector<visualization_msgs::msg::UVCoordinate>>(uv_coordinates);
+    return std::move(*this);
+  }
 
   auto text(std::string text) && noexcept -> Derived &&
   {
