@@ -114,13 +114,19 @@ protected:
     typename PointArrayLike = std::initializer_list<point::Point>,
     std::enable_if_t<traits::like_points<PointArrayLike>, std::nullptr_t> = nullptr>
   auto points(const PointArrayLike &points) && noexcept -> Derived &&
-  { return std::move(*this).points(traits::convert<std::vector<geometry_msgs::msg::Point>>(points)); }
+  {
+    marker().points = traits::convert<std::vector<geometry_msgs::msg::Point>>(points);
+    return std::move(self());
+  }
 
   template <
     typename ColorArrayLike = std::initializer_list<color::Color>,
     std::enable_if_t<traits::like_colors<ColorArrayLike>, std::nullptr_t> = nullptr>
   auto colors(const ColorArrayLike &colors) && noexcept -> Derived &&
-  { return std::move(*this).colors(traits::convert<std::vector<std_msgs::msg::ColorRGBA>>(colors)); }
+  {
+    marker().colors = traits::convert<std::vector<std_msgs::msg::ColorRGBA>>(colors);
+    return std::move(self());
+  }
 
   auto texture_resource(std::string texture_resource) && noexcept -> Derived &&
   {
