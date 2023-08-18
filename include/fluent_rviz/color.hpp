@@ -65,7 +65,7 @@ inline auto HSLA(float h, float s, float l, float a = 1.0) noexcept -> Color
 }  // namespace flrv::color
 
 template <>
-struct flrv::traits::convertor<std_msgs::msg::ColorRGBA, flrv::color::Color>
+struct flrv::traits::Converter<std_msgs::msg::ColorRGBA, flrv::color::Color>
 {
   static auto do_convert(const flrv::color::Color &color) -> std_msgs::msg::ColorRGBA
   { return color; }

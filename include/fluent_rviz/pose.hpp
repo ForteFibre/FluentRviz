@@ -86,7 +86,7 @@ inline auto transform(const Pose &l, const point::Point &r) noexcept -> point::P
 }  // namespace flrv::pose
 
 template <>
-struct flrv::traits::convertor<geometry_msgs::msg::Pose, flrv::pose::Pose>
+struct flrv::traits::Converter<geometry_msgs::msg::Pose, flrv::pose::Pose>
 {
   static auto do_convert(const flrv::pose::Pose &pose) noexcept -> geometry_msgs::msg::Pose
   { return pose; }

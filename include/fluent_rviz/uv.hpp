@@ -27,7 +27,7 @@ struct UV : public visualization_msgs::msg::UVCoordinate
 }  // namespace flrv::uv
 
 template <>
-struct flrv::traits::convertor<visualization_msgs::msg::UVCoordinate, flrv::uv::UV>
+struct flrv::traits::Converter<visualization_msgs::msg::UVCoordinate, flrv::uv::UV>
 {
   static auto do_convert(const flrv::uv::UV &uv) noexcept -> visualization_msgs::msg::UVCoordinate
   { return uv; }

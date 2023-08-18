@@ -143,7 +143,7 @@ inline auto slerp(const Quaternion &q0, const Quaternion &q1, const double t) no
 }  // flrv::quaternion
 
 template <>
-struct flrv::traits::convertor<geometry_msgs::msg::Quaternion, flrv::quaternion::Quaternion>
+struct flrv::traits::Converter<geometry_msgs::msg::Quaternion, flrv::quaternion::Quaternion>
 {
   static auto do_convert(const flrv::quaternion::Quaternion &quaternion) noexcept -> geometry_msgs::msg::Quaternion
   { return quaternion; }

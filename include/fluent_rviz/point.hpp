@@ -88,7 +88,7 @@ inline auto cross(const Point &l, const Point &r) noexcept -> Point
 }  // namespace flrv::point
 
 template <>
-struct flrv::traits::convertor<geometry_msgs::msg::Point, flrv::point::Point>
+struct flrv::traits::Converter<geometry_msgs::msg::Point, flrv::point::Point>
 {
   static auto do_convert(const flrv::point::Point &point) noexcept -> geometry_msgs::msg::Point
   { return point; }
