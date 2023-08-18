@@ -4,7 +4,7 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/plain_marker_base.hpp"
+#include "fluent_rviz/marker/marker_selector.hpp"
 
 namespace flrv::marker
 {
@@ -30,8 +30,8 @@ public:
 struct UseInplace { };
 
 template <>
-struct PlainMarkerBase<UseInplace> : public InplaceMarker
+struct MarkerSelector<UseInplace> : public InplaceMarker
 {
-  PlainMarkerBase(UseInplace) { }
+  MarkerSelector(UseInplace) { }
 };
 }  // namespace flrv::marker

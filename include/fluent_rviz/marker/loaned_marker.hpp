@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fluent_rviz/marker/plain_marker_base.hpp"
+#include "fluent_rviz/marker/marker_selector.hpp"
 #include <utility>
 
 #include <rclcpp/loaned_message.hpp>
@@ -28,7 +28,7 @@ public:
 };
 
 template <>
-struct PlainMarkerBase<rclcpp::LoanedMessage<visualization_msgs::msg::Marker>> : public LoanedMarker
+struct MarkerSelector<rclcpp::LoanedMessage<visualization_msgs::msg::Marker>> : public LoanedMarker
 {
   using LoanedMarker::LoanedMarker;
 };

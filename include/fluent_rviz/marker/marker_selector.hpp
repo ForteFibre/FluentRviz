@@ -3,5 +3,5 @@
 namespace flrv::marker
 {
 template <typename MarkerToken, typename Enabler = void>
-struct PlainMarkerBase;
+struct MarkerSelector;
 }  // namespace flrv::marker

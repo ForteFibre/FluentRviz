@@ -4,7 +4,7 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/plain_marker_base.hpp"
+#include "fluent_rviz/marker/marker_selector.hpp"
 
 namespace flrv::marker
 {
@@ -34,13 +34,13 @@ public:
 };
 
 template <>
-struct PlainMarkerBase<visualization_msgs::msg::Marker &> : public ReferenceMarker
+struct MarkerSelector<visualization_msgs::msg::Marker &> : public ReferenceMarker
 {
   using ReferenceMarker::ReferenceMarker;
 };
 
 template <>
-struct PlainMarkerBase<std::reference_wrapper<visualization_msgs::msg::Marker>> : public ReferenceMarker
+struct MarkerSelector<std::reference_wrapper<visualization_msgs::msg::Marker>> : public ReferenceMarker
 {
   using ReferenceMarker::ReferenceMarker;
 };

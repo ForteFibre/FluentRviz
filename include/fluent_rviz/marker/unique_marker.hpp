@@ -5,7 +5,7 @@
 
 #include <visualization_msgs/msg/marker.hpp>
 
-#include "fluent_rviz/marker/plain_marker_base.hpp"
+#include "fluent_rviz/marker/marker_selector.hpp"
 
 namespace flrv::marker
 {
@@ -31,17 +31,17 @@ public:
 struct UseUnique { };
 
 template <>
-struct PlainMarkerBase<UseUnique> : public UniqueMarker
+struct MarkerSelector<UseUnique> : public UniqueMarker
 {
-  PlainMarkerBase(UseUnique)
+  MarkerSelector(UseUnique)
     : UniqueMarker(std::make_unique<visualization_msgs::msg::Marker>())
   { }
 };
 
 template <>
-struct PlainMarkerBase<std::unique_ptr<visualization_msgs::msg::Marker>> : public UniqueMarker
+struct MarkerSelector<std::unique_ptr<visualization_msgs::msg::Marker>> : public UniqueMarker
 {
-  PlainMarkerBase(std::unique_ptr<visualization_msgs::msg::Marker> marker)
+  MarkerSelector(std::unique_ptr<visualization_msgs::msg::Marker> marker)
     : UniqueMarker(std::move(marker))
   { }
 };

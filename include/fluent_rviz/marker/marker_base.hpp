@@ -20,7 +20,7 @@
 #include <visualization_msgs/msg/mesh_file.hpp>
 #include <visualization_msgs/msg/uv_coordinate.hpp>
 
-#include "fluent_rviz/marker/plain_marker_base.hpp"
+#include "fluent_rviz/marker/marker_selector.hpp"
 #include "fluent_rviz/color.hpp"
 #include "fluent_rviz/point.hpp"
 #include "fluent_rviz/pose.hpp"
@@ -30,9 +30,9 @@
 namespace flrv::marker
 {
 template <typename MarkerToken, typename Derived>
-class MarkerBase : public PlainMarkerBase<MarkerToken>
+class MarkerBase : public MarkerSelector<MarkerToken>
 {
-  using Base = PlainMarkerBase<MarkerToken>;
+  using Base = MarkerSelector<MarkerToken>;
 
   auto self() -> Derived &
   { return static_cast<Derived &>(*this); }
